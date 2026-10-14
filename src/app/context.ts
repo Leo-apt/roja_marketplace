@@ -35,7 +35,7 @@ export interface AppCtx {
     closeDialog: () => void;
     closeLayers: () => void;
     toast: (m: string) => void;
-    toastMsg: string | null;
+    toastError: (m: string) => void;
 }
 
 export const AppContext = createContext<AppCtx | null>(null);

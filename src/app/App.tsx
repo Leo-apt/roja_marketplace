@@ -19,6 +19,11 @@ import CatalogProductsManage from "@/pages/catalogProducts/Manage";
 import MarginsList from "@/pages/margins/List";
 import MarginsDetail from "@/pages/margins/Detail";
 import MarginsManage from "@/pages/margins/Manage";
+import EngineConfigList from "@/pages/engineConfig/List";
+import EngineConfigDetail from "@/pages/engineConfig/Detail";
+import EngineConfigManage from "@/pages/engineConfig/Manage";
+import InstancesList from "@/pages/instance/InstancesList";
+import InstanceDetail from "@/pages/instance/InstanceDetail";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 import { PublicOnly, RequireAuth } from "@/components/auth/RouteGuards";
@@ -60,6 +65,15 @@ export default function App() {
                     <Route path="/catalog/margins/new" element={<MarginsManage />} />
                     <Route path="/catalog/margins/:id" element={<MarginsDetail />} />
                     <Route path="/catalog/margins/:id/edit" element={<MarginsManage />} />
+
+                    <Route path="/catalog/engine-configuration" element={<EngineConfigList />} />
+                    <Route path="/catalog/engine-configuration/new" element={<EngineConfigManage />} />
+                    <Route path="/catalog/engine-configuration/:id" element={<EngineConfigDetail />} />
+                    <Route path="/catalog/engine-configuration/:id/edit" element={<EngineConfigManage />} />
+
+                    <Route path="/instances" element={<InstancesList />} />
+                    <Route path="/instances/:id" element={<InstanceDetail />} />
+                    <Route path="/instances/:id/edit" element={<InstanceDetail />} />
                 </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

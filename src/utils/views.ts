@@ -1,7 +1,7 @@
 export type ViewKey =
     | "overview" | "products" | "purchases" | "subscriptions"
     | "margin" | "settlements" | "reconciliation"
-    | "productCategories" | "bundles" | "catalogProducts" | "margins";
+    | "productCategories" | "bundles" | "catalogProducts" | "margins" | "instances" | "engineConfig";
 
 export interface ViewInfo {
     title: string;
@@ -93,10 +93,23 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
         dateLabel: "Created on", search: "product name", statuses: ["all", "Active", "Inactive"], statusLabel: "Status",
         scope: "All margin records.",
     },
+    instances: {
+        title: "Instances", nav: "Instances", path: "/instances", icon: "▥",
+        subtitle: "Manage instances, their products and access tokens.",
+        dateLabel: "Created on", search: "instance name", statuses: ["all", "Active", "Inactive"], statusLabel: "Status",
+        scope: "All instances.",
+    },
+    engineConfig: {
+        title: "Engine configuration", nav: "Engine configuration", path: "/catalog/engine-configuration", icon: "⚙",
+        subtitle: "Scoring configs, decision thresholds and signals per provider and offer type.",
+        dateLabel: "Created on", search: "config name", statuses: ["all", "Active", "Inactive"], statusLabel: "Status",
+        scope: "All engine configurations.",
+    },
 };
 
 export const navGroups: { label: string; items: ViewKey[] }[] = [
     // { label: "ARS Marketplace", items: ["overview", "products", "purchases", "subscriptions"] },
     // { label: "Finance & control", items: ["margin", "settlements", "reconciliation"] },
-    { label: "Catalog", items: ["productCategories", "bundles", "catalogProducts", "margins"] },
+    { label: "Catalog", items: ["productCategories", "bundles", "catalogProducts", "margins", "engineConfig"] },
+    { label: "Instance", items: ["instances"] },
 ];

@@ -40,7 +40,7 @@ const msg = (e: unknown) => (e instanceof Error ? e.message : "Something went wr
 
 export default function BundlesList() {
     const isAdmin = useIsAdmin();
-    const { toast } = useApp();
+    const { toast, toastError } = useApp();
     const [rows, setRows] = useState<Bundle[] | null>(null);
     const [error, setError] = useState("");
     const [tick, setTick] = useState(0);
@@ -69,7 +69,7 @@ export default function BundlesList() {
             toast("Bundle deleted");
             setDel(null);
         } catch (e) {
-            toast(msg(e));
+            toastError(msg(e));
         } finally {
             setDeleting(false);
         }

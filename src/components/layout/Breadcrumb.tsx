@@ -12,7 +12,8 @@ import {
     FolderTree,
     Layers,
     Package,
-    BadgePercent,
+    BadgePercent, Server,
+    SlidersHorizontal,
 } from "lucide-react";
 import { navGroups, viewInfo, type ViewKey } from "@/utils/views";
 
@@ -28,6 +29,8 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
     bundles: Layers,
     catalogProducts: Package,
     margins: BadgePercent,
+    instances: Server,
+    engineConfig: SlidersHorizontal,
 };
 
 export default function Breadcrumb() {

@@ -5,7 +5,7 @@ import { useApp } from "@/hooks/useApp";
 import Dropdownbox from "@/components/shared/Dropdownbox";
 import { Alert } from "@/components/auth/AuthShell";
 import { AdminNotice, ErrorBox, LoadingBox, useIsAdmin } from "@/components/catalog/PageState";
-import { bundlesService } from "@/services/bundles.service";
+import { bundlesService, compressImage } from "@/services/bundles.service";
 import RichTextEditor from "@/components/catalog/RichTextEditor";
 import {
     btn, ColorField, Field, FileInput, HexNote, MoneyInput, PhoneField, Radio, Section, TextArea, TextInput, Toggle,
@@ -104,7 +104,7 @@ function BundleForm({ initial }: { initial?: Bundle }) {
         if (Object.keys(e).length) return;
         setSaving(true);
         try {
-            const bgImageBase64 = f.bgImage ? await toBase64(f.bgImage) : undefined;
+            const bgImageBase64 = f.bgImage ? await compressImage(f.bgImage) : undefined;
             const input = { ...f, bgImageBase64 };
             if (initial) await bundlesService.update(initial.id, input);
             else await bundlesService.create(input);

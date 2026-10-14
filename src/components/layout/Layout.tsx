@@ -7,7 +7,7 @@ import Breadcrumb from "./Breadcrumb";
 import PageSkeleton from "@/components/shared/SkeletonLoader";
 
 export default function Layout() {
-    const { drawer, dialog, closeDialog, closeLayers, setFilters, setSelected, toastMsg } = useApp();
+    const { drawer, dialog, closeDialog, closeLayers, setFilters, setSelected } = useApp();
     const { pathname } = useLocation();
     const [navOpen, setNavOpen] = useState(false);
     const [loadedPath, setLoadedPath] = useState("");
@@ -45,15 +45,6 @@ export default function Layout() {
             )}
             {drawer}
             {dialog}
-            {toastMsg && (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    className="fixed bottom-[22px] left-1/2 z-[60] max-w-[calc(100vw-32px)] -translate-x-1/2 rounded-[10px] bg-[#172e4d] px-[18px] py-3 text-xs text-white shadow-[0_10px_32px_#132d4710]"
-                >
-                    {toastMsg}
-                </div>
-            )}
         </>
     );
 }

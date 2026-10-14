@@ -1,4 +1,4 @@
-import { apiFetch } from "./auth.service";
+import { apiCall } from "./auth.service";
 import { fmt, who } from "./categories.service";
 import { num, type DiscountType } from "@/utils/catalog";
 
@@ -127,19 +127,8 @@ function toPayload(i: ProductInput, isEdit: boolean) {
     });
 }
 
-interface Wrapped<T> {
-    success: boolean;
-    message?: string;
-    data: T;
-    meta?: { total: number; page: number; limit: number; totalPages: number };
-}
-
-// success true -> return the response; success false -> throw so the page shows the message
-async function call<T>(path: string, init?: RequestInit): Promise<Wrapped<T>> {
-    const r = await apiFetch<Wrapped<T>>(path, init);
-    if (!r.success) throw new Error(r.message || "Request failed");
-    return r;
-}
+// Same helper the bundles and categories services use: returns the wrapped response ({ data }) and throws when success is false
+const call = <T>(path: string, init?: RequestInit) => apiCall<T>(path, init);
 
 export const productsService = {
     /** Pulls every page (100 per request) so the list can filter and paginate on the client. */
@@ -149,7 +138,7 @@ export const productsService = {
         for (; ;) {
             const r = await call<ApiProduct[]>(`/products/get-all-products?page=${page}&limit=100`);
             out.push(...r.data);
-            if (!r.data.length || page >= (r.meta?.totalPages ?? 1)) break;
+            if (r.data.length < 100) break; // last page
             page++;
         }
         return out.map(toUi);

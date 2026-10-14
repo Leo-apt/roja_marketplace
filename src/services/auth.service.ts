@@ -56,7 +56,15 @@ async function raw<T>(path: string, init: RequestInit = {}, token?: string): Pro
     }
     if (!res.ok) throw await toError(res);
     const text = await res.text();
-    return (text ? JSON.parse(text) : null) as T;
+    const body = text ? JSON.parse(text) : null;
+    if (body && typeof body === "object" && typeof body.success === "boolean") {
+        if (!body.success) {
+            let m = Array.isArray(body.message) ? body.message.join(", ") : body.message || "Request failed";
+            if (Array.isArray(body.missing)) m += ": " + body.missing.join(", ");
+            throw new ApiError(res.status, m);
+        }
+    }
+    return body as T; // keep the { success, message, data, meta } wrapper; apiCall and the auth calls read .data
 }
 
 /* ---------- refresh (single-flight) ---------- */
@@ -64,7 +72,7 @@ let refreshing: Promise<Tokens | null> | null = null;
 
 async function doRefresh(refreshToken: string): Promise<Tokens | null> {
     try {
-        const t = await raw<Tokens>("/auth/refresh-token", { method: "POST", body: JSON.stringify({ refreshToken }) });
+        const t = (await raw<Wrapped<Tokens>>("/auth/refresh-token", { method: "POST", body: JSON.stringify({ refreshToken }) })).data;
         const s = getSession();
         if (s) saveSession({ ...s, tokens: t });
         return t;
@@ -118,7 +126,8 @@ export const authService = {
     },
 
     async login(p: LoginPayload): Promise<Session> {
-        const r = await raw<LoginResponse>("/auth/login", { method: "POST", body: JSON.stringify(p) });
+        const r = (await raw<Wrapped<LoginResponse>>("/auth/login", { method: "POST", body: JSON.stringify(p) })).data;
+        if (!r?.token?.access_token || !r.userData) throw new ApiError(500, "Unexpected login response from the server");
         const s: Session = { tokens: r.token, user: r.userData };
         saveSession(s);
         return s;
@@ -133,5 +142,5 @@ export const authService = {
         } catch { /* already logged out locally */ }
     },
 
-    me: () => apiFetch<{ sub: string; email: string; role: string }>("/auth/me"),
+    me: () => apiCall<{ id: string; email: string; role: string }>("/auth/me").then((r) => r.data),
 };

@@ -24,6 +24,7 @@
     "react-international-phone": "^4.8.0",
     "react-router-dom": "^7.18.4",
     "recharts": "^3.10.1",
+    "sonner": "^2.0.8",
     "tailwindcss": "^4.3.3",
     "tinymce": "^7.9.3",
     "zod": "^4.6.7"

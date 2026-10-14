@@ -21,6 +21,7 @@ export default function LoginPage() {
         setLoading(true);
         try {
             await login(em, password); // PublicOnly redirects to Product Categories once the user is set
+            setLoading(false);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Login failed");
             setLoading(false);

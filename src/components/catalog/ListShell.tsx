@@ -26,6 +26,7 @@ interface Props<T extends { id: string }> {
     match: (r: T, q: string, f: Record<string, string>) => boolean;
     cards?: (rows: T[]) => Stat[];
     onDelete?: (id: string) => void;
+    onCreate?: () => void;
 }
 
 const SIZE = 8;
@@ -33,7 +34,7 @@ const th = "whitespace-nowrap border-b border-linesoft bg-surfacealt px-3 py-3 t
 const td = "whitespace-nowrap border-b border-linesoft px-3 py-3 align-middle text-xs text-[#3c4d66]";
 
 export default function ListShell<T extends { id: string }>({
-    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete,
+    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, onCreate,
 }: Props<T>) {
     const nav = useNavigate();
     const { openDrawer } = useApp();
@@ -98,7 +99,7 @@ export default function ListShell<T extends { id: string }>({
                         )}>
                         <Columns3 className="size-4" /> Columns
                     </button>
-                    <button className={btn.brand} onClick={() => nav(`${basePath}/new`)}>
+                    <button className={btn.brand} onClick={() => (onCreate ? onCreate() : nav(`${basePath}/new`))}>
                         <Plus className="size-4" /> {createLabel}
                     </button>
                 </div>

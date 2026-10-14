@@ -4,13 +4,33 @@ import type { Bundle, Status } from "@/data/catalog";
 import { num, type DiscountType } from "@/utils/catalog";
 
 
-const toBase64 = (file: File) =>
+export const toBase64 = (file: File) =>
     new Promise<string>((resolve, reject) => {
         const r = new FileReader();
         r.onload = () => resolve((r.result as string).split(",")[1]);
         r.onerror = () => reject(new Error("Could not read the image"));
         r.readAsDataURL(file);
     });
+
+/** Downscales and re-encodes as JPEG until the base64 string fits maxChars (Nest's default JSON limit is ~100 KB for the whole body). */
+export async function compressImage(file: File, maxChars = 60_000): Promise<string> {
+    const bmp = await createImageBitmap(file);
+    let scale = Math.min(1, 800 / Math.max(bmp.width, bmp.height));
+    let q = 0.8;
+    for (; ;) {
+        const c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(bmp.width * scale));
+        c.height = Math.max(1, Math.round(bmp.height * scale));
+        const ctx = c.getContext("2d")!;
+        ctx.fillStyle = "#fff"; // JPEG has no transparency
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(bmp, 0, 0, c.width, c.height);
+        const b64 = c.toDataURL("image/jpeg", q).split(",")[1];
+        if (b64.length <= maxChars || (q <= 0.45 && scale <= 0.15)) return b64;
+        if (q > 0.45) q -= 0.1;
+        else scale *= 0.75;
+    }
+}
 
 interface ApiTemplate {
     title: string; shortDescription: string; backgroundImage?: string; iconFamily: string; appIcon: string;

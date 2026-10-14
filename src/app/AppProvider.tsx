@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { toast as sonner } from "sonner";
 import { AppContext, actorOf, type SavedView } from "./context";
 import type { Batch, BatchStatus, Role } from "@/types";
 import { initialBatches } from "@/data/batches";
@@ -28,8 +29,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [drawer, setDrawer] = useState<ReactNode>(null);
     const [dialog, setDialog] = useState<ReactNode>(null);
-    const [toastMsg, setToastMsg] = useState<string | null>(null);
-    const timer = useRef<number | undefined>(undefined);
     const actor = actorOf(role);
 
     useEffect(() => {
@@ -54,11 +53,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         document.body.classList.toggle("locked", !!(drawer || dialog));
     }, [drawer, dialog]);
 
-    const toast = useCallback((m: string) => {
-        window.clearTimeout(timer.current);
-        setToastMsg(m);
-        timer.current = window.setTimeout(() => setToastMsg(null), 5000);
-    }, []);
+    const toast = useCallback((m: string) => { sonner.success(m); }, []);
+    const toastError = useCallback((m: string) => { sonner.error(m); }, []);
 
     const setFilters = useCallback((patch: Partial<Filters>) => setF((f) => ({ ...f, ...patch })), []);
     const closeDialog = useCallback(() => setDialog(null), []);
@@ -121,7 +117,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         closeDialog,
         closeLayers,
         toast,
-        toastMsg,
+        toastError,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
