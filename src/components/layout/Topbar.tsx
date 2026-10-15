@@ -1,39 +1,72 @@
-import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
+import {
+  ArrowUpRight,
   Bell,
   ChevronDown,
+  FolderTree,
   LogOut,
   Menu,
+  Package,
+  PackagePlus,
+  Percent,
   Search,
   Settings,
+  SlidersHorizontal,
   X,
   Zap,
+  type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 
-type QuickAction = { label: string; hint: string; onSelect: () => void };
+type QuickAction = {
+  label: string;
+  hint: string;
+  icon: LucideIcon;
+  tone: string; // tailwind classes for the icon tile
+  onSelect: () => void;
+};
 
-// TODO: wire each onSelect to your real routes / modals
 const QUICK_ACTIONS: QuickAction[] = [
   {
-    label: "New invoice",
-    hint: "Create and send an invoice",
+    label: "Categories",
+    hint: "Create and manage product categories",
+    icon: FolderTree,
+    tone: "bg-blue-50 text-blue-600 ring-1 ring-inset ring-blue-100 group-hover/item:bg-blue-100",
     onSelect: () => {},
   },
   {
-    label: "Add expense",
-    hint: "Record a business expense",
+    label: "Add Bundles",
+    hint: "Create and manage product bundles",
+    icon: PackagePlus,
+    tone: "bg-violet-50 text-violet-600 ring-1 ring-inset ring-violet-100 group-hover/item:bg-violet-100",
     onSelect: () => {},
   },
   {
-    label: "Upload receipt",
-    hint: "Scan or attach a receipt",
+    label: "Create Product",
+    hint: "Add new products and manage details",
+    icon: Package,
+    tone: "bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-100 group-hover/item:bg-emerald-100",
     onSelect: () => {},
   },
   {
-    label: "Generate report",
-    hint: "P&L, balance sheet and more",
+    label: "Margins",
+    hint: "Configure product profit margins",
+    icon: Percent,
+    tone: "bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-100 group-hover/item:bg-amber-100",
+    onSelect: () => {},
+  },
+  {
+    label: "Engine Configuration",
+    hint: "Configure engines and business rules",
+    icon: SlidersHorizontal,
+    tone: "bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-100 group-hover/item:bg-rose-100",
     onSelect: () => {},
   },
 ];
@@ -63,19 +96,17 @@ function useDismiss(
 
 /** Shared card-like surface used by buttons in the bar. */
 const cardBase =
-  "border border-gray-200/80 bg-white shadow-sm outline-none transition-all duration-200 ease-out " +
-  "hover:-translate-y-px hover:border-gray-300 hover:shadow-md active:translate-y-0 active:scale-[0.97] " +
+  "border border-gray-200/80 bg-white shadow-sm outline-none transition-all duration-300 tb-ease " +
+  "hover:-translate-y-px hover:border-gray-300 hover:shadow-[0_6px_14px_-6px_rgba(16,24,40,0.12)] active:translate-y-0 active:scale-[0.97] " +
   "focus-visible:ring-2 focus-visible:ring-brand/30";
 
-/** Popover panel that animates in and out instead of mounting/unmounting. */
+/** Popover panel. Open/close motion lives in the <style> block (tb-pop). */
 function popoverClass(open: boolean) {
   return (
-    "absolute right-0 top-[calc(100%+10px)] z-50 origin-top-right overflow-hidden rounded-2xl " +
-    "border border-gray-200 bg-white shadow-xl ring-1 ring-black/5 " +
-    "transition-[opacity,transform,visibility] duration-200 ease-out " +
-    (open
-      ? "visible translate-y-0 scale-100 opacity-100"
-      : "pointer-events-none invisible -translate-y-1 scale-95 opacity-0")
+    "tb-pop absolute right-0 top-[calc(100%+12px)] z-50 origin-top-right overflow-hidden rounded-2xl " +
+    "border border-gray-200/80 bg-white/95 backdrop-blur-xl " +
+    "shadow-[0_20px_40px_-16px_rgba(16,24,40,0.12),0_2px_8px_-4px_rgba(16,24,40,0.05)] ring-1 ring-black/5 " +
+    (open ? "tb-pop-open" : "")
   );
 }
 
@@ -106,18 +137,60 @@ function IconButton({
 function QuickActions() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   useDismiss(ref, open, () => setOpen(false));
+
+  const focusItem = (i: number) => {
+    const n = QUICK_ACTIONS.length;
+    itemRefs.current[((i % n) + n) % n]?.focus();
+  };
+
+  const onTriggerKey = (e: ReactKeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setOpen(true);
+      window.setTimeout(() => focusItem(0), 40);
+    }
+  };
+
+  const onMenuKey = (e: ReactKeyboardEvent) => {
+    const current = itemRefs.current.findIndex(
+      (el) => el === document.activeElement,
+    );
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      focusItem(current + 1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      focusItem(current <= 0 ? -1 : current - 1);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      focusItem(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      focusItem(-1);
+    } else if (e.key === "Escape") {
+      triggerRef.current?.focus();
+    }
+  };
 
   return (
     <div ref={ref} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className={`inline-flex h-12 items-center gap-3 rounded-2xl pl-1.5 pr-3 ${cardBase}`}
+        onKeyDown={onTriggerKey}
+        className={`group/trigger inline-flex h-12 items-center gap-3 rounded-2xl pl-1.5 pr-3 ${cardBase}`}
       >
-        <span className="grid size-9 place-items-center rounded-xl bg-topbar-avatar-bg text-topbar-avatar-text transition-transform duration-300 ease-out hover:rotate-6">
+        <span
+          className={`grid size-9 place-items-center rounded-xl bg-topbar-avatar-bg text-topbar-avatar-text transition-transform duration-500 tb-spring group-hover/trigger:rotate-6 ${
+            open ? "rotate-12 scale-110" : ""
+          }`}
+        >
           <Zap className="size-[18px]" />
         </span>
         <span className="flex flex-col items-start leading-tight max-[850px]:hidden">
@@ -125,7 +198,7 @@ function QuickActions() {
           <span className="text-[11px] text-muted">Shortcuts &amp; Tools</span>
         </span>
         <ChevronDown
-          className={`size-4 text-muted transition-transform duration-300 ease-out max-[850px]:hidden ${
+          className={`size-4 text-muted transition-transform duration-500 tb-ease max-[850px]:hidden ${
             open ? "rotate-180" : ""
           }`}
         />
@@ -134,27 +207,88 @@ function QuickActions() {
       <div
         role="menu"
         aria-hidden={!open}
-        className={`${popoverClass(open)} w-72 p-1.5`}
+        onKeyDown={onMenuKey}
+        className={`${popoverClass(open)} w-[22rem]`}
       >
-        <p className="px-2.5 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-wider text-muted">
-          Quick actions
-        </p>
-        {QUICK_ACTIONS.map((a) => (
-          <button
-            key={a.label}
-            type="button"
-            role="menuitem"
-            tabIndex={open ? 0 : -1}
-            onClick={() => {
-              setOpen(false);
-              a.onSelect();
-            }}
-            className="flex w-full flex-col rounded-xl px-2.5 py-2 text-left leading-tight transition-colors duration-150 hover:bg-gray-50"
-          >
-            <span className="text-xs font-semibold text-ink">{a.label}</span>
-            <span className="text-[11px] text-muted">{a.hint}</span>
-          </button>
-        ))}
+        {/* Header */}
+        <div className="flex items-center gap-3 border-b border-gray-100 bg-gradient-to-b from-gray-50/90 to-white/60 px-4 py-3.5">
+          <span className="grid size-8 place-items-center rounded-xl bg-topbar-avatar-bg text-topbar-avatar-text shadow-sm">
+            <Zap className="size-4" />
+          </span>
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="text-xs font-bold text-ink">Quick Actions</p>
+            <p className="text-[11px] text-muted">
+              Jump straight to common tasks
+            </p>
+          </div>
+          <span className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-muted">
+            {QUICK_ACTIONS.length} tools
+          </span>
+        </div>
+
+        {/* Items */}
+        <div className="p-1.5">
+          {QUICK_ACTIONS.map((a, i) => {
+            const Icon = a.icon;
+            return (
+              <button
+                key={a.label}
+                ref={(el) => {
+                  itemRefs.current[i] = el;
+                }}
+                type="button"
+                role="menuitem"
+                data-qa-item
+                tabIndex={open ? 0 : -1}
+                onClick={() => {
+                  setOpen(false);
+                  a.onSelect();
+                }}
+                style={{ "--i": i } as React.CSSProperties}
+                className={`group/item relative flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left outline-none transition-[background-color,transform] duration-200 tb-ease hover:bg-gray-50 focus-visible:bg-gray-50 focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.985]`}
+              >
+                {/* Accent bar grows in on hover / focus */}
+                <span className="pointer-events-none absolute left-0 top-1/2 h-0 w-[3px] -translate-y-1/2 rounded-full bg-brand transition-[height] duration-300 tb-ease group-hover/item:h-5 group-focus-visible/item:h-5" />
+                <span
+                  className={`grid size-9 shrink-0 place-items-center rounded-lg transition-[transform,background-color] duration-300 tb-spring group-hover/item:-rotate-3 group-hover/item:scale-110 group-focus-visible/item:scale-110 ${a.tone}`}
+                >
+                  <Icon className="size-[18px]" />
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col leading-tight">
+                  <span className="text-xs font-semibold text-ink">
+                    {a.label}
+                  </span>
+                  <span className="truncate text-[11px] text-muted">
+                    {a.hint}
+                  </span>
+                </span>
+                <ArrowUpRight className="size-4 shrink-0 -translate-x-2 translate-y-1 text-muted opacity-0 transition-[transform,opacity,color] duration-300 tb-ease group-hover/item:translate-x-0 group-hover/item:translate-y-0 group-hover/item:text-ink group-hover/item:opacity-100 group-focus-visible/item:translate-x-0 group-focus-visible/item:translate-y-0 group-focus-visible/item:opacity-100" />
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center gap-4 border-t border-gray-100 bg-gray-50/70 px-4 py-2.5 text-[10px] text-muted max-[850px]:hidden">
+          <span className="inline-flex items-center gap-1.5">
+            <kbd className="rounded border border-gray-200 bg-white px-1 font-sans font-semibold">
+              ↑↓
+            </kbd>
+            Navigate
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <kbd className="rounded border border-gray-200 bg-white px-1 font-sans font-semibold">
+              Enter
+            </kbd>
+            Open
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <kbd className="rounded border border-gray-200 bg-white px-1 font-sans font-semibold">
+              Esc
+            </kbd>
+            Close
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -289,12 +423,57 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
     <header className="sticky top-0 z-30 flex h-[76px] animate-[topbar-in_400ms_ease-out_both] items-center justify-between gap-3 border-b border-topbar-border bg-white/70 px-7 backdrop-blur-xl max-[1180px]:px-5 max-[850px]:px-4 print:hidden">
       {/* Local keyframes so no tailwind.config change is needed */}
       <style>{`
+                :root {
+                    --tb-ease: cubic-bezier(0.22, 1, 0.36, 1);
+                    --tb-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+                .tb-ease.tb-ease { transition-timing-function: var(--tb-ease); }
+                .tb-spring.tb-spring { transition-timing-function: var(--tb-spring); }
+
                 @keyframes topbar-in {
                     from { opacity: 0; transform: translateY(-8px); }
                     to   { opacity: 1; transform: translateY(0); }
                 }
+                @keyframes qa-in {
+                    from { opacity: 0; transform: translateY(10px) scale(0.97); }
+                    to   { opacity: 1; transform: translateY(0) scale(1); }
+                }
+
+                /* Popover: closed state, delays 'visibility' until fade-out ends */
+                .tb-pop {
+                    opacity: 0;
+                    visibility: hidden;
+                    pointer-events: none;
+                    transform: translateY(-8px) scale(0.95);
+                    transition:
+                        opacity 320ms var(--tb-ease),
+                        transform 320ms var(--tb-ease),
+                        visibility 0s linear 320ms;
+                    will-change: opacity, transform;
+                }
+                .tb-pop.tb-pop-open {
+                    opacity: 1;
+                    visibility: visible;
+                    pointer-events: auto;
+                    transform: translateY(0) scale(1);
+                    transition:
+                        opacity 320ms var(--tb-ease),
+                        transform 320ms var(--tb-ease),
+                        visibility 0s;
+                }
+
+                /* Staggered items on open */
+                .tb-pop-open [data-qa-item] {
+                    animation: qa-in 420ms var(--tb-ease) backwards;
+                    animation-delay: calc(70ms + var(--i, 0) * 50ms);
+                }
+
+                /* Reduced motion: keep a gentle fade, drop movement */
                 @media (prefers-reduced-motion: reduce) {
                     header { animation: none !important; }
+                    .tb-pop { transform: none; transition: opacity 150ms linear, visibility 0s linear 150ms; }
+                    .tb-pop.tb-pop-open { transition: opacity 150ms linear, visibility 0s; }
+                    .tb-pop-open [data-qa-item] { animation: none; }
                 }
             `}</style>
 
@@ -310,8 +489,10 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
         </button>
 
         <div
-          className={`relative w-full max-w-[340px] rounded-xl transition-all duration-300 ease-out ${
-            focused ? "max-w-[440px] shadow-[0_0_0_4px] shadow-brand/10" : ""
+          className={`relative w-full max-w-[340px] rounded-xl transition-[max-width,box-shadow] duration-500 tb-ease ${
+            focused
+              ? "max-w-[440px] shadow-[0_0_0_3px] shadow-brand/[0.06]"
+              : ""
           }`}
         >
           <Search
@@ -332,7 +513,7 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
                 else inputRef.current?.blur();
               }
             }}
-            placeholder="Search…"
+            placeholder="Search products, categories…"
             aria-label="Search"
             className="h-11 w-full rounded-xl border border-gray-200/80 bg-white pl-10 pr-16 text-xs text-ink shadow-sm outline-none transition-all duration-200 placeholder:text-muted hover:border-gray-300 focus:border-brand"
           />
@@ -373,11 +554,18 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
           )}
         </IconButton>
 
-        <IconButton label="Settings" className="max-[640px]:hidden">
+        <IconButton
+          label="Settings"
+          className="hover:!border-brand/30 hover:bg-brand/5 hover:text-brand max-[640px]:hidden"
+        >
           <Settings className="size-[18px] transition-transform duration-500 group-hover:rotate-90" />
         </IconButton>
 
-        <IconButton label="Log out" onClick={() => setConfirmOut(true)}>
+        <IconButton
+          label="Log out"
+          onClick={() => setConfirmOut(true)}
+          className="hover:!border-red-200 hover:bg-red-50 hover:text-red-600"
+        >
           <LogOut className="size-[18px] transition-transform duration-200 group-hover:translate-x-0.5" />
         </IconButton>
 

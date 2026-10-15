@@ -404,6 +404,15 @@ export default function Sidebar({
                       })}
                     </div>
                   </div>
+
+                  {/* Bottom line under every group (collapsed desktop already
+                      shows a divider above each group, so hide it there) */}
+                  <div
+                    aria-hidden="true"
+                    className={`mx-3 mb-1 mt-2 h-px bg-gradient-to-r from-transparent via-sidebar-divider to-transparent ${
+                      collapsed ? "min-[851px]:hidden" : ""
+                    }`}
+                  />
                 </div>
               );
             })}
