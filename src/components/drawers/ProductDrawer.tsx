@@ -54,7 +54,7 @@ export default function ProductDrawer({ id }: { id: string }) {
                     />
                 </div>
             </div>
-            <div className="rounded-[9px] border border-[#cbdcf9] bg-[#f1f6ff] px-4 py-3 text-xs text-[#415d83]">
+            <div className="rounded-[9px] border border-note-info-border bg-note-info-bg px-4 py-3 text-xs text-note-info-text">
                 Publishing a new price or supplier cost creates a new version. Existing purchases, bundle allocations, and subscribers keep their original snapshot unless an approved migration occurs.
             </div>
         </Drawer>

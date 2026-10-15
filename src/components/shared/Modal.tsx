@@ -13,7 +13,7 @@ export default function Modal({ title, children, footer, error }: { title: strin
             <div className="flex items-center justify-between border-b border-line px-6 py-5">
                 <h2 className="text-lg font-bold tracking-[-0.25px]">{title}</h2>
                 <button
-                    className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-[#bfd0ec] hover:enabled:bg-[#f4f7fe] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={closeDialog}
                     aria-label="Close dialog"
                 >
@@ -26,7 +26,7 @@ export default function Modal({ title, children, footer, error }: { title: strin
             </div>
             <div className="flex justify-end gap-2 border-t border-line px-6 py-[15px]">
                 <button
-                    className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-[#bfd0ec] hover:enabled:bg-[#f4f7fe] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={closeDialog}
                 >
                     Cancel

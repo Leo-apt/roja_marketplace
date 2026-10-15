@@ -23,7 +23,7 @@ export default function MoreFiltersDialog({ view }: { view: ViewKey }) {
             title="More filters"
             footer={
                 <button
-                    className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-brand bg-brand px-3 py-[7px] font-semibold text-white hover:enabled:border-brandhover hover:enabled:bg-brandhover disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-btn-primary bg-btn-primary px-3 py-[7px] font-semibold text-white hover:enabled:border-btn-primary-hover hover:enabled:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={apply}
                 >
                     Apply filters
@@ -80,7 +80,7 @@ export default function MoreFiltersDialog({ view }: { view: ViewKey }) {
                     Only negative-contribution order lines
                 </label>
             )}
-            <div className="rounded-[9px] border border-[#cbdcf9] bg-[#f1f6ff] px-4 py-3 text-xs text-[#415d83]">
+            <div className="rounded-[9px] border border-note-info-border bg-note-info-bg px-4 py-3 text-xs text-note-info-text">
                 Production filters also include product/category, bundle, price version, payment/fulfillment/entitlement state, refund state, state/ZIP eligibility, and settlement hold reason. The sample implements the fields above.
             </div>
         </Modal>

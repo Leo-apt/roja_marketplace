@@ -32,22 +32,22 @@ export default function TrendChart({ f }: { f: Filters }) {
             role="img"
             aria-label="Captured product sales and adjusted gross margin by financial event date, US dollars"
         >
-            <text x="8" y="20" fill="#6a7790" fontSize="10">USD</text>
-            <text x="8" y="39" fill="#6a7790" fontSize="10">{money(upper)}</text>
-            <line x1="52" y1={base} x2="620" y2={base} stroke="#dde5f0" />
-            <text x="8" y={base + 3} fill="#6a7790" fontSize="10">$0</text>
+            <text x="8" y="20" className="fill-th-text" fontSize="10">USD</text>
+            <text x="8" y="39" className="fill-th-text" fontSize="10">{money(upper)}</text>
+            <line x1="52" y1={base} x2="620" y2={base} className="stroke-chart-grid" />
+            <text x="8" y={base + 3} className="fill-th-text" fontSize="10">$0</text>
             {values.map((v, i) => {
                 const x = 58 + i * dx;
                 const w = Math.min(20, dx * 0.29);
                 return (
                     <g key={v.d}>
-                        <rect x={x} y={y(v.s)} width={w} height={Math.abs(base - y(v.s))} rx="2" fill="#7b9be9">
+                        <rect x={x} y={y(v.s)} width={w} height={Math.abs(base - y(v.s))} rx="2" className="fill-chart-sales">
                             <title>{`${v.d}: captured sales ${money(v.s)}`}</title>
                         </rect>
-                        <rect x={x + w + 3} y={Math.min(base, y(v.g))} width={w} height={Math.abs(base - y(v.g))} rx="2" fill={v.g < 0 ? "#cd6272" : "#25a77a"}>
+                        <rect x={x + w + 3} y={Math.min(base, y(v.g))} width={w} height={Math.abs(base - y(v.g))} rx="2" className={v.g < 0 ? "fill-chart-loss" : "fill-chart-gain"}>
                             <title>{`${v.d}: gross margin ${money(v.g)}`}</title>
                         </rect>
-                        <text x={x + w} y="205" textAnchor="middle" fontSize="10" fill="#6a7790">{v.d.slice(5)}</text>
+                        <text x={x + w} y="205" textAnchor="middle" fontSize="10" className="fill-th-text">{v.d.slice(5)}</text>
                     </g>
                 );
             })}

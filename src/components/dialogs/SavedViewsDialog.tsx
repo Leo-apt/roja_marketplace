@@ -28,7 +28,7 @@ export default function SavedViewsDialog({ view }: { view: string }) {
                 />
             </label>
             <button
-                className="inline-flex min-h-9 items-center justify-center gap-1.5 self-start whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-[#bfd0ec] hover:enabled:bg-[#f4f7fe] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-9 items-center justify-center gap-1.5 self-start whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={save}
             >
                 Save view
@@ -38,7 +38,7 @@ export default function SavedViewsDialog({ view }: { view: string }) {
                 {mine.map((v, i) => (
                     <button
                         key={i}
-                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-[#bfd0ec] hover:enabled:bg-[#f4f7fe] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
                         onClick={() => {
                             setFilters(v.filters);
                             setSelected(new Set());

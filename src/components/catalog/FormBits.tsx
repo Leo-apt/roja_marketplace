@@ -6,10 +6,11 @@ import "react-international-phone/style.css";
 import { isHex } from "@/utils/catalog";
 
 export const btn = {
-    primary: "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50",
-    cancel: "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md bg-red-500 px-5 py-2 text-sm font-semibold text-white hover:bg-red-600",
-    secondary: "inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-[#bfd0ec] hover:bg-[#f4f7fe]",
-    brand: "inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-brand bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brandhover",
+    primary: "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md bg-btn-primary px-5 py-2 text-sm font-semibold text-white hover:bg-btn-primary-hover disabled:opacity-50",
+    cancel: "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md bg-btn-danger px-5 py-2 text-sm font-semibold text-white hover:bg-btn-danger-hover",
+    secondary: "inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-btn-secondary-hover-border hover:bg-btn-secondary-hover-bg",
+    brand: "inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-btn-primary bg-btn-primary px-4 py-2 text-sm font-semibold text-white hover:bg-btn-primary-hover",
+    navy: "inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-btn-dark px-4 py-2 text-sm font-semibold text-white hover:bg-btn-dark-hover",
 };
 
 export const inputBase =
@@ -22,7 +23,7 @@ export function Field({ label, required, note, error, children, className = "" }
     return (
         <div className={className}>
             <label className="mb-1.5 block text-sm font-semibold text-ink">
-                {label}{required && <span className="text-red-500">*</span>}
+                {label}{required && <span className="text-btn-danger">*</span>}
             </label>
             {children}
             {note && <p className="mt-1.5 text-xs text-muted">{note}</p>}
@@ -31,7 +32,7 @@ export function Field({ label, required, note, error, children, className = "" }
     );
 }
 
-export const HexNote = <span className="font-semibold text-indigo-600">Must be HEX code, e.g. #000000</span>;
+export const HexNote = <span className="font-semibold text-brand">Must be HEX code, e.g. #000000</span>;
 
 export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
     return <input {...props} className={`${inputCls} ${props.className ?? ""}`} />;
@@ -132,7 +133,7 @@ export function Check({ checked, onChange, label }: { checked: boolean; onChange
 export function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
     return (
         <button type="button" role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)}
-            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${on ? "bg-[#1a73a7]" : "bg-gray-300"}`}>
+            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${on ? "bg-brand" : "bg-gray-300"}`}>
             <span className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-white shadow transition-transform ${on ? "translate-x-5" : ""}`} />
         </button>
     );
@@ -152,7 +153,7 @@ export function Section({ n, title, subtitle, children }: { n: number; title: st
     return (
         <section className="rounded-xl border border-line bg-white p-6 shadow-sm">
             <div className="flex items-start gap-3 border-b border-gray-300 pb-3">
-                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-indigo-600 text-sm font-bold text-white">{n}</span>
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-sm font-bold text-white">{n}</span>
                 <div>
                     <h2 className="text-base font-bold text-ink">{title}</h2>
                     {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
@@ -172,15 +173,15 @@ export function Stepper({ steps, current, onGo }: { steps: string[]; current: nu
                 return (
                     <li key={s} className="relative flex min-w-[96px] flex-1 flex-col items-center">
                         {i > 0 && (
-                            <span className={`absolute left-[-50%] right-[50%] top-[15px] h-0.5 ${i <= current ? "bg-indigo-600" : "bg-gray-200"}`} />
+                            <span className={`absolute left-[-50%] right-[50%] top-[15px] h-0.5 ${i <= current ? "bg-brand" : "bg-gray-200"}`} />
                         )}
                         <button type="button" disabled={i > current} onClick={() => onGo(i)}
                             className="relative z-10 flex flex-col items-center gap-2 disabled:cursor-not-allowed">
-                            <span className={`grid size-8 place-items-center rounded-full border-2 text-xs font-bold ${active ? "border-indigo-600 bg-indigo-600 text-white ring-4 ring-indigo-100"
-                                : done ? "border-indigo-600 bg-indigo-600 text-white" : "border-gray-300 bg-white text-muted"}`}>
+                            <span className={`grid size-8 place-items-center rounded-full border-2 text-xs font-bold ${active ? "border-brand bg-brand text-white ring-4 ring-brandsoft"
+                                : done ? "border-brand bg-brand text-white" : "border-gray-300 bg-white text-muted"}`}>
                                 {done ? <CheckIcon className="size-4" /> : i + 1}
                             </span>
-                            <span className={`text-center text-xs font-semibold ${active ? "text-indigo-700" : done ? "text-ink" : "text-muted"}`}>{s}</span>
+                            <span className={`text-center text-xs font-semibold ${active ? "text-brand" : done ? "text-ink" : "text-muted"}`}>{s}</span>
                         </button>
                     </li>
                 );
@@ -194,7 +195,7 @@ export function SearchField({ value, onChange, placeholder = "Search…", label 
 }) {
     return (
         <div className="w-full">
-            {label && <label className="mb-1.5 block text-xs font-semibold text-[#475569]">{label}</label>}
+            {label && <label className="mb-1.5 block text-xs font-semibold text-label">{label}</label>}
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
                 <input className={`${inputCls} pl-9 pr-9`} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />

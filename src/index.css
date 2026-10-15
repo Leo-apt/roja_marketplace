@@ -1,22 +1,29 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 @theme {
   /* Fonts */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
 
   /* Brand */
-  --color-brand: #2363da;
-  --color-brandhover: #1953bd;
-  --color-brandsoft: #eaf1ff;
+  --color-brand: #7c3aed;
+  --color-brandhover: #6d28d9;
+  --color-brandsoft: #f3e8ff;
 
   /* Text and surfaces */
-  --color-ink: #172b44;
-  --color-muted: #63728a;
-  --color-page: #f4f6fa;
-  --color-line: #e2e7f0;
-  --color-linesoft: #eef0f5;
-  --color-surfacealt: #f8f9fc;
+  --color-ink: #111827;
+  --color-muted: #6b7280;
+  --color-page: #ffffff;
+  --color-line: #e5e7eb;
+  --color-linesoft: #f3f4f6;
+  --color-surfacealt: #f8fafc;
+
+  /* Sidebar (now light) */
+  --color-nav: #F8FAFC;
+  --color-navhover: #e6f1fb;
+  --color-navactive: #ffffff;
+  --color-navmuted: #6b7280;
 
   /* Status */
   --color-good: #116846;
@@ -28,11 +35,97 @@
   --color-purple: #6941ab;
   --color-purplebg: #f1ebfa;
 
+  /* Buttons */
+  --color-btn-primary: var(--color-sidebar-bg);
+  --color-btn-primary-hover: var(--color-sidebar-hover);
+  --color-btn-danger: #ef4444;
+  --color-btn-danger-hover: #dc2626;
+  --color-btn-dark: #0f766e;
+  --color-btn-dark-hover: #115e59;
+  --color-btn-secondary-hover-border: #bfd0ec;
+  --color-btn-secondary-hover-bg: #f4f7fe;
+
+  /* Table action button, active page number, links */
+  --color-action: #1e293b;
+  --color-action-hover: #0f172a;
+  --color-link: #2563eb;
+
   /* Sidebar */
-  --color-nav: #142740;
-  --color-navhover: #203853;
-  --color-navactive: #2a4160;
-  --color-navmuted: #9dadc6;
+  --color-sidebar-bg: #334155;
+  --color-sidebar-border: #1e293b;
+  --color-sidebar-text: #e2e8f0;
+  --color-sidebar-text-active: #ffffff;
+  --color-sidebar-group: #cbd5e1;
+  --color-sidebar-icon: #f1f5f9;
+  --color-sidebar-hover: #475569;
+  --color-sidebar-active: #475569;
+  --color-sidebar-active-border: #64748b;
+  --color-sidebar-divider: #475569;
+  --color-sidebar-logo-bg: #f0f4f8;
+  --color-sidebar-logo-text: #235fce;
+
+  /* Topbar */
+  --color-topbar-bg: #f4faff;
+  --color-topbar-border: #e2e8f0;
+  --color-topbar-avatar-bg: #e9efff;
+  --color-topbar-avatar-text: #2758ae;
+
+  /* Breadcrumb */
+  --color-crumb-bg: #ffffff;
+  --color-crumb-border: #e2e8f0;
+  --color-crumb-title: #0f172a;
+  --color-crumb-text: #64748b;
+  --color-crumb-current: #334155;
+  --color-crumb-sep: #cbd5e1;
+  --color-crumb-hover: #f1f5f9;
+
+  /* Dialog states */
+  --color-danger-soft: #fef2f2;
+  --color-danger-ring: #fee2e2;
+  --color-danger-ping: #f87171;
+  --color-caution: #f59e0b;
+  --color-caution-hover: #d97706;
+  --color-caution-soft: #fffbeb;
+  --color-caution-ring: #fef3c7;
+  --color-caution-ping: #fbbf24;
+
+  /* Table */
+  --color-row-hover: #fafcff;
+  --color-th-text: #6a7790;
+
+  /* Surfaces, overlay, neutral tag */
+  --color-surfacesoft: #f6f8fc;
+  --color-overlay: #10243f;
+  --color-tag-neutral-bg: #eef1f6;
+  --color-tag-neutral-text: #56647b;
+
+  /* Page shell chips */
+  --color-chip-bg: #eef2fa;
+  --color-chip-text: #5d7293;
+  --color-sample-text: #566a88;
+  --color-sample-dot: #e8a239;
+
+  /* Info and warning note boxes, timeline */
+  --color-note-info-bg: #f1f6ff;
+  --color-note-info-border: #cbdcf9;
+  --color-note-info-text: #415d83;
+  --color-note-warn-bg: #fff9ef;
+  --color-note-warn-border: #f0d8ab;
+  --color-note-warn-text: #77501b;
+  --color-timeline-dot: #5f91e5;
+
+  /* Text shades, form label, warn border */
+  --color-label: #475569;
+  --color-cell-text: #3c4d66;
+  --color-td-text: #4b5563;
+  --color-sort-icon: #9ca3af;
+  --color-warn-border: #f3dca8;
+
+  /* Chart */
+  --color-chart-sales: #7b9be9;
+  --color-chart-gain: #25a77a;
+  --color-chart-loss: #cd6272;
+  --color-chart-grid: #dde5f0;
 }
 
 @layer base {
@@ -70,7 +163,7 @@
   input:focus-visible,
   select:focus-visible,
   textarea:focus-visible {
-    outline: 3px solid #94baff;
+    outline: 3px solid #c4b5fd;
     outline-offset: 2px;
   }
 

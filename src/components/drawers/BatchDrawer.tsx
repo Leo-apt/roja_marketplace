@@ -42,7 +42,7 @@ export default function BatchDrawer({ id }: { id: string }) {
                 kicker={`${b.payee} · supplier payout`}
                 footer={<>
                     <button
-                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-[#bfd0ec] hover:enabled:bg-[#f4f7fe] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
                         onClick={closeLayers}
                     >
                         Close
@@ -50,14 +50,14 @@ export default function BatchDrawer({ id }: { id: string }) {
                     {b.status === "Draft" && (
                         <>
                             <button
-                                className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-bad hover:enabled:border-[#bfd0ec] hover:enabled:bg-[#f4f7fe] disabled:cursor-not-allowed disabled:opacity-50"
+                                className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-bad hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
                                 disabled={role !== "preparer"}
                                 onClick={() => setShowVoid(true)}
                             >
                                 Void draft
                             </button>
                             <button
-                                className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-brand bg-brand px-3 py-[7px] font-semibold text-white hover:enabled:border-brandhover hover:enabled:bg-brandhover disabled:cursor-not-allowed disabled:opacity-50"
+                                className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-btn-primary bg-btn-primary px-3 py-[7px] font-semibold text-white hover:enabled:border-btn-primary-hover hover:enabled:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                                 disabled={role !== "preparer"}
                                 onClick={() => advanceBatch(id, "Pending approval", "Submitted for independent approval")}
                             >
@@ -67,7 +67,7 @@ export default function BatchDrawer({ id }: { id: string }) {
                     )}
                     {b.status === "Pending approval" && (
                         <button
-                            className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-brand bg-brand px-3 py-[7px] font-semibold text-white hover:enabled:border-brandhover hover:enabled:bg-brandhover disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-btn-primary bg-btn-primary px-3 py-[7px] font-semibold text-white hover:enabled:border-btn-primary-hover hover:enabled:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={!canApprove}
                             onClick={() => advanceBatch(id, "Approved", "Approved by separate finance actor", { approvedBy: actor })}
                         >
@@ -76,7 +76,7 @@ export default function BatchDrawer({ id }: { id: string }) {
                     )}
                     {b.status === "Approved" && (
                         <button
-                            className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-brand bg-brand px-3 py-[7px] font-semibold text-white hover:enabled:border-brandhover hover:enabled:bg-brandhover disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-btn-primary bg-btn-primary px-3 py-[7px] font-semibold text-white hover:enabled:border-btn-primary-hover hover:enabled:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={role !== "approver"}
                             onClick={() => advanceBatch(id, "Payment submitted", "External payment submission recorded; not yet paid")}
                         >
@@ -85,7 +85,7 @@ export default function BatchDrawer({ id }: { id: string }) {
                     )}
                     {b.status === "Payment submitted" && (
                         <button
-                            className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-brand bg-brand px-3 py-[7px] font-semibold text-white hover:enabled:border-brandhover hover:enabled:bg-brandhover disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-btn-primary bg-btn-primary px-3 py-[7px] font-semibold text-white hover:enabled:border-btn-primary-hover hover:enabled:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={role !== "approver"}
                             onClick={() => setShowVoid(true)}
                         >
@@ -107,7 +107,7 @@ export default function BatchDrawer({ id }: { id: string }) {
                         ["Net payout", money(b.amount)],
                         ["Payout reference", b.reference || "No bank confirmation"],
                     ]} />
-                <div className="rounded-[9px] border border-[#cbdcf9] bg-[#f1f6ff] px-4 py-3 text-xs text-[#415d83]">{b.note}</div>
+                <div className="rounded-[9px] border border-note-info-border bg-note-info-bg px-4 py-3 text-xs text-note-info-text">{b.note}</div>
                 <div className="min-w-0 overflow-hidden rounded-xl border border-line bg-white">
                     <div className="flex items-center justify-between gap-2.5 border-b border-line px-5 py-[17px]"><h3 className="text-sm font-semibold">Immutable source allocation</h3></div>
                     <DetailTable head={["Source", "Invoice / credit", "Net payable"]} rows={entries.map((r) => [<OrderLink id={r.orderId} />, r.invoice, money(r.amount)])} />
@@ -116,7 +116,7 @@ export default function BatchDrawer({ id }: { id: string }) {
                     {b.timeline.map(([d, l, a], i) => (
                         <li
                             key={i}
-                            className="relative flex gap-3 pb-5 before:mt-[7px] before:size-[7px] before:shrink-0 before:rounded-full before:bg-[#5f91e5] after:absolute after:left-[3px] after:top-[18px] after:h-[calc(100%-12px)] after:w-px after:bg-line last:after:hidden"
+                            className="relative flex gap-3 pb-5 before:mt-[7px] before:size-[7px] before:shrink-0 before:rounded-full before:bg-timeline-dot after:absolute after:left-[3px] after:top-[18px] after:h-[calc(100%-12px)] after:w-px after:bg-line last:after:hidden"
                         >
                             <div>
                                 <strong className="text-xs">{l}</strong>
@@ -125,7 +125,7 @@ export default function BatchDrawer({ id }: { id: string }) {
                         </li>
                     ))}
                 </ol>
-                <div className="rounded-[9px] border border-[#f0d8ab] bg-[#fff9ef] px-4 py-3 text-xs text-[#77501b]">
+                <div className="rounded-[9px] border border-note-warn-border bg-note-warn-bg px-4 py-3 text-xs text-note-warn-text">
                     All actions below simulate an approval workflow only. No bank, gateway, or ARS request is sent. Pending or ambiguous transfers must not be blindly retried.
                 </div>
             </Drawer></>

@@ -207,7 +207,7 @@ const Dropdownbox: React.FC<DropdownProps> = ({
     return (
         <div ref={dropdownRef} className={`relative w-full ${className}`}>
             {label && (
-                <label className="mb-1.5 block text-xs font-semibold text-[#475569]">
+                <label className="mb-1.5 block text-xs font-semibold text-label">
                     {label}
                     {required && <span className="ml-1 text-red-500">*</span>}
                 </label>

@@ -37,7 +37,7 @@ export default function BundleSections({ b, variant = "bundle" }: { b: Bundle; v
             </DCard>
 
             <DCard title="Post-Purchase / Hidden Fields">
-                <p className="mb-4 rounded-md border border-[#f3dca8] bg-warnbg px-3 py-2 text-xs text-warn">
+                <p className="mb-4 rounded-md border border-warn-border bg-warnbg px-3 py-2 text-xs text-warn">
                     These fields are never rendered pre-purchase — visible to the customer only after purchase is complete.
                 </p>
                 <Grid one>

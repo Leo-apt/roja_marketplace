@@ -94,12 +94,12 @@ export default function ConfirmDialog({
                     confirmText: confirmText || "Logout",
                     icon: LogOut,
                     confirmIcon: LogOut,
-                    accent: "bg-red-500",
-                    pingColor: "bg-red-400",
-                    iconRing: "ring-red-100",
-                    iconBg: "bg-red-50",
-                    iconColor: "text-red-500",
-                    confirmButtonClass: "bg-red-500 hover:bg-red-600 focus-visible:ring-red-300",
+                    accent: "bg-btn-danger",
+                    pingColor: "bg-danger-ping",
+                    iconRing: "ring-danger-ring",
+                    iconBg: "bg-danger-soft",
+                    iconColor: "text-btn-danger",
+                    confirmButtonClass: "bg-btn-danger hover:bg-btn-danger-hover focus-visible:ring-danger-ping",
                 };
             case "delete":
                 return {
@@ -110,12 +110,12 @@ export default function ConfirmDialog({
                     confirmText: confirmText || "Delete",
                     icon: Trash2,
                     confirmIcon: Trash2,
-                    accent: "bg-red-500",
-                    pingColor: "bg-red-400",
-                    iconRing: "ring-red-100",
-                    iconBg: "bg-red-50",
-                    iconColor: "text-red-500",
-                    confirmButtonClass: "bg-red-500 hover:bg-red-600 focus-visible:ring-red-300",
+                    accent: "bg-btn-danger",
+                    pingColor: "bg-danger-ping",
+                    iconRing: "ring-danger-ring",
+                    iconBg: "bg-danger-soft",
+                    iconColor: "text-btn-danger",
+                    confirmButtonClass: "bg-btn-danger hover:bg-btn-danger-hover focus-visible:ring-danger-ping",
                 };
             case "warning":
                 return {
@@ -124,12 +124,12 @@ export default function ConfirmDialog({
                     confirmText: confirmText || "Confirm",
                     icon: AlertTriangle,
                     confirmIcon: ArrowRight,
-                    accent: "bg-amber-500",
-                    pingColor: "bg-amber-400",
-                    iconRing: "ring-amber-100",
-                    iconBg: "bg-amber-50",
-                    iconColor: "text-amber-500",
-                    confirmButtonClass: "bg-amber-500 hover:bg-amber-600 focus-visible:ring-amber-300",
+                    accent: "bg-caution",
+                    pingColor: "bg-caution-ping",
+                    iconRing: "ring-caution-ring",
+                    iconBg: "bg-caution-soft",
+                    iconColor: "text-caution",
+                    confirmButtonClass: "bg-caution hover:bg-caution-hover focus-visible:ring-caution-ping",
                 };
             case "info":
                 return {
@@ -139,9 +139,9 @@ export default function ConfirmDialog({
                     icon: Info,
                     confirmIcon: ArrowRight,
                     accent: "bg-brand",
-                    pingColor: "bg-blue-400",
-                    iconRing: "ring-blue-100",
-                    iconBg: "bg-blue-50",
+                    pingColor: "bg-brand/40",
+                    iconRing: "ring-brandsoft",
+                    iconBg: "bg-brandsoft",
                     iconColor: "text-brand",
                     confirmButtonClass: "bg-brand hover:bg-brandhover focus-visible:ring-brand/40",
                 };

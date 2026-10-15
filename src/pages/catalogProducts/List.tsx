@@ -2,20 +2,20 @@ import { useEffect, useState } from "react";
 import ListShell, { type Col } from "@/components/catalog/ListShell";
 import type { FilterField } from "@/components/catalog/ListDrawers";
 import { avg } from "@/components/catalog/StatCards";
+import { StatusBadge } from "@/components/catalog/DetailBits";
 import { AdminNotice, ErrorBox, LoadingBox, useIsAdmin } from "@/components/catalog/PageState";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { useApp } from "@/hooks/useApp";
-import { marginsService, type MarginRec } from "@/services/margins.service";
+import { productsService, type ProductRec } from "@/services/products.service";
 import { usd } from "@/utils/catalog";
 
-const cols: Col<MarginRec>[] = [
-    { key: "product", label: "Product", link: true, render: (r) => r.product },
-    { key: "wholesale", label: "Wholesale Price ($)", align: "right", render: (r) => usd(r.wholesale) },
-    { key: "retail", label: "Suggested Retail ($)", align: "right", render: (r) => usd(r.retail) },
-    { key: "markupAmt", label: "Roja Markup Amount ($)", align: "right", render: (r) => usd(r.markupAmount) },
-    { key: "markupPct", label: "Roja Markup (%)", align: "right", render: (r) => `${r.markupPercent}%` },
-    { key: "buy", label: "Roja Buy Value ($)", align: "right", render: (r) => usd(r.buyRate) },
-    { key: "margin", label: "Margin vs. Retail ($)", align: "right", render: (r) => usd(r.marginVsRetail) },
+const cols: Col<ProductRec>[] = [
+    { key: "name", label: "Product Name", link: true, render: (r) => r.name },
+    { key: "categoryName", label: "Category", render: (r) => r.categoryName },
+    { key: "retail", label: "Retail Price ($)", align: "right", render: (r) => (r.retail == null ? "-" : usd(r.retail)) },
+    { key: "sellingPrice", label: "Selling Price ($)", align: "right", render: (r) => (r.sellingPrice == null ? "-" : usd(r.sellingPrice)) },
+    { key: "bundles", label: "Bundles", render: (r) => (r.bundles.length ? r.bundles.map((b) => b.name || b.shortCode).join(", ") : "-") },
+    { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
 ];
 
 const statusOptions = [
@@ -28,19 +28,19 @@ const statusOptions = [
 const fields: FilterField[] = [{ key: "status", label: "Status", options: statusOptions }];
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong");
 
-export default function MarginsList() {
+export default function CatalogProductsList() {
     const isAdmin = useIsAdmin();
     const { toast, toastError } = useApp();
-    const [rows, setRows] = useState<MarginRec[] | null>(null);
+    const [rows, setRows] = useState<ProductRec[] | null>(null);
     const [error, setError] = useState("");
     const [tick, setTick] = useState(0);
-    const [del, setDel] = useState<MarginRec | null>(null);
+    const [del, setDel] = useState<ProductRec | null>(null);
     const [deleting, setDeleting] = useState(false);
 
     useEffect(() => {
         if (!isAdmin) return;
         let live = true;
-        marginsService.list()
+        productsService.list()
             .then((r) => { if (live) setRows(r); })
             .catch((e) => { if (live) setError(msg(e)); });
         return () => { live = false; };
@@ -54,9 +54,9 @@ export default function MarginsList() {
         if (!del) return;
         setDeleting(true);
         try {
-            await marginsService.remove(del.id);
+            await productsService.remove(del.id);
             setRows((r) => (r ? r.filter((x) => x.id !== del.id) : r));
-            toast("Margin deleted");
+            toast("Product deleted");
             setDel(null);
         } catch (e) {
             toastError(msg(e));
@@ -70,28 +70,27 @@ export default function MarginsList() {
             <ListShell
                 rows={rows}
                 cols={cols}
-                basePath="/catalog/margins"
-                createLabel="Create Margin"
-                rowLabel="margins"
+                basePath="/catalog/products"
+                createLabel="Create Product"
+                rowLabel="products"
                 searchPlaceholder="Search products…"
-                cards={(r) => {
-                    const ms = r.flatMap((x) => (x.marginVsRetail == null ? [] : [x.marginVsRetail]));
-                    return [
-                        { label: "Total Margins", value: r.length },
-                        { label: "Avg Markup", value: `${avg(r.map((x) => x.markupPercent)).toFixed(2)}%` },
-                        { label: "Total Margin", value: usd(ms.reduce((a, b) => a + b, 0)) },
-                        { label: "Highest Margin", value: usd(ms.length ? Math.max(...ms) : 0) },
-                    ];
-                }}
+                cards={(r) => [
+                    { label: "Total Products", value: r.length },
+                    { label: "Active", value: r.filter((x) => x.status === "Active").length },
+                    { label: "Draft", value: r.filter((x) => x.status === "Draft").length },
+                    { label: "Avg Selling Price", value: usd(avg(r.flatMap((x) => (x.sellingPrice == null ? [] : [x.sellingPrice])))) },
+                ]}
                 filterFields={fields}
-                match={(r, q, f) => (f.status === "all" || r.status === f.status) && (!q || r.product.toLowerCase().includes(q))}
+                match={(r, q, f) =>
+                    (f.status === "all" || r.status === f.status) &&
+                    (!q || r.name.toLowerCase().includes(q) || r.categoryName.toLowerCase().includes(q))}
                 onDelete={(id) => setDel(rows.find((x) => x.id === id) ?? null)}
             />
             <ConfirmDialog
                 isOpen={!!del}
                 type="delete"
-                itemType="margin"
-                itemName={del?.product}
+                itemType="product"
+                itemName={del?.name}
                 loading={deleting}
                 onClose={() => setDel(null)}
                 onConfirm={confirmDelete}

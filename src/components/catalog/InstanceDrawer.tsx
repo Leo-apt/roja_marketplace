@@ -40,7 +40,7 @@ export default function InstanceDrawer({ open, onClose, onCreate }: {
 
     return createPortal(
         <div className="fixed inset-0 z-[99990]">
-            <div className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${shown ? "opacity-100" : "opacity-0"}`} onClick={onClose} />
+            <div className={`absolute inset-0 bg-overlay/40 transition-opacity duration-200 ${shown ? "opacity-100" : "opacity-0"}`} onClick={onClose} />
             <aside role="dialog" aria-modal="true" aria-label="Create instance"
                 className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-200 ${shown ? "translate-x-0" : "translate-x-full"}`}>
                 <header className="flex items-center justify-between border-b border-line px-5 py-4">

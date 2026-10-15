@@ -90,7 +90,7 @@ export default function DataTable<T>({ rows, cols, viewKey, label, rowLabel = "r
                         />
                     </div>
                     <button
-                        className="inline-flex min-h-[29px] items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-2 py-1 text-xs font-semibold text-ink hover:enabled:border-[#bfd0ec] hover:enabled:bg-[#f4f7fe] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex min-h-[29px] items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-2 py-1 text-xs font-semibold text-ink hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
                         onClick={() => openDialog(<ColumnsDialog viewKey={viewKey} cols={cols.map((c) => ({ key: c.key, label: c.label }))} />)}
                     >
                         Columns
@@ -103,7 +103,7 @@ export default function DataTable<T>({ rows, cols, viewKey, label, rowLabel = "r
                     <thead>
                         <tr>
                             {selectable && (
-                                <th className="w-[34px] border-b border-linesoft bg-surfacealt px-3 py-3 pr-0 text-left text-xs font-semibold leading-snug text-[#6a7790]">
+                                <th className="w-[34px] border-b border-linesoft bg-surfacealt px-3 py-3 pr-0 text-left text-xs font-semibold leading-snug text-th-text">
                                     <input
                                         type="checkbox"
                                         className="size-3.5 accent-brand"
@@ -118,7 +118,7 @@ export default function DataTable<T>({ rows, cols, viewKey, label, rowLabel = "r
                                 </th>
                             )}
                             {shown.map((c) => (
-                                <th key={c.key} className={`border-b border-linesoft bg-surfacealt px-3 py-3 text-left text-xs font-semibold leading-snug text-[#6a7790] ${c.align === "right" ? "text-right" : ""}`}>
+                                <th key={c.key} className={`border-b border-linesoft bg-surfacealt px-3 py-3 text-left text-xs font-semibold leading-snug text-th-text ${c.align === "right" ? "text-right" : ""}`}>
                                     <button
                                         className="cursor-pointer border-0 bg-transparent p-0 text-xs font-semibold leading-snug text-inherit"
                                         onClick={() => {
@@ -138,7 +138,7 @@ export default function DataTable<T>({ rows, cols, viewKey, label, rowLabel = "r
                     </thead>
                     <tbody>
                         {pageRows.map((r, i) => (
-                            <tr key={selectable ? selectable.id(r) : i} className="hover:bg-[#fafcff]">
+                            <tr key={selectable ? selectable.id(r) : i} className="hover:bg-row-hover">
                                 {selectable && (
                                     <td className="w-[34px] border-b border-linesoft px-3 py-3 pr-0">
                                         <input
@@ -154,7 +154,7 @@ export default function DataTable<T>({ rows, cols, viewKey, label, rowLabel = "r
                                 {shown.map((c, j) => (
                                     <td
                                         key={c.key}
-                                        className={`border-b border-linesoft px-3 py-3 align-middle text-[#3c4d66] ${c.align === "right" ? "text-right tabular-nums" : ""} ${j === 0 ? "min-w-[118px] whitespace-nowrap" : ""}`}
+                                        className={`border-b border-linesoft px-3 py-3 align-middle text-cell-text ${c.align === "right" ? "text-right tabular-nums" : ""} ${j === 0 ? "min-w-[118px] whitespace-nowrap" : ""}`}
                                     >
                                         {c.render(r)}
                                     </td>

@@ -20,7 +20,7 @@ export default function SubscriptionBody({ s }: { s: Subscription }) {
                     ["Current EWA stage", "Stage " + s.stage],
                 ]}
             />
-            <div className="rounded-[9px] border border-[#cbdcf9] bg-[#f1f6ff] px-4 py-3 text-xs text-[#415d83]">
+            <div className="rounded-[9px] border border-note-info-border bg-note-info-bg px-4 py-3 text-xs text-note-info-text">
                 Billing, service entitlement, and EWA stage are independent. Cancellation may be immediate or term-end according to the approved product contract.
             </div>
         </>

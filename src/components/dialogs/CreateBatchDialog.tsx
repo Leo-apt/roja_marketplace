@@ -32,7 +32,7 @@ export default function CreateBatchDialog({ payee, amount, entries, period }: Pr
             error={err}
             footer={
                 <button
-                    className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-brand bg-brand px-3 py-[7px] font-semibold text-white hover:enabled:border-brandhover hover:enabled:bg-brandhover disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-btn-primary bg-btn-primary px-3 py-[7px] font-semibold text-white hover:enabled:border-btn-primary-hover hover:enabled:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={confirm}
                 >
                     Create draft
@@ -49,7 +49,7 @@ export default function CreateBatchDialog({ payee, amount, entries, period }: Pr
                     onChange={(e) => setNote(e.target.value)}
                 />
             </label>
-            <div className="rounded-[9px] border border-[#cbdcf9] bg-[#f1f6ff] px-4 py-3 text-xs text-[#415d83]">Entries will be reserved against duplicate allocation. This does not send money.</div>
+            <div className="rounded-[9px] border border-note-info-border bg-note-info-bg px-4 py-3 text-xs text-note-info-text">Entries will be reserved against duplicate allocation. This does not send money.</div>
         </Modal>
     );
 }

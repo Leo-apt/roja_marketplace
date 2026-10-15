@@ -16,7 +16,7 @@ export function Kv({ items }: { items: [string, ReactNode][] }) {
 
 export function MoneyRows({ rows }: { rows: [string, number][] }) {
     return (
-        <div className="flex flex-col gap-2.5 rounded-[9px] border border-line bg-[#f6f8fc] p-4">
+        <div className="flex flex-col gap-2.5 rounded-[9px] border border-line bg-surfacesoft p-4">
             {rows.map(([l, n], i) => (
                 <div
                     key={l}
@@ -37,15 +37,15 @@ export function DetailTable({ head, rows }: { head: string[]; rows: ReactNode[][
                 <thead>
                     <tr>
                         {head.map((h) => (
-                            <th key={h} className="border-b border-linesoft bg-surfacealt px-3 py-3 font-semibold text-[#6a7790]">{h}</th>
+                            <th key={h} className="border-b border-linesoft bg-surfacealt px-3 py-3 font-semibold text-th-text">{h}</th>
                         ))}
                     </tr>
                 </thead>
                 <tbody>
                     {rows.map((r, i) => (
-                        <tr key={i} className="hover:bg-[#fafcff]">
+                        <tr key={i} className="hover:bg-row-hover">
                             {r.map((c, j) => (
-                                <td key={j} className="border-b border-linesoft px-3 py-3 align-middle text-[#3c4d66]">{c}</td>
+                                <td key={j} className="border-b border-linesoft px-3 py-3 align-middle text-cell-text">{c}</td>
                             ))}
                         </tr>
                     ))}

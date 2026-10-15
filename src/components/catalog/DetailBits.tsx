@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import type { Status } from "@/data/catalog";
 import { btn } from "./FormBits";
 
@@ -10,14 +10,15 @@ export const StatusBadge = ({ status }: { status: Status | "Draft" | "Scheduled"
     </span>
 );
 
-export function DetailShell({ backTo, editTo, children }: { backTo: string; editTo?: string; children: ReactNode }) {
+export function DetailShell({ editTo, children }: { backTo?: string; editTo?: string; children: ReactNode }) {
     const nav = useNavigate();
     return (
         <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-                <button className={btn.secondary} onClick={() => nav(backTo)}><ArrowLeft className="size-4" /> Back</button>
-                {editTo && <button className={btn.brand} onClick={() => nav(editTo)}><Pencil className="size-4" /> Edit</button>}
-            </div>
+            {editTo && (
+                <div className="flex justify-end">
+                    <button className={btn.brand} onClick={() => nav(editTo)}><Pencil className="size-4" /> Edit</button>
+                </div>
+            )}
             {children}
         </div>
     );
@@ -39,7 +40,7 @@ export const Grid = ({ children, one }: { children: ReactNode; one?: boolean }) 
 export const KV = ({ k, children }: { k: string; children: ReactNode }) => (
     <>
         <dt className="font-semibold text-ink">{k}</dt>
-        <dd className="min-w-0 break-words text-[#3c4d66]">{children}</dd>
+        <dd className="min-w-0 break-words text-cell-text">{children}</dd>
     </>
 );
 

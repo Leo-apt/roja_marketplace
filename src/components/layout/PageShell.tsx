@@ -27,11 +27,11 @@ export default function PageShell({ view, onExport, children }: { view: ViewKey;
                 </label>
 
                 <div className="flex flex-1 flex-wrap items-center justify-center gap-2.5 max-[850px]:justify-start">
-                    <span className="inline-flex items-center gap-[7px] whitespace-nowrap rounded-full border border-line bg-white px-[9px] py-[5px] text-[11px] text-[#566a88] before:size-1.5 before:rounded-full before:bg-[#e8a239]">
+                    <span className="inline-flex items-center gap-[7px] whitespace-nowrap rounded-full border border-line bg-white px-[9px] py-[5px] text-[11px] text-sample-text before:size-1.5 before:rounded-full before:bg-sample-dot">
                         Interactive sample · 7 Oct 2026
                     </span>
                     <button
-                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-[#bfd0ec] hover:enabled:bg-[#f4f7fe] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
                         onClick={() => setShowReset(true)}
                     >
                         Reset demo
@@ -40,19 +40,19 @@ export default function PageShell({ view, onExport, children }: { view: ViewKey;
 
                 <div className="ml-auto flex items-center gap-[7px] max-[1180px]:ml-0 max-[850px]:flex-wrap">
                     <button
-                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-[#bfd0ec] hover:enabled:bg-[#f4f7fe] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
                         onClick={() => openDrawer(<FiltersDrawer view={view} />)}
                     >
                         Filters{active ? " •" : ""}
                     </button>
                     <button
-                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-[#bfd0ec] hover:enabled:bg-[#f4f7fe] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
                         onClick={() => openDialog(<SavedViewsDialog view={view} />)}
                     >
                         Saved views
                     </button>
                     <button
-                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-brand bg-brand px-3 py-[7px] font-semibold text-white hover:enabled:border-brandhover hover:enabled:bg-brandhover disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-btn-primary bg-btn-primary px-3 py-[7px] font-semibold text-white hover:enabled:border-btn-primary-hover hover:enabled:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                         onClick={onExport}
                     >
                         Export CSV
@@ -62,7 +62,7 @@ export default function PageShell({ view, onExport, children }: { view: ViewKey;
 
             <div className=" mb-4 flex flex-wrap items-center gap-2 text-[11px] text-muted">
                 <span>{v.scope}</span>
-                <span className="rounded-[5px] bg-[#eef2fa] px-[7px] py-[3px] text-[11px] text-[#5d7293]">USD · UTC</span>
+                <span className="rounded-[5px] bg-chip-bg px-[7px] py-[3px] text-[11px] text-chip-text">USD · UTC</span>
                 {f.type !== "all" && <span className="rounded-[5px] bg-[#eef2fa] px-[7px] py-[3px] text-[11px] text-[#5d7293]">{f.type}</span>}
                 {f.stage !== "all" && <span className="rounded-[5px] bg-[#eef2fa] px-[7px] py-[3px] text-[11px] text-[#5d7293]">Current EWA stage {f.stage}</span>}
                 <button className="border-0 bg-transparent p-0 text-left text-xs font-semibold text-brand" onClick={resetFilters}>Clear filters</button>

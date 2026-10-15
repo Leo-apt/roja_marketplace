@@ -45,7 +45,7 @@ export default function Pagination({ currentPage, totalPages, start, end, total,
                                 key={idx}
                                 onClick={() => onPageChange(page as number)}
                                 className={`size-9 rounded-lg text-sm font-medium cursor-pointer ${currentPage === page
-                                    ? "bg-brand text-white"
+                                    ? "bg-action text-white"
                                     : "border border-line hover:bg-surfacealt text-ink"
                                     }`}
                             >
@@ -56,7 +56,7 @@ export default function Pagination({ currentPage, totalPages, start, end, total,
                     <button
                         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
-                        className="px-3 py-2 rounded-lg border border-line hover:bg-surfacealt disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        className="px-3 py-2 rounded-lg border border-line text-[#9ca3af] hover:bg-surfacealt disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                         »
                     </button>

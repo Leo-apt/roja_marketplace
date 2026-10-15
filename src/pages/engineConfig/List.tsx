@@ -16,6 +16,8 @@ const cols: Col<EngineConfig>[] = [
     { key: "name", label: "Name", link: true, render: (r) => r.name },
     { key: "providerId", label: "Provider ID", render: (r) => providerName(r.providerId) },
     { key: "offerType", label: "Offer Type", render: (r) => r.offerType },
+    { key: "createdOn", label: "Created On", render: (r) => r.createdOn, sortValue: (r) => Date.parse(r.createdOn) || 0 },
+    { key: "updatedOn", label: "Last Updated On", render: (r) => r.updatedOn, sortValue: (r) => Date.parse(r.updatedOn) || 0 },
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
 ];
 

@@ -58,7 +58,7 @@ export default function OrderDrawer({ id }: { id: string }) {
                         r.batch ? <BatchLink id={r.batch}>{r.batch}</BatchLink> : r.hold || "Eligible",
                     ])}
                 />
-                <div className="rounded-[9px] border border-[#cbdcf9] bg-[#f1f6ff] px-4 py-3 text-xs text-[#415d83]">
+                <div className="rounded-[9px] border border-note-info-border bg-note-info-bg px-4 py-3 text-xs text-note-info-text">
                     Original paid liabilities remain in their batch. Later confirmed credits are separate carry-forward adjustments; historical payouts are never rewritten.
                 </div>
             </>
@@ -81,7 +81,7 @@ function Summary({ o }: { o: Order }) {
     return (
         <>
             <div className="flex flex-wrap items-center gap-2.5"><Tag s={o.payment} /><Tag s={o.fulfillment} /><Tag s={o.settlement} /></div>
-            {o.hold && <div className="rounded-[9px] border border-[#f0d8ab] bg-[#fff9ef] px-4 py-3 text-xs text-[#77501b]">{o.hold}. Payment, fulfillment and provider deactivation are independently tracked.</div>}
+            {o.hold && <div className="rounded-[9px] border border-note-warn-border bg-note-warn-bg px-4 py-3 text-xs text-note-warn-text">{o.hold}. Payment, fulfillment and provider deactivation are independently tracked.</div>}
             <Kv
                 items={[
                     ["Customer", <>{o.customer}<div className="text-xs font-normal text-muted">{o.email}</div></>],
@@ -102,7 +102,7 @@ function Summary({ o }: { o: Order }) {
                     <MoneyRows rows={[["Captured customer payment", o.captured], ["Customer refunds (all components)", -o.refunded], ["Principal chargeback", -o.chargeback], ["Net customer cash before fees", o.captured - o.refunded - o.chargeback]]} />
                 </div>
             </div>
-            <div className="rounded-[9px] border border-[#cbdcf9] bg-[#f1f6ff] px-4 py-3 text-xs text-[#415d83]">Stage changes do not erase purchases. Marketplace entitlement is separate from EWA membership and must follow the approved product policy.</div>
+            <div className="rounded-[9px] border border-note-info-border bg-note-info-bg px-4 py-3 text-xs text-note-info-text">Stage changes do not erase purchases. Marketplace entitlement is separate from EWA membership and must follow the approved product policy.</div>
         </>
     );
 }
@@ -125,7 +125,7 @@ function Items({ o }: { o: Order }) {
                     <Tag s={l.fulfillment} />,
                 ])}
             />
-            <div className="rounded-[9px] border border-[#cbdcf9] bg-[#f1f6ff] px-4 py-3 text-xs text-[#415d83]">Bundle components and allocations are frozen when purchased; parent and components must not both be counted as sales.</div>
+            <div className="rounded-[9px] border border-note-info-border bg-note-info-bg px-4 py-3 text-xs text-note-info-text">Bundle components and allocations are frozen when purchased; parent and components must not both be counted as sales.</div>
             {o.items
                 .filter((l) => getProduct(l.productId).components.length)
                 .map((l) => {
@@ -170,7 +170,7 @@ function Payments({ o, last4 }: { o: Order; last4: string }) {
                     ...(o.chargeback ? [["Chargeback DSP-DEMO-" + last4, o.disputeDate ?? "", money(o.chargeback), <Tag s="Disputed" c="bad" />]] : []),
                 ]}
             />
-            <div className="rounded-[9px] border border-[#cbdcf9] bg-[#f1f6ff] px-4 py-3 text-xs text-[#415d83]">No PAN, CVV, full bank account, secret key, or payment token is exposed. Failed attempts are not sales or supplier payables.</div>
+            <div className="rounded-[9px] border border-note-info-border bg-note-info-bg px-4 py-3 text-xs text-note-info-text">No PAN, CVV, full bank account, secret key, or payment token is exposed. Failed attempts are not sales or supplier payables.</div>
         </>
     );
 }
@@ -195,7 +195,7 @@ function Fulfillment({ o, last4 }: { o: Order; last4: string }) {
                     ["Provider portal access", "Display trusted, allowlisted access links; no secrets in URL"],
                 ]}
             />
-            <div className="rounded-[9px] border border-[#f0d8ab] bg-[#fff9ef] px-4 py-3 text-xs text-[#77501b]">
+            <div className="rounded-[9px] border border-note-warn-border bg-note-warn-bg px-4 py-3 text-xs text-note-warn-text">
                 A paid but failed activation must enter the support queue. Retry requires a status lookup or stable idempotency reference, never another customer charge.
             </div>
         </>
@@ -211,7 +211,7 @@ function MarginTab({ o }: { o: Order }) {
     const unrecovered = o.refunded > 0 && sum(o.items, "cost") > sum(o.items, "credit");
     return (
         <>
-            <div className="rounded-[9px] border border-[#cbdcf9] bg-[#f1f6ff] px-4 py-3 text-xs text-[#415d83]">Order lifetime view through 7 Oct, independent of the report date filter. This is collected product sales, not accounting revenue recognition.</div>
+            <div className="rounded-[9px] border border-note-info-border bg-note-info-bg px-4 py-3 text-xs text-note-info-text">Order lifetime view through 7 Oct, independent of the report date filter. This is collected product sales, not accounting revenue recognition.</div>
             <MoneyRows
                 rows={[
                     ["Net product sales", sales],
@@ -231,7 +231,7 @@ function MarginTab({ o }: { o: Order }) {
                     money(r.fees),
                 ])}
             />
-            <div className={`rounded-[9px] border px-4 py-3 text-xs ${unrecovered ? "border-[#f0d8ab] bg-[#fff9ef] text-[#77501b]" : "border-[#cbdcf9] bg-[#f1f6ff] text-[#415d83]"}`}>
+            <div className={`rounded-[9px] border px-4 py-3 text-xs ${unrecovered ? "border-note-warn-border bg-note-warn-bg text-note-warn-text" : "border-note-info-border bg-note-info-bg text-note-info-text"}`}>
                 Customer refunds and supplier credits are separate events. A refund can leave ROJA with unrecovered supplier cost.
             </div>
         </>
@@ -253,7 +253,7 @@ function Timeline({ o }: { o: Order }) {
             {ev.map(([d, l, t], i) => (
                 <li
                     key={i}
-                    className="relative flex gap-3 pb-5 before:mt-[7px] before:size-[7px] before:shrink-0 before:rounded-full before:bg-[#5f91e5] after:absolute after:left-[3px] after:top-[18px] after:h-[calc(100%-12px)] after:w-px after:bg-line last:after:hidden"
+                    className="relative flex gap-3 pb-5 before:mt-[7px] before:size-[7px] before:shrink-0 before:rounded-full before:bg-timeline-dot after:absolute after:left-[3px] after:top-[18px] after:h-[calc(100%-12px)] after:w-px after:bg-line last:after:hidden"
                 >
                     <div>
                         <strong className="text-xs">{l}</strong>

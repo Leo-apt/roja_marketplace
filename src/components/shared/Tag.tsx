@@ -6,7 +6,7 @@ const styles: Record<string, string> = {
     bad: "bg-badbg text-bad",
     blue: "bg-brandsoft text-brand",
     purple: "bg-purplebg text-purple",
-    "": "bg-[#eef1f6] text-[#56647b]",
+    "": "bg-tag-neutral-bg text-tag-neutral-text",
 };
 
 export default function Tag({ s, c }: { s: string; c?: string }) {

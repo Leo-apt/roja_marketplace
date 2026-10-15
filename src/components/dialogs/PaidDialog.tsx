@@ -26,14 +26,14 @@ export default function PaidDialog({ id }: { id: string }) {
             error={err}
             footer={
                 <button
-                    className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-brand bg-brand px-3 py-[7px] font-semibold text-white hover:enabled:border-brandhover hover:enabled:bg-brandhover disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-btn-primary bg-btn-primary px-3 py-[7px] font-semibold text-white hover:enabled:border-btn-primary-hover hover:enabled:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={save}
                 >
                     Record Paid (demo)
                 </button>
             }
         >
-            <div className="rounded-[9px] border border-[#f0d8ab] bg-[#fff9ef] px-4 py-3 text-xs text-[#77501b]">
+            <div className="rounded-[9px] border border-note-warn-border bg-note-warn-bg px-4 py-3 text-xs text-note-warn-text">
                 Demo evidence only. In production, verify bank/gateway confirmation and store restricted payment proof before recording Paid.
             </div>
             <label className="flex flex-col gap-1.5 text-xs font-semibold">

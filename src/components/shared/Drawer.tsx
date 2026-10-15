@@ -13,12 +13,13 @@ interface Props {
     footer?: ReactNode | ((close: () => void) => ReactNode);
     /** Any CSS width. Default keeps the old size. */
     width?: string;
+    colored?: boolean;
 }
 
 const DURATION = 500;
 
 export default function Drawer({
-    title, kicker, tabs, tab, onTab, children, footer,
+    title, kicker, tabs, tab, onTab, children, footer, colored,
     width = "min(930px, calc(100vw - 20px))",
 }: Props) {
     const { closeLayers } = useApp();
@@ -44,7 +45,7 @@ export default function Drawer({
     return (
         <>
             <div
-                className={`fixed inset-0 z-40 bg-[#10243f]/40 backdrop-blur-[2px] transition-opacity duration-500 ease-out print:hidden ${shown ? "opacity-100" : "opacity-0"}`}
+                className={`fixed inset-0 z-40 bg-overlay/40 backdrop-blur-[2px] transition-opacity duration-500 ease-out print:hidden ${shown ? "opacity-100" : "opacity-0"}`}
                 onClick={close}
             />
             <aside
@@ -53,28 +54,47 @@ export default function Drawer({
                 style={{ width }}
                 className={`fixed inset-y-0 right-0 z-[41] flex max-w-[100vw] flex-col bg-white shadow-[-15px_0_60px_#071c342b] transition-transform duration-500 ease-out ${shown ? "translate-x-0" : "translate-x-full"}`}
             >
-                <div className="flex items-start justify-between gap-2.5 border-b border-line px-[26px] py-[22px] max-[850px]:p-[18px]">
-                    <div>
-                        <small className="text-xs text-muted">{kicker}</small>
-                        <h2 className="my-1 text-[21px] font-bold tracking-[-0.25px]">{title}</h2>
-                        <span className="text-xs text-muted">Presentation sample · no production mutation</span>
+                {colored ? (
+                    <>
+                        <div className="flex items-center justify-between gap-2.5 bg-sidebar-bg px-[26px] py-[18px] max-[850px]:p-[18px]">
+                            <h2 className="text-[21px] font-bold tracking-[-0.25px] text-sidebar-text-active">{title}</h2>
+                            <button
+                                className="inline-flex min-h-9 items-center justify-center rounded-lg border border-sidebar-border px-3 py-[7px] font-semibold text-sidebar-text-active hover:bg-sidebar-hover"
+                                onClick={close}
+                                aria-label="Close details"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="flex flex-col gap-0.5 border-b border-line bg-surfacesoft px-[26px] py-3 max-[850px]:px-[18px]">
+                            <small className="text-xs text-muted">{kicker}</small>
+                            <span className="text-xs text-muted">Presentation sample · no production mutation</span>
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex items-start justify-between gap-2.5 border-b border-line px-[26px] py-[22px] max-[850px]:p-[18px]">
+                        <div>
+                            <small className="text-xs text-muted">{kicker}</small>
+                            <h2 className="my-1 text-[21px] font-bold tracking-[-0.25px]">{title}</h2>
+                            <span className="text-xs text-muted">Presentation sample · no production mutation</span>
+                        </div>
+                        <button
+                            className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
+                            onClick={close}
+                            aria-label="Close details"
+                        >
+                            ×
+                        </button>
                     </div>
-                    <button
-                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-[#bfd0ec] hover:enabled:bg-[#f4f7fe] disabled:cursor-not-allowed disabled:opacity-50"
-                        onClick={close}
-                        aria-label="Close details"
-                    >
-                        ×
-                    </button>
-                </div>
+                )}
                 {tabs && <Tabs tabs={tabs} value={tab ?? ""} onChange={(k) => onTab?.(k)} label="Detail sections" />}
                 <div className="flex flex-1 flex-col gap-[18px] overflow-auto px-[26px] py-[22px] max-[850px]:p-[18px]">{children}</div>
-                <div className="flex justify-end gap-2 border-t border-line bg-[#f9fafc] px-[26px] py-[15px] max-[850px]:flex-wrap max-[850px]:px-[18px] max-[850px]:py-3">
+                <div className="flex justify-end gap-2 border-t border-line bg-surfacesoft px-[26px] py-[15px] max-[850px]:flex-wrap max-[850px]:px-[18px] max-[850px]:py-3">
                     {footer ? (
                         typeof footer === "function" ? footer(close) : footer
                     ) : (
                         <button
-                            className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-[#bfd0ec] hover:enabled:bg-[#f4f7fe] disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
                             onClick={close}
                         >
                             Close

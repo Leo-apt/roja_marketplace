@@ -1,10 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { btn } from "./FormBits";
+import PageSkeleton from "@/components/shared/SkeletonLoader";
 
-export const LoadingBox = () => (
-    <div className="rounded-xl border border-line bg-white px-5 py-12 text-center text-sm text-muted">Loading…</div>
-);
+export const LoadingBox = () => <PageSkeleton />;
 
 export function ErrorBox({ message, onRetry, backTo }: { message: string; onRetry?: () => void; backTo?: string }) {
     const nav = useNavigate();

@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
-import { Check as CheckIcon, Copy, Pencil } from "lucide-react";
+import { Calendar, Check as CheckIcon, Clock, Copy, Globe, KeyRound, Layers, Pencil, Plus, RefreshCw, Settings, Trash2 } from "lucide-react";
 import { useApp } from "@/hooks/useApp";
-import Tabs from "@/components/shared/Tabs";
+import Drawer from "@/components/shared/Drawer";
 import Dropdownbox from "@/components/shared/Dropdownbox";
 import DatePicker from "@/components/shared/DatePicker";
-import { DCard, DetailShell, Grid, KV, NotFound, StatusBadge } from "@/components/catalog/DetailBits";
-import { btn, Field, MoneyInput, Radio, TextArea, TextInput } from "@/components/catalog/FormBits";
+import { DCard, Grid, KV, NotFound, StatusBadge } from "@/components/catalog/DetailBits";
+import { btn, Field, MoneyInput, Radio, SearchField, TextArea, TextInput, Toggle } from "@/components/catalog/FormBits";
 import { instances, type Instance, type InstanceProduct } from "@/data/instances";
 import type { Status } from "@/data/catalog";
 import { statusFormOptions, usd } from "@/utils/catalog";
@@ -15,7 +15,9 @@ import { statusFormOptions, usd } from "@/utils/catalog";
 const BASE = "/instances";
 
 /* ---------------- Products tab ---------------- */
-function ProductsTab({ inst }: { inst: Instance }) {
+function ProductsTab({ inst, subId, enabled, onToggle }: {
+    inst: Instance; subId: string; enabled: Record<string, boolean>; onToggle: (productId: string, on: boolean) => void;
+}) {
     const { toast } = useApp();
     const [items, setItems] = useState<InstanceProduct[]>(inst.products);
     const [selId, setSelId] = useState(inst.products[0]?.id ?? "");
@@ -44,18 +46,22 @@ function ProductsTab({ inst }: { inst: Instance }) {
 
     return (
         <div className="grid gap-4 md:grid-cols-[240px_1fr]">
-            <div role="tablist" aria-orientation="vertical" className="flex flex-col gap-1 md:border-r md:border-line md:pr-3">
-                {items.map((p) => (
-                    <button key={p.id} role="tab" aria-selected={p.id === selId} onClick={() => pick(p.id)}
-                        className={`rounded-md px-3 py-2.5 text-left text-xs ${p.id === selId ? "bg-brandsoft font-semibold text-brand" : "text-[#3c4d66] hover:bg-gray-50"}`}>
-                        {p.name}
-                    </button>
-                ))}
+            <div className="md:border-r md:border-line md:pr-3">
+                <h3 className="mb-3 border-b border-line px-1 pb-3 text-xs font-bold uppercase tracking-wide text-ink">Products</h3>
+                <div role="tablist" aria-orientation="vertical" className="flex flex-col gap-1">
+                    {items.map((p) => (
+                        <button key={p.id} role="tab" aria-selected={p.id === selId} onClick={() => pick(p.id)}
+                            className={`rounded-md px-3 py-2.5 text-left text-xs ${p.id === selId ? "bg-brandsoft font-semibold text-brand" : "text-[#3c4d66] hover:bg-gray-50"}`}>
+                            {p.name}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {sel && (
                 <div className="min-w-0">
-                    <div className="mb-4 flex items-center justify-between gap-3 border-b border-line pb-3">
+                    <h3 className="mb-3 border-b border-line px-1 pb-3 text-xs font-bold uppercase tracking-wide text-ink">Product Details</h3>
+                    <div className="mb-4 flex items-center justify-between gap-3">
                         <h3 className="truncate text-sm font-bold text-ink">{editing && draft ? draft.name || "Edit product" : sel.name}</h3>
                         {editing ? (
                             <div className="flex gap-2">
@@ -63,7 +69,12 @@ function ProductsTab({ inst }: { inst: Instance }) {
                                 <button className={btn.primary} onClick={save}>Save</button>
                             </div>
                         ) : (
-                            <button className={btn.brand} onClick={startEdit}><Pencil className="size-4" /> Edit</button>
+                            <div className="flex items-center gap-3">
+                                <span className="text-xs font-semibold text-ink">Active for this sub entity</span>
+                                <Toggle label="Product active for this sub entity" on={enabled[`${subId}:${sel.id}`] ?? true}
+                                    onChange={(v) => onToggle(sel.id, v)} />
+                                <button className={btn.brand} onClick={startEdit}><Pencil className="size-4" /> Edit</button>
+                            </div>
                         )}
                     </div>
 
@@ -162,7 +173,7 @@ const EXP_OPTIONS: { value: Exp; label: string }[] = [
     { value: "7", label: "7 days" }, { value: "30", label: "30 days" }, { value: "60", label: "60 days" },
     { value: "90", label: "90 days" }, { value: "custom", label: "Custom" }, { value: "never", label: "Never" },
 ];
-interface TokenRec { id: string; notes: string; created: string; expires: string; hint: string }
+interface TokenRec { notes: string; created: string; expires: string; expiresAt: string | null; hint: string }
 
 const TODAY = new Date().toISOString().slice(0, 10);
 const fmtDate = (d: Date) => d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -177,111 +188,314 @@ const expiryLabel = (exp: Exp, custom: string) => {
     return fmtDate(d);
 };
 
-function TokenTab() {
+const expiryDate = (exp: Exp, custom: string): Date | null =>
+    exp === "never" ? null : exp === "custom" ? new Date(`${custom}T00:00:00`) : new Date(Date.now() + Number(exp) * 86400000);
+const daysLeftOf = (r: TokenRec) =>
+    r.expiresAt ? Math.max(0, Math.ceil((new Date(r.expiresAt).getTime() - Date.now()) / 86400000)) : null;
+
+function TokenDrawer({ subName, regenerate, onSave }: {
+    subName: string; regenerate: boolean; onSave: (notes: string, exp: Exp, custom: string) => void;
+}) {
     const [notes, setNotes] = useState("");
     const [exp, setExp] = useState<Exp>("30");
     const [custom, setCustom] = useState("");
     const [errors, setErrors] = useState({ notes: "", custom: "" });
-    const [issued, setIssued] = useState<{ token: string; expires: string } | null>(null);
-    const [list, setList] = useState<TokenRec[]>([
-        { id: "t0", notes: "CI pipeline", created: "Oct 01, 2026", expires: "Dec 31, 2026", hint: "a91f" },
-    ]);
+    return (
+        <Drawer
+            title={regenerate ? "Regenerate Token" : "Generate Token"}
+            kicker={`${subName} · sub entity`}
+            width="min(460px, calc(100vw - 20px))"
+            colored
+            footer={(close) => (
+                <>
+                    <button className={btn.cancel} onClick={close}>Cancel</button>
+                    <button className={btn.primary} onClick={() => {
+                        const e = {
+                            notes: notes.trim() ? "" : "Notes are required",
+                            custom: exp === "custom" && !custom ? "Pick an expiration date" : "",
+                        };
+                        setErrors(e);
+                        if (e.notes || e.custom) return;
+                        onSave(notes.trim(), exp, custom);
+                        close();
+                    }}>{regenerate ? "Regenerate" : "Generate Token"}</button>
+                </>
+            )}
+        >
+            <Field label="Notes" required error={errors.notes}>
+                <TextArea rows={3} value={notes} placeholder="What is this token used for?" onChange={(e) => setNotes(e.target.value)} />
+            </Field>
+            <Field label="Expiration" required error={errors.custom}>
+                <div className="flex flex-wrap gap-x-6 gap-y-3 pt-1">
+                    {EXP_OPTIONS.map((o) => (
+                        <Radio key={o.value} name="exp" label={o.label} checked={exp === o.value} onChange={() => setExp(o.value)} />
+                    ))}
+                </div>
+                {exp === "custom" && (
+                    <div className="mt-3">
+                        <DatePicker value={custom} minDate={TODAY} placeholder="Select date" onChange={setCustom} />
+                    </div>
+                )}
+            </Field>
+        </Drawer>
+    );
+}
 
-    const generate = () => {
-        const e = {
-            notes: notes.trim() ? "" : "Notes are required",
-            custom: exp === "custom" && !custom ? "Pick an expiration date" : "",
-        };
-        setErrors(e);
-        if (e.notes || e.custom) return;
+function TokenTab({ subs, tokens, onSave, onDelete }: {
+    subs: SubEntity[]; tokens: Record<string, TokenRec>;
+    onSave: (subId: string, r: TokenRec) => void; onDelete: (subId: string) => void;
+}) {
+    const { openDrawer, toast } = useApp();
+    const [q, setQ] = useState("");
+    const [issued, setIssued] = useState<{ token: string; expires: string } | null>(null);
+
+    const generate = (s: SubEntity, notes: string, exp: Exp, custom: string) => {
         const token = makeToken();
+        const d = expiryDate(exp, custom);
         const expires = expiryLabel(exp, custom);
-        setList((l) => [{ id: `t${Date.now()}`, notes: notes.trim(), created: fmtDate(new Date()), expires, hint: token.slice(-4) }, ...l]);
+        onSave(s.id, { notes, created: fmtDate(new Date()), expires, expiresAt: d ? d.toISOString() : null, hint: token.slice(-4) });
         setIssued({ token, expires });
-        setNotes(""); setExp("30"); setCustom("");
     };
+    const open = (s: SubEntity, regenerate: boolean) =>
+        openDrawer(<TokenDrawer subName={s.name} regenerate={regenerate} onSave={(n, e, c) => generate(s, n, e, c)} />);
+
+    const shown = subs.filter((s) => s.name.toLowerCase().includes(q.trim().toLowerCase()));
 
     return (
         <div className="flex flex-col gap-4">
-            <DCard title="Generate Token">
-                <div className="flex flex-col gap-5">
-                    <Field label="Notes" required error={errors.notes}>
-                        <TextArea rows={3} value={notes} placeholder="What is this token used for?" onChange={(e) => setNotes(e.target.value)} />
-                    </Field>
-                    <Field label="Expiration" required error={errors.custom}>
-                        <div className="flex flex-wrap gap-x-6 gap-y-3 pt-1">
-                            {EXP_OPTIONS.map((o) => (
-                                <Radio key={o.value} name="exp" label={o.label} checked={exp === o.value} onChange={() => setExp(o.value)} />
-                            ))}
-                        </div>
-                        {exp === "custom" && (
-                            <div className="mt-3 md:max-w-[50%]">
-                                <DatePicker value={custom} minDate={TODAY} placeholder="Select date" onChange={setCustom} />
-                            </div>
-                        )}
-                    </Field>
-                    <div><button className={btn.primary} onClick={generate}>Generate Token</button></div>
-                </div>
+            <DCard title="Manage API tokens for your sub entities">
+                <div className="max-w-[360px]"><SearchField value={q} placeholder="Search sub entities…" onChange={setQ} /></div>
             </DCard>
 
-            <DCard title="Generated Tokens">
-                <div className="overflow-auto">
-                    <table className="w-full border-collapse text-left text-xs">
-                        <thead>
-                            <tr className="text-[#6a7790]">
-                                <th className="border-b border-linesoft py-2 pr-3">Notes</th>
-                                <th className="border-b border-linesoft py-2 pr-3">Created</th>
-                                <th className="border-b border-linesoft py-2 pr-3">Expires</th>
-                                <th className="border-b border-linesoft py-2">Token</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {list.map((t) => (
-                                <tr key={t.id} className="text-[#3c4d66]">
-                                    <td className="border-b border-linesoft py-2.5 pr-3">{t.notes}</td>
-                                    <td className="whitespace-nowrap border-b border-linesoft py-2.5 pr-3">{t.created}</td>
-                                    <td className="whitespace-nowrap border-b border-linesoft py-2.5 pr-3">{t.expires}</td>
-                                    <td className="border-b border-linesoft py-2.5 font-mono">roja_••••••••{t.hint}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </DCard>
+            {shown.length === 0 && <div className="rounded-xl border border-line bg-white px-5 py-10 text-center text-sm text-muted">No sub entities found.</div>}
+
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {shown.map((s) => {
+                    const t = tokens[s.id];
+                    const left = t ? daysLeftOf(t) : null;
+                    return (
+                        <section key={s.id} className="flex h-full flex-col rounded-xl border border-line bg-white p-5">
+                            <h3 className="mb-4 flex items-center gap-2 truncate text-sm font-bold text-ink">
+                                <Globe className="size-4 shrink-0" /> <span className="truncate">{s.name}</span>
+                            </h3>
+                            {t ? (
+                                <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-line">
+                                    <div className="flex items-center justify-between bg-surfacealt px-4 py-3">
+                                        <span className="inline-flex items-center gap-2 text-sm font-semibold text-ink"><KeyRound className="size-4" /> Token</span>
+                                        <span className="rounded-full bg-goodbg px-3 py-1 text-xs font-semibold text-good">Active</span>
+                                    </div>
+                                    <div className="flex flex-1 flex-col gap-2 px-4 py-3 text-xs text-muted">
+                                        <span className="inline-flex items-center gap-2"><KeyRound className="size-3.5 shrink-0" /> <span className="truncate">{t.notes}</span></span>
+                                        <span className="inline-flex items-center gap-2 font-mono">roja_••••••••{t.hint}</span>
+                                        <span className="inline-flex items-center gap-2"><Calendar className="size-3.5 shrink-0" /> Created {t.created}</span>
+                                        <span className="inline-flex items-center gap-2"><Clock className="size-3.5 shrink-0" /> {left == null ? "Never expires" : `${left} days left`}</span>
+                                        <div className="mt-auto flex flex-wrap gap-2 pt-3">
+                                            <button className={btn.secondary} onClick={() => open(s, true)}><RefreshCw className="size-4" /> Regenerate</button>
+                                            <button className={btn.secondary} onClick={() => { onDelete(s.id); toast("Token deleted"); }}><Trash2 className="size-4" /> Delete</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button type="button" onClick={() => open(s, false)}
+                                    className="flex min-h-[180px] w-full flex-1 flex-col items-center justify-center gap-2 rounded-xl border-2 border-dotted border-brand bg-brandsoft text-sm font-bold text-brand transition hover:bg-white">
+                                    <KeyRound className="size-5" /> Generate Token <Plus className="size-4" />
+                                </button>
+                            )}
+                        </section>
+                    );
+                })}
+            </div>
 
             {issued && <TokenModal token={issued.token} expires={issued.expires} onDone={() => setIssued(null)} />}
         </div>
     );
 }
 
+/* ---------------- Token status line ---------------- */
+function TokenStatusLine({ name, rec }: { name: string; rec?: TokenRec }) {
+    const left = rec ? daysLeftOf(rec) : null;
+    return (
+        <section className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line bg-white px-5 py-3 text-xs">
+            <strong className="text-ink">{name} Token Details -</strong>
+            <span className="inline-flex items-center gap-1.5">
+                <span className={`size-2 rounded-full ${rec ? "bg-good" : "bg-gray-300"}`} />
+                <KeyRound className="size-3.5 text-muted" />
+                <span className="text-muted">{!rec ? "Not generated yet" : left == null ? "Never expires" : `${left} days left`}</span>
+            </span>
+        </section>
+    );
+}
+
+/* ---------------- Sub entity drawer (create + edit) ---------------- */
+interface SubEntity { id: string; name: string; description: string }
+
+function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (name: string, description: string) => void }) {
+    const [name, setName] = useState(initial?.name ?? "");
+    const [desc, setDesc] = useState(initial?.description ?? "");
+    const [err, setErr] = useState("");
+    return (
+        <Drawer
+            title={initial ? "Edit Sub Entity" : "New Sub Entity"}
+            kicker="Sub entity"
+            width="min(420px, calc(100vw - 20px))"
+            colored
+            footer={(close) => (
+                <>
+                    <button className={btn.cancel} onClick={close}>Cancel</button>
+                    <button className={btn.primary} onClick={() => {
+                        if (!name.trim()) { setErr("Name is required"); return; }
+                        onSave(name.trim(), desc.trim());
+                        close();
+                    }}>{initial ? "Save" : "Create"}</button>
+                </>
+            )}
+        >
+            <Field label="Sub Entity Name" required error={err}>
+                <TextInput value={name} placeholder="e.g. Local" onChange={(e) => setName(e.target.value)} />
+            </Field>
+            <Field label="Description">
+                <TextArea rows={4} value={desc} placeholder="What is this sub entity used for?" onChange={(e) => setDesc(e.target.value)} />
+            </Field>
+        </Drawer>
+    );
+}
+
 /* ---------------- Page ---------------- */
 export default function InstanceDetail() {
     const { id } = useParams();
+    const { openDrawer, toast } = useApp();
     const inst = instances.find((i) => i.id === id);
-    const [tab, setTab] = useState("products");
+    const [tab, setTab] = useState("entity");
+    const [subs, setSubs] = useState<SubEntity[]>([
+        { id: "local", name: "Sub Entity 1", description: "" },
+        { id: "staging", name: "Sub Entity 2", description: "" },
+    ]);
+    const [subId, setSubId] = useState("local");
+    const [enabled, setEnabled] = useState<Record<string, boolean>>({});
+    const [tokens, setTokens] = useState<Record<string, TokenRec>>({});
+    const [info, setInfo] = useState<Partial<Pick<Instance, "name" | "description" | "status">>>({});
+    const [editingInfo, setEditingInfo] = useState(false);
+    const [infoDraft, setInfoDraft] = useState<{ name: string; description: string; status: Status } | null>(null);
+    const [infoErr, setInfoErr] = useState("");
     if (!inst) return <NotFound backTo={BASE} />;
+    const view = { ...inst, ...info };
+    const startInfoEdit = () => {
+        setInfoDraft({ name: view.name, description: view.description ?? "", status: view.status });
+        setInfoErr("");
+        setEditingInfo(true);
+    };
+    const cancelInfoEdit = () => { setEditingInfo(false); setInfoDraft(null); setInfoErr(""); };
+    const saveInfo = () => {
+        if (!infoDraft) return;
+        if (!infoDraft.name.trim()) { setInfoErr("Name is required"); return; }
+        setInfo({ name: infoDraft.name.trim(), description: infoDraft.description.trim(), status: infoDraft.status });
+        cancelInfoEdit();
+        toast("Instance details updated");
+    };
+
+    const addSub = (name: string, description: string) => {
+        const s = { id: `s${Date.now()}`, name, description };
+        setSubs((l) => [...l, s]);
+        setSubId(s.id);
+        toast("Sub entity created");
+    };
+    const editSub = (sid: string, name: string, description: string) => {
+        setSubs((l) => l.map((s) => (s.id === sid ? { ...s, name, description } : s)));
+        toast("Sub entity updated");
+    };
 
     return (
-        <DetailShell backTo={BASE}>
-            <section className="flex items-center gap-4 rounded-xl border border-line bg-white p-5">
-                {inst.imageUrl
-                    ? <img src={inst.imageUrl} alt={inst.name} className="size-14 rounded-lg object-cover" />
-                    : <span className="grid size-14 place-items-center rounded-lg bg-brandsoft text-lg font-bold text-brand">{inst.name[0]}</span>}
-                <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-base font-bold text-ink">{inst.name}</h2>
-                    <p className="text-xs text-muted">{inst.description || "No description"}</p>
+        <div className="flex flex-col gap-4">
+            <section className="overflow-hidden rounded-xl border border-sidebar-border bg-sidebar-bg">
+                <div className="flex flex-wrap items-start gap-4 p-5">
+                    {inst.imageUrl
+                        ? <img src={inst.imageUrl} alt={view.name} className="size-14 rounded-lg object-cover" />
+                        : <span className="grid size-14 place-items-center rounded-lg bg-brandsoft text-lg font-bold text-brand">{view.name[0]}</span>}
+
+                    <div className="min-w-0 flex-1">
+                        {editingInfo && infoDraft ? (
+                            <div className="grid gap-4 rounded-xl border border-line bg-surfacealt p-4 md:grid-cols-2">
+                                <Field label="Instance Name" required error={infoErr}>
+                                    <TextInput value={infoDraft.name} onChange={(e) => setInfoDraft((d) => d && { ...d, name: e.target.value })} />
+                                </Field>
+                                <Field label="Status">
+                                    <Dropdownbox name="istatus" value={infoDraft.status} options={statusFormOptions} rounded="rounded-md" compact
+                                        onChange={(e) => setInfoDraft((d) => d && { ...d, status: e.target.value as Status })} />
+                                </Field>
+                                <Field label="Description" className="md:col-span-2">
+                                    <TextArea rows={3} value={infoDraft.description} onChange={(e) => setInfoDraft((d) => d && { ...d, description: e.target.value })} />
+                                </Field>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="flex items-center gap-4">
+                                    <h2 className="truncate text-base font-bold text-sidebar-text-active">{view.name}</h2>
+                                    <button type="button" aria-label="Edit instance details" title="Edit"
+                                        className="ml-2 inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-white/30 bg-white/10 text-white transition hover:bg-white/20"
+                                        onClick={startInfoEdit}>
+                                        <Pencil className="size-3.5" />
+                                    </button>
+                                </div>
+                                <p className="text-xs text-sidebar-group">{view.description || "No description"}</p>
+                            </>
+                        )}
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-2">
+                        {editingInfo ? (
+                            <>
+                                <button className="inline-flex min-h-9 items-center rounded-lg border border-white/40 px-4 text-sm font-semibold text-white transition hover:bg-white/10" onClick={cancelInfoEdit}>Cancel</button>
+                                <button className="inline-flex min-h-9 items-center rounded-lg border border-white bg-white px-4 text-sm font-semibold text-ink transition hover:bg-white/90" onClick={saveInfo}>Save</button>
+                            </>
+                        ) : (
+                            <StatusBadge status={view.status} />
+                        )}
+                    </div>
                 </div>
-                <StatusBadge status={inst.status} />
+                <div role="tablist" aria-label="Entity tabs" className="flex gap-1 bg-sidebar-border px-2 pt-2">
+                    {([["entity", "Sub Entity", Layers], ["token", "Token Generation", KeyRound]] as const).map(([k, t, Icon]) => (
+                        <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+                            className={`inline-flex items-center gap-2 rounded-t-lg px-5 py-3 text-xs font-bold ${tab === k ? "bg-white text-ink" : "text-sidebar-group hover:bg-sidebar-hover hover:text-sidebar-text-active"}`}>
+                            <Icon className="size-4" /> {t}
+                        </button>
+                    ))}
+                </div>
             </section>
 
-            <section className="rounded-xl border border-line bg-white">
-                <Tabs tabs={[["products", "Products"], ["token", "Token Generation"]]} value={tab} onChange={setTab} label="Instance tabs" />
-                {/* both tabs stay mounted so unsaved edits and the token form survive tab switches */}
-                <div className="p-5">
-                    <div className={tab === "products" ? "" : "hidden"}><ProductsTab inst={inst} /></div>
-                    <div className={tab === "token" ? "" : "hidden"}><TokenTab /></div>
-                </div>
-            </section>
-        </DetailShell>
+            {/* both tabs stay mounted so unsaved edits and the token form survive tab switches */}
+            <div className={tab === "entity" ? "flex flex-col gap-4" : "hidden"}>
+                <section className="flex w-full min-w-0 items-center gap-2 rounded-xl border border-line bg-white p-3">
+                    <div className="thin-scrollbar flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1">
+                        {subs.map((s) => {
+                            const active = s.id === subId;
+                            return (
+                                <div key={s.id} className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-lg border text-xs font-semibold ${active ? "border-action bg-action text-white" : "border-line bg-surfacealt text-muted"}`}>
+                                    <button type="button" className="px-3 py-2" onClick={() => setSubId(s.id)}>{s.name}</button>
+                                    <button type="button" aria-label={`Edit ${s.name}`} title="Edit" className="py-2 pr-2.5"
+                                        onClick={() => openDrawer(<SubEntityDrawer initial={s} onSave={(n, d) => editSub(s.id, n, d)} />)}>
+                                        <Settings className="size-3.5" />
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <button className={`${btn.navy} shrink-0`} onClick={() => openDrawer(<SubEntityDrawer onSave={addSub} />)}>
+                        <Plus className="size-4" /> New Sub Entity
+                    </button>
+                </section>
+
+                <TokenStatusLine name={subs.find((s) => s.id === subId)?.name ?? ""} rec={tokens[subId]} />
+
+                <section className="rounded-xl border border-line bg-white p-5">
+                    <ProductsTab inst={inst} subId={subId} enabled={enabled}
+                        onToggle={(pid, on) => setEnabled((m) => ({ ...m, [`${subId}:${pid}`]: on }))} />
+                </section>
+            </div>
+            <div className={tab === "token" ? "" : "hidden"}>
+                <TokenTab subs={subs} tokens={tokens}
+                    onSave={(sid, r) => setTokens((m) => ({ ...m, [sid]: r }))}
+                    onDelete={(sid) => setTokens((m) => { const n = { ...m }; delete n[sid]; return n; })} />
+            </div>
+        </div>
     );
 }

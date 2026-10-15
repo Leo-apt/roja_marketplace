@@ -45,7 +45,7 @@ export default function FiltersDrawer({ view }: { view: ViewKey }) {
             footer={(close) => (
                 <>
                     <button className={`${btn} border-line bg-white text-ink`} onClick={() => setD(pick(defaultFilters))}>Clear</button>
-                    <button className={`${btn} border-brand bg-brand text-white`} onClick={() => apply(close)}>Apply filters</button>
+                    <button className={`${btn} border-btn-primary bg-btn-primary text-white hover:bg-btn-primary-hover`} onClick={() => apply(close)}>Apply filters</button>
                 </>
             )}
         >
@@ -72,7 +72,7 @@ export default function FiltersDrawer({ view }: { view: ViewKey }) {
 
             <button
                 type="button"
-                className="inline-flex min-h-9 w-full items-center justify-between rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:border-[#bfd0ec] hover:bg-[#f4f7fe]"
+                className="inline-flex min-h-9 w-full items-center justify-between rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:border-btn-secondary-hover-border hover:bg-btn-secondary-hover-bg"
                 onClick={() => setShowMore((s) => !s)}
                 aria-expanded={showMore}
             >

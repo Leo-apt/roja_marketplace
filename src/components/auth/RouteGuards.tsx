@@ -9,6 +9,7 @@ export function RequireAuth() {
     return user ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
+
 export function PublicOnly() {
     const { user, ready } = useAuth();
     if (!ready) return <Loading />;

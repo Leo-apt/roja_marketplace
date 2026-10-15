@@ -1,6 +1,6 @@
 import { useEffect, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { Columns3, Eye, Pencil, Plus, Settings, SlidersHorizontal, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, Eye, Menu, Pencil, Plus, SlidersHorizontal } from "lucide-react";
 import { useApp } from "@/hooks/useApp";
 import Pagination from "@/components/shared/Pagination";
 import { btn, SearchField } from "./FormBits";
@@ -13,6 +13,7 @@ export interface Col<T> {
     render: (r: T) => ReactNode;
     align?: "right";
     link?: boolean;
+    sortValue?: (r: T) => string | number | null;
 }
 
 interface Props<T extends { id: string }> {
@@ -30,8 +31,8 @@ interface Props<T extends { id: string }> {
 }
 
 const SIZE = 8;
-const th = "whitespace-nowrap border-b border-linesoft bg-surfacealt px-3 py-3 text-left text-xs font-semibold leading-snug text-[#6a7790]";
-const td = "whitespace-nowrap border-b border-linesoft px-3 py-3 align-middle text-xs text-[#3c4d66]";
+const th = "whitespace-nowrap border-b border-linesoft bg-surfacealt px-3 py-3 text-left text-xs font-bold leading-snug text-th-text";
+const td = "whitespace-nowrap border-b border-linesoft px-3 py-3 align-middle text-xs text-td-text";
 
 export default function ListShell<T extends { id: string }>({
     rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, onCreate,
@@ -43,6 +44,13 @@ export default function ListShell<T extends { id: string }>({
     const [f, setF] = useState<Record<string, string>>(blank);
     const [hidden, setHidden] = useState<string[]>([]);
     const [page, setPage] = useState(1);
+    const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" } | null>(null);
+    const valueOf = (c: Col<T>, r: T) => (c.sortValue ? c.sortValue(r) : (r as unknown as Record<string, unknown>)[c.key]);
+    const canSort = (c: Col<T>) => rows.some((r) => ["string", "number"].includes(typeof valueOf(c, r)));
+    const toggleSort = (key: string) => {
+        setSort((s) => (!s || s.key !== key ? { key, dir: "asc" } : s.dir === "asc" ? { key, dir: "desc" } : null));
+        setPage(1);
+    };
 
     const [menu, setMenu] = useState<{ id: string; top: number; left: number } | null>(null);
 
@@ -70,7 +78,16 @@ export default function ListShell<T extends { id: string }>({
         setMenu({ id, top, left: Math.max(8, r.right - 144) });
     };
 
-    const filtered = rows.filter((r) => match(r, q.trim().toLowerCase(), f));
+    const base = rows.filter((r) => match(r, q.trim().toLowerCase(), f));
+    const sortCol = sort ? cols.find((c) => c.key === sort.key) : undefined;
+    const filtered = sortCol && sort
+        ? [...base].sort((a, b) => {
+            const x = valueOf(sortCol, a), y = valueOf(sortCol, b);
+            const r = typeof x === "number" && typeof y === "number"
+                ? x - y : String(x ?? "").localeCompare(String(y ?? ""), undefined, { numeric: true });
+            return sort.dir === "asc" ? r : -r;
+        })
+        : base;
     const pages = Math.max(1, Math.ceil(filtered.length / SIZE));
     const cur = Math.min(page, pages);
     const start = (cur - 1) * SIZE;
@@ -93,7 +110,7 @@ export default function ListShell<T extends { id: string }>({
                         )}>
                         <SlidersHorizontal className="size-4" /> Filters{filtersActive ? " •" : ""}
                     </button>
-                    <button className={btn.secondary}
+                    <button className={btn.navy}
                         onClick={() => openDrawer(
                             <ColumnsDrawer cols={cols.map((c) => ({ key: c.key, label: c.label }))} hidden={hidden} onApply={setHidden} />,
                         )}>
@@ -111,19 +128,31 @@ export default function ListShell<T extends { id: string }>({
                         <thead>
                             <tr>
                                 <th className={`${th} pl-5`}>S.No</th>
-                                {shown.map((c) => <th key={c.key} className={`${th} ${c.align === "right" ? "text-right" : ""}`}>{c.label}</th>)}
+                                {shown.map((c) => (
+                                    <th key={c.key} className={`${th} ${c.align === "right" ? "text-right" : ""}`}>
+                                        {canSort(c) ? (
+                                            <button type="button" onClick={() => toggleSort(c.key)}
+                                                className={`inline-flex items-center gap-1 ${c.align === "right" ? "flex-row-reverse" : ""}`}>
+                                                {c.label}
+                                                {sort?.key === c.key
+                                                    ? (sort.dir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />)
+                                                    : <ChevronsUpDown className="size-3 text-sort-icon" />}
+                                            </button>
+                                        ) : c.label}
+                                    </th>
+                                ))}
                                 <th className={th}>Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {pageRows.map((r, i) => (
-                                <tr key={r.id} className="hover:bg-[#fafcff]">
+                                <tr key={r.id} className="hover:bg-row-hover">
                                     <td className={`${td} pl-5`}>{start + i + 1}</td>
                                     {shown.map((c) => (
                                         <td key={c.key} className={`${td} ${c.align === "right" ? "text-right tabular-nums" : ""}`}>
                                             {c.link ? (
                                                 <button type="button" onClick={() => nav(`${basePath}/${r.id}`)}
-                                                    className="text-left font-semibold text-brand hover:underline">
+                                                    className="text-left font-semibold text-link hover:underline">
                                                     {c.render(r)}
                                                 </button>
                                             ) : c.render(r)}
@@ -132,8 +161,8 @@ export default function ListShell<T extends { id: string }>({
                                     <td className={td}>
                                         <button data-action-menu aria-label="Actions" title="Actions"
                                             onClick={(e) => openMenu(e, r.id)}
-                                            className="rounded-md border border-line p-1.5 text-[#3c4d66] hover:bg-gray-50">
-                                            <Settings className="size-4" />
+                                            className="rounded-md bg-action p-1.5 text-white hover:bg-action-hover">
+                                            <Menu className="size-4" />
                                         </button>
                                     </td>
                                 </tr>
@@ -165,15 +194,15 @@ export default function ListShell<T extends { id: string }>({
                         <Eye className="size-4" /> View
                     </button>
                     <button onClick={() => { nav(`${basePath}/${menu.id}/edit`); setMenu(null); }}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-xs text-[#3c4d66] hover:bg-gray-50">
+                        className="flex w-full items-center gap-2 px-3 py-2 text-xs text-cell-text hover:bg-gray-50">
                         <Pencil className="size-4" /> Edit
                     </button>
-                    {onDelete && (
+                    {/* {onDelete && (
                         <button onClick={() => { onDelete(menu.id); setMenu(null); }}
                             className="flex w-full items-center gap-2 px-3 py-2 text-xs text-bad hover:bg-badbg">
                             <Trash2 className="size-4" /> Delete
                         </button>
-                    )}
+                    )} */}
                 </div>
             )}
         </div>

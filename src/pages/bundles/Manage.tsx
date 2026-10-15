@@ -198,7 +198,7 @@ function BundleForm({ initial }: { initial?: Bundle }) {
                             )}
                             {showSelling && (
                                 <div className="md:col-span-2">
-                                    <p className="mb-2 text-sm text-emerald-600">
+                                    <p className="mb-2 text-sm text-good">
                                         <span>{f.discountWhen === "first" ? "First-time price" : "Discounted price"}: </span>
                                         <b>{usd(selling)}</b>
                                         <span className="ml-1 text-muted">(regular {usd(priceNum)})</span>
@@ -220,7 +220,7 @@ function BundleForm({ initial }: { initial?: Bundle }) {
                     </Field>
 
                     <Field label="Benefits List" note={undefined}>
-                        <p className="-mt-1 mb-2 text-xs text-indigo-500">List of discussion topics / covered issues</p>
+                        <p className="-mt-1 mb-2 text-xs text-brand">List of discussion topics / covered issues</p>
                         <div className="flex flex-col gap-2">
                             {f.benefits.map((b, i) => (
                                 <div key={i} className="flex">
@@ -228,7 +228,7 @@ function BundleForm({ initial }: { initial?: Bundle }) {
                                         value={b} placeholder={`Benefit ${i + 1}`} onChange={(e) => setBenefit(i, e.target.value)} />
                                     <button type="button" aria-label="Remove benefit"
                                         onClick={() => set("benefits", f.benefits.length > 1 ? f.benefits.filter((_, x) => x !== i) : [""])}
-                                        className="grid w-11 shrink-0 place-items-center rounded-r-md border border-l-0 border-red-400 text-red-500 hover:bg-red-50">
+                                        className="grid w-11 shrink-0 place-items-center rounded-r-md border border-l-0 border-btn-danger text-btn-danger hover:bg-danger-soft">
                                         <Trash2 className="size-4" />
                                     </button>
                                 </div>
