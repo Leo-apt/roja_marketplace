@@ -5,7 +5,7 @@ import type { Status } from "@/data/catalog";
 import { btn } from "./FormBits";
 
 export const StatusBadge = ({ status }: { status: Status | "Draft" | "Scheduled" }) => (
-    <span className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-bold uppercase ${status === "Active" ? "bg-goodbg text-good" : status === "Inactive" ? "bg-badbg text-bad" : "bg-warnbg text-warn"}`}>
+    <span className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-bold capitalize ${status === "Active" ? "bg-goodbg text-good" : status === "Inactive" ? "bg-badbg text-bad" : "bg-warnbg text-warn"}`}>
         {status}
     </span>
 );

@@ -21,7 +21,7 @@ interface ApiProduct {
     marketplace?: { termsUrl?: string; imageUrl?: string; imageBackgroundColor?: string; shortDescription?: string; longDescription?: string; pricingRenewalContent?: string };
     dashboard?: { template?: string; title?: string; callToAction?: string; featureTitle?: string; shortDescription?: string };
     retailPrice?: number | null; discountType?: string | null; discountValue?: number | null; sellingPrice?: number;
-    bundled?: (Ref | string)[]; audienceType?: string; placements?: string[]; perUserFrequencyCap?: number | null;
+    bundled?: (Ref | string)[]; audienceType?: string; configurationId?: string | null; placements?: string[]; perUserFrequencyCap?: number | null;
     publishMode?: string; scheduledAt?: string | null; expiresAt?: string | null;
     createdBy: unknown; updatedBy: unknown; createdAt: string; updatedAt: string;
 }
@@ -32,7 +32,7 @@ export interface ProductRec {
     template: string; dashTitle: string; cta: string; featureTitle: string; dashShort: string;
     retail: number | null; discountType: DiscountType | ""; discountValue: number | null; sellingPrice: number | null;
     bundles: { id: string; name: string; shortCode: string }[];
-    audience: "everyone" | "provider"; placements: string[]; freqCap: number | null;
+    audience: "everyone" | "provider"; configurationId: string; placements: string[]; freqCap: number | null;
     publish: "now" | "later"; availableFrom: string; expiresOn: string;
     createdBy: string; createdOn: string; updatedBy: string; updatedOn: string;
 }
@@ -42,7 +42,7 @@ export interface ProductInput {
     imageBg: string; shortDescription: string; longDescription: string; pricingContent: string;
     template: string; dashTitle: string; cta: string; featureTitle: string; dashShort: string;
     retail: string; discountType: DiscountType; discountValue: string; bundleIds: string[];
-    audience: "everyone" | "provider"; placements: string[]; freqCap: string;
+    audience: "everyone" | "provider"; productConfig: string; placements: string[]; freqCap: string;
     publish: "now" | "later"; availableFrom: string; expires: boolean; expiresOn: string;
 }
 
@@ -83,6 +83,7 @@ const toUi = (a: ApiProduct): ProductRec => {
         sellingPrice: a.sellingPrice ?? a.retailPrice ?? null,
         bundles: (a.bundled ?? []).map(ref).filter((b): b is NonNullable<typeof b> => !!b),
         audience: a.audienceType === "providerRules" ? "provider" : "everyone",
+        configurationId: a.configurationId ?? "",
         placements: a.placements ?? [], freqCap: a.perUserFrequencyCap ?? null,
         publish: a.publishMode === "scheduled" ? "later" : "now",
         availableFrom: ymd(a.scheduledAt), expiresOn: ymd(a.expiresAt),
@@ -119,6 +120,7 @@ function toPayload(i: ProductInput, isEdit: boolean) {
         discountValue: hasDisc ? dv : clear,
         bundled: i.bundleIds,
         audienceType: i.audience === "provider" ? "providerRules" : "everyone",
+        configurationId: i.audience === "provider" ? opt(i.productConfig) : clear,
         placements: i.placements,
         perUserFrequencyCap: i.freqCap.trim() ? Math.floor(num(i.freqCap)) : clear,
         publishMode: later ? "scheduled" : "immediate",

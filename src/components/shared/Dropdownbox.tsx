@@ -25,6 +25,8 @@ interface DropdownProps {
     buttonClassName?: string;
     footerAction?: { label: string; onClick: () => void };
     compact?: boolean;
+    onOpen?: () => void;
+    loading?: boolean;
 }
 
 const Dropdownbox: React.FC<DropdownProps> = ({
@@ -43,6 +45,8 @@ const Dropdownbox: React.FC<DropdownProps> = ({
     buttonClassName = "",
     footerAction,
     compact = false,
+    onOpen,
+    loading = false,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
@@ -153,6 +157,12 @@ const Dropdownbox: React.FC<DropdownProps> = ({
             setIsOpen(true);
         }
     };
+
+    // Tell the parent when the menu opens (click or arrow key)
+    useEffect(() => {
+        if (isOpen) onOpen?.();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]);
 
     // Close on outside click
     useEffect(() => {
@@ -280,7 +290,13 @@ const Dropdownbox: React.FC<DropdownProps> = ({
                     )}
 
                     <ul ref={listRef} role="listbox" className="thin-scrollbar max-h-48 overflow-y-auto py-1">
-                        {filteredOptions.length > 0 ? (
+                        {loading ? (
+                            [0, 1, 2].map((i) => (
+                                <li key={i} className="px-4 py-2.5" aria-hidden="true">
+                                    <div className="h-4 animate-pulse rounded bg-gray-200" style={{ width: `${75 - i * 15}%` }} />
+                                </li>
+                            ))
+                        ) : filteredOptions.length > 0 ? (
                             filteredOptions.map((option, index) => {
                                 const isSelected = option.value === value;
                                 const isHighlighted = index === highlightedIndex;

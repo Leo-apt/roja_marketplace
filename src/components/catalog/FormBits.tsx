@@ -11,6 +11,8 @@ export const btn = {
     secondary: "inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-btn-secondary-hover-border hover:bg-btn-secondary-hover-bg",
     brand: "inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-btn-primary bg-btn-primary px-4 py-2 text-sm font-semibold text-white hover:bg-btn-primary-hover",
     navy: "inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-btn-dark px-4 py-2 text-sm font-semibold text-white hover:bg-btn-dark-hover",
+    info: "inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-note-info-border bg-note-info-bg px-4 py-2 text-sm font-semibold text-link transition-colors hover:border-link hover:bg-link hover:text-white",
+    danger: "inline-flex min-h-10 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-bad/30 bg-badbg px-4 py-2 text-sm font-semibold text-bad transition-colors hover:border-btn-danger hover:bg-btn-danger hover:text-white",
 };
 
 export const inputBase =
