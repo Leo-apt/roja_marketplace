@@ -203,7 +203,7 @@ export default function Sidebar({
                 .sb-spot {
                     background: radial-gradient(
                         110px circle at var(--mx, 50%) var(--my, 50%),
-                        color-mix(in srgb, var(--color-brand, #3b82f6) 16%, transparent),
+                        color-mix(in srgb, var(--color-brand, #059669) 12%, transparent),
                         transparent 70%
                     );
                 }
@@ -227,7 +227,7 @@ export default function Sidebar({
               : "mb-5 h-14"
           }`}
         >
-          <div className="pointer-events-none absolute left-1/2 top-1/2 size-16 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand/20 blur-2xl" />
+          <div className="pointer-events-none absolute left-1/2 top-1/2 size-16 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand/10 blur-2xl" />
           <img
             src={logo}
             alt="Roja Marketplace"
@@ -384,7 +384,7 @@ export default function Sidebar({
                               className={`relative grid size-8 shrink-0 place-items-center rounded-lg transition-all duration-300 ${
                                 active
                                   ? "bg-brand text-white shadow-sm"
-                                  : "bg-current/5 text-sidebar-icon group-hover:bg-current/10 group-hover:text-sidebar-text-active"
+                                  : "bg-emerald-900/5 text-sidebar-icon group-hover:bg-white group-hover:text-brand"
                               }`}
                             >
                               <Icon className="size-[17px] transition-transform duration-300 group-hover:scale-110" />
@@ -435,7 +435,7 @@ export default function Sidebar({
             onMouseLeave={hideTip}
             title={collapsed ? undefined : `Collapse sidebar (${shortcut})`}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={`group flex w-full items-center rounded-xl border border-white/10 bg-white/10 py-2 text-sidebar-text-active outline-none transition-all duration-300 hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-brand/40 active:scale-95 ${
+            className={`group flex w-full items-center rounded-xl border border-sidebar-border bg-white py-2 text-sidebar-text outline-none transition-all duration-300 hover:border-emerald-200 hover:bg-white hover:text-sidebar-text-active hover:shadow-sm focus-visible:ring-2 focus-visible:ring-brand/40 active:scale-95 ${
               collapsed ? "justify-center px-0" : "justify-between px-3"
             }`}
           >
@@ -454,8 +454,8 @@ export default function Sidebar({
               </span>
             </span>
             <kbd
-              className={`overflow-hidden whitespace-nowrap rounded-md border border-white/15 bg-white/10 px-1.5 py-0.5 font-sans text-[10px] font-semibold transition-all duration-300 ${
-                collapsed ? "hidden" : "opacity-80"
+              className={`overflow-hidden whitespace-nowrap rounded-md border border-sidebar-border bg-sidebar-bg px-1.5 py-0.5 font-sans text-[10px] font-semibold text-sidebar-icon transition-all duration-300 ${
+                collapsed ? "hidden" : ""
               }`}
             >
               {shortcut}
