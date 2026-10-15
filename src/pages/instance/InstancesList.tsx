@@ -61,7 +61,7 @@ export default function InstancesList() {
                 rows={rows}
                 cols={cols}
                 basePath={BASE}
-                createLabel="Create Instance"
+                createLabel="Create Entity"
                 rowLabel="instances"
                 searchPlaceholder="Search instances…"
                 cards={(r) => [

@@ -50,7 +50,7 @@ export default function SavedViewsDialog({ view }: { view: string }) {
                 ))}
             </div>
             <small className="text-xs text-muted">
-                Stored on this device for the presentation. Production saved views belong to the instance and administrator.
+                Stored on this device for the presentation. Production saved views belong to the Entity and administrator.
             </small>
         </Modal>
     );

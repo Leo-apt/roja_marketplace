@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { DCard, DetailShell, Grid, KV, StatusBadge } from "@/components/catalog/DetailBits";
+import { DetailHeader, DetailShell, DSection, DTile, DTiles } from "@/components/catalog/DetailBits";
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import { providers, weightFields, weightTypes, type EngineConfig } from "@/data/engine";
 import { engineConfigsService } from "@/services/engineConfigs.service";
@@ -24,50 +24,59 @@ export default function EngineConfigDetail() {
 
     if (error) return <ErrorBox message={error} backTo={BASE} />;
     if (!c || c.id !== id) return <LoadingBox />;
+    const providerLabel = providers.find((p) => p.value === c.providerId)?.label ?? c.providerId;
     return (
-        <DetailShell backTo={BASE} editTo={`${BASE}/${c.id}/edit`}>
-            <DCard title="Configuration">
-                <Grid>
-                    <KV k="Config Name">{c.name}</KV>
-                    <KV k="Status"><StatusBadge status={c.status} /></KV>
-                    <KV k="Provider ID">{providers.find((p) => p.value === c.providerId)?.label ?? c.providerId}</KV>
-                    <KV k="Offer Type">{c.offerType}</KV>
-                    <KV k="Category">{dash(c.category)}</KV>
-                    <KV k="Base Score">{dash(c.baseScore)}</KV>
-                    <KV k="Created By">{c.createdBy}</KV>
-                    <KV k="Created On">{c.createdOn}</KV>
-                    <KV k="Last Updated By">{c.updatedBy}</KV>
-                    <KV k="Last Updated On">{c.updatedOn}</KV>
-                </Grid>
-            </DCard>
+        <DetailShell backTo={BASE}>
+            <DetailHeader
+                title={c.name}
+                subtitle={`${providerLabel} · ${c.offerType}`}
+                status={c.status}
+                highlight={{ label: "Base Score", value: dash(c.baseScore) }}
+                editTo={`${BASE}/${c.id}/edit`}
+            >
+                <DTiles>
+                    <DTile label="Provider ID">{providerLabel}</DTile>
+                    <DTile label="Offer Type">{c.offerType}</DTile>
+                    <DTile label="Category">{dash(c.category)}</DTile>
+                </DTiles>
+            </DetailHeader>
 
-            <DCard title="Decision Thresholds">
-                <Grid>
-                    <KV k="Show ≥">{dash(c.show)}</KV>
-                    <KV k="Review ≥">{dash(c.review)}</KV>
-                    <KV k="Hide">{dash(c.hide)}</KV>
-                </Grid>
-            </DCard>
+            <DSection title="Decision Thresholds">
+                <DTiles>
+                    <DTile label="Show ≥">{dash(c.show)}</DTile>
+                    <DTile label="Review ≥">{dash(c.review)}</DTile>
+                    <DTile label="Hide">{dash(c.hide)}</DTile>
+                </DTiles>
+            </DSection>
 
-            {c.signals.length === 0 && <DCard title="Signals"><p className="text-sm text-muted">No signals configured.</p></DCard>}
+            {c.signals.length === 0 && <DSection title="Signals"><p className="text-sm text-muted">No signals configured.</p></DSection>}
             {c.signals.map((s, i) => (
-                <DCard key={s.uid} title={`Signal ${i + 1}`}>
-                    <Grid>
-                        <KV k="Signal ID">{dash(s.signalId)}</KV>
-                        <KV k="Label">{dash(s.label)}</KV>
-                        <KV k="Min Count">{dash(s.minCount)}</KV>
-                        <KV k="Top Category">{dash(s.topCategory)}</KV>
-                        <KV k="Code">{dash(s.code)}</KV>
-                        <KV k="MCC">{dash(s.mcc)}</KV>
-                        <KV k="Keywords">{dash(s.keywords)}</KV>
-                        <KV k="Same As (signal id)">{dash(s.sameAs)}</KV>
-                        <KV k="Flags">{dash(s.flags)}</KV>
-                        <KV k="Context Field">{dash(s.contextField)}</KV>
-                        <KV k="Weight Type">{weightTypes.find((w) => w.value === s.weightType)?.label ?? s.weightType}</KV>
-                        {(weightFields[s.weightType] ?? []).map((f) => <KV key={f.key} k={f.label}>{dash(s[f.key])}</KV>)}
-                    </Grid>
-                </DCard>
+                <DSection key={s.uid} title={`Signal ${i + 1}`}>
+                    <DTiles>
+                        <DTile label="Signal ID">{dash(s.signalId)}</DTile>
+                        <DTile label="Label">{dash(s.label)}</DTile>
+                        <DTile label="Min Count">{dash(s.minCount)}</DTile>
+                        <DTile label="Top Category">{dash(s.topCategory)}</DTile>
+                        <DTile label="Code">{dash(s.code)}</DTile>
+                        <DTile label="MCC">{dash(s.mcc)}</DTile>
+                        <DTile label="Keywords">{dash(s.keywords)}</DTile>
+                        <DTile label="Same As (signal id)">{dash(s.sameAs)}</DTile>
+                        <DTile label="Flags">{dash(s.flags)}</DTile>
+                        <DTile label="Context Field">{dash(s.contextField)}</DTile>
+                        <DTile label="Weight Type">{weightTypes.find((w) => w.value === s.weightType)?.label ?? s.weightType}</DTile>
+                        {(weightFields[s.weightType] ?? []).map((f) => <DTile key={f.key} label={f.label}>{dash(s[f.key])}</DTile>)}
+                    </DTiles>
+                </DSection>
             ))}
+
+            <DSection title="Audit">
+                <DTiles four>
+                    <DTile label="Created By">{c.createdBy}</DTile>
+                    <DTile label="Created On">{c.createdOn}</DTile>
+                    <DTile label="Last Updated By">{c.updatedBy}</DTile>
+                    <DTile label="Last Updated On">{c.updatedOn}</DTile>
+                </DTiles>
+            </DSection>
         </DetailShell>
     );
 }

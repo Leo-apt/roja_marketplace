@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { DCard, DetailShell, Grid, KV, StatusBadge } from "@/components/catalog/DetailBits";
+import { DetailHeader, DetailShell, DSection, DTile, DTiles } from "@/components/catalog/DetailBits";
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import { marginsService, type MarginRec } from "@/services/margins.service";
 import { usd } from "@/utils/catalog";
@@ -24,23 +24,40 @@ export default function MarginsDetail() {
     if (error) return <ErrorBox message={error} backTo={BASE} />;
     if (!r || r.id !== id) return <LoadingBox />;
     return (
-        <DetailShell backTo={BASE} editTo={`${BASE}/${r.id}/edit`}>
-            <DCard title="Margin Details">
-                <Grid>
-                    <KV k="Product Name">{r.product}</KV>
-                    <KV k="Features">{r.features.length ? r.features.map((x) => <div key={x}>{x}</div>) : "-"}</KV>
-                    <KV k="Wholesale Price">{usd(r.wholesale)}</KV>
-                    <KV k="Retail Price">{usd(r.retail)}</KV>
-                    <KV k="Roja Markup">{usd(r.markupAmount)}</KV>
-                    <KV k="Roja Buy Rate">{usd(r.buyRate)}</KV>
-                    <KV k="Margin Vs. Retail">{usd(r.marginVsRetail)}</KV>
-                    <KV k="Status">{r.status ? <StatusBadge status={r.status} /> : "-"}</KV>
-                    <KV k="Created By">{r.createdBy}</KV>
-                    <KV k="Created On">{r.createdOn}</KV>
-                    <KV k="Last Updated By">{r.updatedBy}</KV>
-                    <KV k="Last Updated On">{r.updatedOn}</KV>
-                </Grid>
-            </DCard>
+        <DetailShell backTo={BASE}>
+            <DetailHeader
+                title={r.product}
+                subtitle="Margin details"
+                status={r.status || undefined}
+                highlight={{ label: "Margin Vs. Retail", value: usd(r.marginVsRetail) }}
+                editTo={`${BASE}/${r.id}/edit`}
+            >
+                <DTiles four>
+                    <DTile label="Wholesale Price">{usd(r.wholesale)}</DTile>
+                    <DTile label="Retail Price">{usd(r.retail)}</DTile>
+                    <DTile label="Roja Markup">{usd(r.markupAmount)}</DTile>
+                    <DTile label="Roja Buy Rate">{usd(r.buyRate)}</DTile>
+                </DTiles>
+            </DetailHeader>
+
+            <DSection title="Features">
+                {r.features.length ? (
+                    <div className="flex flex-wrap gap-2">
+                        {r.features.map((x) => (
+                            <span key={x} className="rounded-md bg-brandsoft px-3 py-1 text-xs font-semibold text-brand">{x}</span>
+                        ))}
+                    </div>
+                ) : <p className="text-sm text-muted">No features.</p>}
+            </DSection>
+
+            <DSection title="Audit">
+                <DTiles four>
+                    <DTile label="Created By">{r.createdBy}</DTile>
+                    <DTile label="Created On">{r.createdOn}</DTile>
+                    <DTile label="Last Updated By">{r.updatedBy}</DTile>
+                    <DTile label="Last Updated On">{r.updatedOn}</DTile>
+                </DTiles>
+            </DSection>
         </DetailShell>
     );
 }

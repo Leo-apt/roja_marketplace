@@ -1,6 +1,6 @@
 import { useEffect, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, Eye, Menu, Pencil, Plus, SlidersHorizontal } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, Eye, Pencil, Plus, Settings, SlidersHorizontal } from "lucide-react";
 import { useApp } from "@/hooks/useApp";
 import Pagination from "@/components/shared/Pagination";
 import { btn, SearchField } from "./FormBits";
@@ -161,8 +161,8 @@ export default function ListShell<T extends { id: string }>({
                                     <td className={td}>
                                         <button data-action-menu aria-label="Actions" title="Actions"
                                             onClick={(e) => openMenu(e, r.id)}
-                                            className="rounded-md bg-action p-1.5 text-white hover:bg-action-hover">
-                                            <Menu className="size-4" />
+                                            className="group rounded-md bg-action p-1.5 text-white hover:bg-action-hover">
+                                            <Settings className="size-4 transition-transform duration-300 group-hover:rotate-90" />
                                         </button>
                                     </td>
                                 </tr>

@@ -25,8 +25,8 @@ export default function BundlesDetail() {
     if (error) return <ErrorBox message={error} backTo={BASE} />;
     if (!b || b.id !== id) return <LoadingBox />;
     return (
-        <DetailShell backTo={BASE} editTo={`${BASE}/${b.id}/edit`}>
-            <BundleSections b={b} />
+        <DetailShell backTo={BASE}>
+            <BundleSections b={b} editTo={`${BASE}/${b.id}/edit`} />
         </DetailShell>
     );
 }

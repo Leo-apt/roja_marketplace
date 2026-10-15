@@ -29,7 +29,7 @@ export default function InstanceDrawer({ open, onClose, onCreate }: {
 
     const submit = () => {
         const e = {
-            name: name.trim() ? "" : "Instance name is required",
+            name: name.trim() ? "" : "Entity name is required",
             image: file && file.size > 2 * 1024 * 1024 ? "Image must be less than 2 MB" : "",
         };
         setErr(e);
@@ -41,20 +41,20 @@ export default function InstanceDrawer({ open, onClose, onCreate }: {
     return createPortal(
         <div className="fixed inset-0 z-[99990]">
             <div className={`absolute inset-0 bg-overlay/40 transition-opacity duration-200 ${shown ? "opacity-100" : "opacity-0"}`} onClick={onClose} />
-            <aside role="dialog" aria-modal="true" aria-label="Create instance"
+            <aside role="dialog" aria-modal="true" aria-label="Create Entity"
                 className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-200 ${shown ? "translate-x-0" : "translate-x-full"}`}>
                 <header className="flex items-center justify-between border-b border-line px-5 py-4">
-                    <h2 className="text-base font-bold text-ink">Create Instance</h2>
+                    <h2 className="text-base font-bold text-ink">Create Entity</h2>
                     <button type="button" aria-label="Close" onClick={onClose} className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
                         <X className="size-5" />
                     </button>
                 </header>
                 <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-5">
-                    <Field label="Instance Name" required error={err.name}>
+                    <Field label="Entity Name" required error={err.name}>
                         <TextInput value={name} placeholder="e.g. Roja Main" onChange={(e) => setName(e.target.value)} />
                     </Field>
                     <Field label="Description">
-                        <TextArea rows={4} value={desc} placeholder="What is this instance used for?" onChange={(e) => setDesc(e.target.value)} />
+                        <TextArea rows={4} value={desc} placeholder="What is this Entity used for?" onChange={(e) => setDesc(e.target.value)} />
                     </Field>
                     <Field label="Image" note="Upload a JPEG or PNG image that is less than 2 MB." error={err.image}>
                         <FileInput accept="image/png,image/jpeg" file={file} onChange={setFile} />

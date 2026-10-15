@@ -53,3 +53,61 @@ export function NotFound({ backTo }: { backTo: string }) {
         </div>
     );
 }
+export function DetailHeader({ title, subtitle, status, highlight, editTo, children }: {
+    title: ReactNode; subtitle?: ReactNode; status?: Status | "Draft" | "Scheduled";
+    highlight?: { label: string; value: ReactNode }; editTo?: string; children?: ReactNode;
+}) {
+    const nav = useNavigate();
+    return (
+        <section className="overflow-hidden rounded-xl border border-line bg-white">
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-brandsoft px-6 py-5">
+                <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="truncate text-lg font-bold text-ink">{title}</h2>
+                        {status && <StatusBadge status={status} />}
+                    </div>
+                    {subtitle && <p className="mt-1 text-xs text-muted">{subtitle}</p>}
+                </div>
+                <div className="flex items-center gap-5">
+                    {highlight && (
+                        <div className="text-right">
+                            <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{highlight.label}</div>
+                            <div className="text-xl font-bold text-brand">{highlight.value}</div>
+                        </div>
+                    )}
+                    {editTo && (
+                        <button className={btn.brand} onClick={() => nav(editTo)}><Pencil className="size-4" /> Edit</button>
+                    )}
+                </div>
+            </div>
+            {children && <div className="p-6">{children}</div>}
+        </section>
+    );
+}
+
+export const DSection = ({ title, children }: { title: string; children: ReactNode }) => (
+    <section className="rounded-xl border border-line bg-white">
+        <h3 className="border-b border-line px-6 py-4 text-xs font-bold uppercase tracking-wide text-ink">{title}</h3>
+        <div className="p-6">{children}</div>
+    </section>
+);
+
+export const DTiles = ({ children, four }: { children: ReactNode; four?: boolean }) => (
+    <dl className={`grid gap-3 sm:grid-cols-2 ${four ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>{children}</dl>
+);
+
+export const DTile = ({ label, children }: { label: string; children: ReactNode }) => (
+    <div className="min-w-0 rounded-lg border border-line bg-surfacealt px-4 py-3">
+        <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">{label}</dt>
+        <dd className="mt-1 break-words text-sm font-semibold text-ink">{children}</dd>
+    </div>
+);
+
+export const DRows = ({ children }: { children: ReactNode }) => <dl>{children}</dl>;
+
+export const DRow = ({ label, children }: { label: string; children: ReactNode }) => (
+    <div className="grid gap-1 border-b border-line py-3 first:pt-0 last:border-b-0 last:pb-0 md:grid-cols-[190px_1fr] md:gap-4">
+        <dt className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</dt>
+        <dd className="min-w-0 break-words text-sm text-cell-text">{children}</dd>
+    </div>
+);

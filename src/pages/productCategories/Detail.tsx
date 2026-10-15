@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { DCard, DetailShell, Grid, KV, StatusBadge } from "@/components/catalog/DetailBits";
+import { DetailHeader, DetailShell, DSection, DTile, DTiles } from "@/components/catalog/DetailBits";
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import { categoriesService, type CategoryRec } from "@/services/categories.service";
 
@@ -24,19 +24,24 @@ export default function ProductCategoriesDetail() {
     if (!rec || rec.id !== id) return <LoadingBox />;
 
     return (
-        <DetailShell backTo={BASE} editTo={`${BASE}/${rec.id}/edit`}>
-            <DCard title="Category Details">
-                <Grid>
-                    <KV k="Name">{rec.name}</KV>
-                    <KV k="Slug">{rec.slug}</KV>
-                    <KV k="Status"><StatusBadge status={rec.status} /></KV>
-                    <KV k="Description">{rec.description || "-"}</KV>
-                    <KV k="Created By">{rec.createdBy}</KV>
-                    <KV k="Created On">{rec.createdOn}</KV>
-                    <KV k="Last Updated By">{rec.updatedBy}</KV>
-                    <KV k="Last Updated On">{rec.updatedOn}</KV>
-                </Grid>
-            </DCard>
+        <DetailShell backTo={BASE}>
+            <DetailHeader
+                title={rec.name}
+                subtitle={`Slug · ${rec.slug}`}
+                status={rec.status}
+                editTo={`${BASE}/${rec.id}/edit`}
+            >
+                <p className="text-sm text-cell-text">{rec.description || "No description"}</p>
+            </DetailHeader>
+
+            <DSection title="Audit">
+                <DTiles four>
+                    <DTile label="Created By">{rec.createdBy}</DTile>
+                    <DTile label="Created On">{rec.createdOn}</DTile>
+                    <DTile label="Last Updated By">{rec.updatedBy}</DTile>
+                    <DTile label="Last Updated On">{rec.updatedOn}</DTile>
+                </DTiles>
+            </DSection>
         </DetailShell>
     );
 }
