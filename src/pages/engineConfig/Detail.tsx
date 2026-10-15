@@ -4,6 +4,7 @@ import { DetailHeader, DetailShell, DSection, DTile, DTiles } from "@/components
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import { providers, weightFields, weightTypes, type EngineConfig } from "@/data/engine";
 import { engineConfigsService } from "@/services/engineConfigs.service";
+import EmptyState from "@/components/shared/EmptyState";
 
 const BASE = "/catalog/engine-configuration";
 const dash = (s: string) => s || "-";
@@ -49,7 +50,7 @@ export default function EngineConfigDetail() {
                 </DTiles>
             </DSection>
 
-            {c.signals.length === 0 && <DSection title="Signals"><p className="text-sm text-muted">No signals configured.</p></DSection>}
+            {c.signals.length === 0 && <DSection title="Signals"><EmptyState compact title="No signals configured" /></DSection>}
             {c.signals.map((s, i) => (
                 <DSection key={s.uid} title={`Signal ${i + 1}`}>
                     <DTiles>

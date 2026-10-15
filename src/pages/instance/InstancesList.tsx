@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ListShell, { type Col } from "@/components/catalog/ListShell";
 import type { FilterField } from "@/components/catalog/ListDrawers";
 import { Toggle } from "@/components/catalog/FormBits";
-import { AdminNotice, useIsAdmin } from "@/components/catalog/PageState";
+import { AdminNotice, ErrorBox, LoadingBox, useIsAdmin } from "@/components/catalog/PageState";
 import InstanceDrawer, { type InstanceDraft } from "@/components/catalog/InstanceDrawer";
 import { useApp } from "@/hooks/useApp";
 import type { Status } from "@/data/catalog";
-import { instances, type Instance } from "@/data/instances";
+import type { Instance } from "@/data/instances";
+import { entityService } from "@/services/entity.service";
 import { statusFilterOptions } from "@/utils/catalog";
 
 const BASE = "/instances";
@@ -17,31 +18,60 @@ export default function InstancesList() {
     const isAdmin = useIsAdmin();
     const nav = useNavigate();
     const { toast } = useApp();
-    const [rows, setRows] = useState<Instance[]>([...instances]);
+    const [rows, setRows] = useState<Instance[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
     const [drawer, setDrawer] = useState(false);
+    const [editing, setEditing] = useState<Instance | null>(null);
+
+    const load = useCallback(async () => {
+        setLoading(true);
+        setError("");
+        try { setRows(await entityService.list()); }
+        catch (e) { setError(e instanceof Error ? e.message : "Failed to load entities"); }
+        finally { setLoading(false); }
+    }, []);
+
+    useEffect(() => { if (isAdmin) void load(); }, [isAdmin, load]);
 
     if (!isAdmin) return <AdminNotice />;
+    if (loading) return <LoadingBox />;
+    if (error) return <ErrorBox message={error} onRetry={load} />;
 
-    const setStatus = (id: string, on: boolean) => {
+    const setStatus = async (id: string, on: boolean) => {
         const s: Status = on ? "Active" : "Inactive";
-        instances.forEach((i) => { if (i.id === id) i.status = s; }); // keeps the mock store in sync
-        setRows((r) => r.map((x) => (x.id === id ? { ...x, status: s } : x)));
-        toast(`Instance ${on ? "activated" : "deactivated"}`);
+        try {
+            await entityService.update(id, { status: s });
+            setRows((r) => r.map((x) => (x.id === id ? { ...x, status: s } : x)));
+            toast(`Entity ${on ? "activated" : "deactivated"}`);
+        } catch (e) {
+            toast(e instanceof Error ? e.message : "Update failed");
+        }
     };
 
-    const create = (d: InstanceDraft) => {
-        const rec: Instance = { id: `i${Date.now()}`, ...d, status: "Active", products: [] };
-        instances.push(rec);
-        setRows((r) => [...r, rec]);
-        toast("Instance created");
+    const save = async (d: InstanceDraft) => {
+        if (editing) {
+            const rec = await entityService.update(editing.id, {
+                name: d.name,
+                description: d.description,
+                // only send the image if it changed, so a name-only edit does not resend the large base64
+                imageUrl: d.imageUrl !== editing.imageUrl ? d.imageUrl : undefined,
+            });
+            setRows((r) => r.map((x) => (x.id === editing.id ? { ...rec, products: x.products } : x)));
+            toast("Entity updated");
+            return;
+        }
+        const rec = await entityService.create(d);
+        setRows((r) => [rec, ...r]);
+        toast("Entity created");
     };
 
     const cols: Col<Instance>[] = [
-        { key: "name", label: "Instance Name", link: true, render: (r) => r.name },
+        { key: "name", label: "Entity Name", link: true, render: (r) => r.name },
         {
             key: "status", label: "Status", render: (r) => (
                 <div className="flex items-center gap-2">
-                    <Toggle label={`Toggle ${r.name}`} on={r.status === "Active"} onChange={(v) => setStatus(r.id, v)} />
+                    <Toggle label={`Toggle ${r.name}`} on={r.status === "Active"} onChange={(v) => void setStatus(r.id, v)} />
                     <span>{r.status}</span>
                 </div>
             ),
@@ -62,18 +92,20 @@ export default function InstancesList() {
                 cols={cols}
                 basePath={BASE}
                 createLabel="Create Entity"
-                rowLabel="instances"
-                searchPlaceholder="Search instances…"
+                rowLabel="entities"
+                searchPlaceholder="Search entities…"
                 cards={(r) => [
-                    { label: "Total Instances", value: r.length },
+                    { label: "Total Entities", value: r.length },
                     { label: "Active", value: r.filter((x) => x.status === "Active").length },
                     { label: "Total Products", value: r.reduce((n, x) => n + x.products.length, 0) },
                 ]}
                 filterFields={fields}
                 match={(r, q, f) => (f.status === "all" || r.status === f.status) && (!q || r.name.toLowerCase().includes(q))}
-                onCreate={() => setDrawer(true)}
+                onCreate={() => { setEditing(null); setDrawer(true); }}
+                onEdit={(id) => { const r = rows.find((x) => x.id === id); if (r) { setEditing(r); setDrawer(true); } }}
             />
-            <InstanceDrawer open={drawer} onClose={() => setDrawer(false)} onCreate={create} />
+            <InstanceDrawer open={drawer} initial={editing}
+                onClose={() => { setDrawer(false); setEditing(null); }} onSubmit={save} />
         </>
     );
 }

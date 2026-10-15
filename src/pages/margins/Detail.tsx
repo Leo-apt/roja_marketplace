@@ -4,6 +4,7 @@ import { DetailHeader, DetailShell, DSection, DTile, DTiles } from "@/components
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import { marginsService, type MarginRec } from "@/services/margins.service";
 import { usd } from "@/utils/catalog";
+import EmptyState from "@/components/shared/EmptyState";
 
 const BASE = "/catalog/margins";
 
@@ -47,7 +48,7 @@ export default function MarginsDetail() {
                             <span key={x} className="rounded-md bg-brandsoft px-3 py-1 text-xs font-semibold text-brand">{x}</span>
                         ))}
                     </div>
-                ) : <p className="text-sm text-muted">No features.</p>}
+                ) : <EmptyState compact title="No features" />}
             </DSection>
 
             <DSection title="Audit">

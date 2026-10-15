@@ -6,6 +6,7 @@ import Pagination from "@/components/shared/Pagination";
 import { btn, SearchField } from "./FormBits";
 import { CatalogFilterDrawer, ColumnsDrawer, type FilterField } from "./ListDrawers";
 import StatCards, { type Stat } from "./StatCards";
+import EmptyState from "@/components/shared/EmptyState";
 
 export interface Col<T> {
     key: string;
@@ -28,6 +29,7 @@ interface Props<T extends { id: string }> {
     cards?: (rows: T[]) => Stat[];
     onDelete?: (id: string) => void;
     onCreate?: () => void;
+    onEdit?: (id: string) => void;
 }
 
 const SIZE = 8;
@@ -35,7 +37,7 @@ const th = "whitespace-nowrap border-b border-linesoft bg-surfacealt px-3 py-3 t
 const td = "whitespace-nowrap border-b border-linesoft px-3 py-3 align-middle text-xs text-td-text";
 
 export default function ListShell<T extends { id: string }>({
-    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, onCreate,
+    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, onCreate, onEdit,
 }: Props<T>) {
     const nav = useNavigate();
     const { openDrawer } = useApp();
@@ -170,10 +172,10 @@ export default function ListShell<T extends { id: string }>({
                         </tbody>
                     </table>
                     {filtered.length === 0 && (
-                        <div className="px-5 py-12 text-center text-muted">
-                            <strong className="block">No matching records</strong>
-                            <p>Try a different search or clear the filters.</p>
-                        </div>
+                        <EmptyState
+                            title={filtersActive ? "No matching records" : "No records found"}
+                            message={filtersActive ? "Try a different search or clear the filters." : "Records you create will show up here."}
+                        />
                     )}
                 </div>
                 <Pagination
@@ -193,7 +195,7 @@ export default function ListShell<T extends { id: string }>({
                         className="flex w-full items-center gap-2 px-3 py-2 text-xs text-brand hover:bg-brandsoft">
                         <Eye className="size-4" /> View
                     </button>
-                    <button onClick={() => { nav(`${basePath}/${menu.id}/edit`); setMenu(null); }}
+                    <button onClick={() => { if (onEdit) onEdit(menu.id); else nav(`${basePath}/${menu.id}/edit`); setMenu(null); }}
                         className="flex w-full items-center gap-2 px-3 py-2 text-xs text-cell-text hover:bg-gray-50">
                         <Pencil className="size-4" /> Edit
                     </button>

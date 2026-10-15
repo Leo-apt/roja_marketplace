@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
 import { Calendar, Check as CheckIcon, Clock, Copy, Globe, KeyRound, Layers, Pencil, Plus, RefreshCw, Settings, Trash2 } from "lucide-react";
@@ -8,9 +8,13 @@ import Dropdownbox from "@/components/shared/Dropdownbox";
 import DatePicker from "@/components/shared/DatePicker";
 import { DCard, Grid, KV, NotFound, StatusBadge } from "@/components/catalog/DetailBits";
 import { btn, Field, MoneyInput, Radio, SearchField, TextArea, TextInput, Toggle } from "@/components/catalog/FormBits";
-import { instances, type Instance, type InstanceProduct } from "@/data/instances";
+import type { Instance, InstanceProduct } from "@/data/instances";
+import { entityService } from "@/services/entity.service";
+import { subEntityService } from "@/services/sub-entity.service";
+import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import type { Status } from "@/data/catalog";
 import { statusFormOptions, usd } from "@/utils/catalog";
+import EmptyState from "@/components/shared/EmptyState";
 
 const BASE = "/instances";
 
@@ -41,7 +45,7 @@ function ProductsTab({ inst, subId, enabled, onToggle }: {
     const upd = <K extends keyof InstanceProduct>(k: K, v: InstanceProduct[K]) => setDraft((d) => (d ? { ...d, [k]: v } : d));
 
     if (!items.length) {
-        return <div className="py-10 text-center text-sm text-muted">No products are associated with this instance.</div>;
+        return <EmptyState title="No products yet" message="No products are associated with this entity." />;
     }
 
     return (
@@ -267,7 +271,11 @@ function TokenTab({ subs, tokens, onSave, onDelete }: {
                 <div className="max-w-[360px]"><SearchField value={q} placeholder="Search sub entities…" onChange={setQ} /></div>
             </DCard>
 
-            {shown.length === 0 && <div className="rounded-xl border border-line bg-white px-5 py-10 text-center text-sm text-muted">No sub entities found.</div>}
+            {shown.length === 0 && (
+                <div className="rounded-xl border border-line bg-white">
+                    <EmptyState title="No sub entities found" />
+                </div>
+            )}
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {shown.map((s) => {
@@ -329,10 +337,11 @@ function TokenStatusLine({ name, rec }: { name: string; rec?: TokenRec }) {
 /* ---------------- Sub entity drawer (create + edit) ---------------- */
 interface SubEntity { id: string; name: string; description: string }
 
-function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (name: string, description: string) => void }) {
+function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (name: string, description: string) => Promise<void> }) {
     const [name, setName] = useState(initial?.name ?? "");
     const [desc, setDesc] = useState(initial?.description ?? "");
     const [err, setErr] = useState("");
+    const [saving, setSaving] = useState(false);
     return (
         <Drawer
             title={initial ? "Edit Sub Entity" : "New Sub Entity"}
@@ -341,12 +350,19 @@ function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (na
             colored
             footer={(close) => (
                 <>
-                    <button className={btn.cancel} onClick={close}>Cancel</button>
-                    <button className={btn.primary} onClick={() => {
+                    <button className={btn.cancel} onClick={close} disabled={saving}>Cancel</button>
+                    <button className={`${btn.primary} disabled:opacity-60`} disabled={saving} onClick={async () => {
                         if (!name.trim()) { setErr("Name is required"); return; }
-                        onSave(name.trim(), desc.trim());
-                        close();
-                    }}>{initial ? "Save" : "Create"}</button>
+                        setSaving(true);
+                        try {
+                            await onSave(name.trim(), desc.trim());
+                            close();
+                        } catch (e) {
+                            setErr(e instanceof Error ? e.message : "Save failed");
+                        } finally {
+                            setSaving(false);
+                        }
+                    }}>{saving ? "Saving…" : initial ? "Save" : "Create"}</button>
                 </>
             )}
         >
@@ -364,19 +380,44 @@ function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (na
 export default function InstanceDetail() {
     const { id } = useParams();
     const { openDrawer, toast } = useApp();
-    const inst = instances.find((i) => i.id === id);
+    const [inst, setInst] = useState<Instance | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [loadErr, setLoadErr] = useState("");
+    const load = useCallback(async (iid: string) => {
+        setLoading(true);
+        setLoadErr("");
+        try { setInst(await entityService.get(iid)); }
+        catch (e) { setLoadErr(e instanceof Error ? e.message : "Failed to load entity"); }
+        finally { setLoading(false); }
+    }, []);
+    useEffect(() => { if (id) void load(id); }, [id, load]);
     const [tab, setTab] = useState("entity");
-    const [subs, setSubs] = useState<SubEntity[]>([
-        { id: "local", name: "Sub Entity 1", description: "" },
-        { id: "staging", name: "Sub Entity 2", description: "" },
-    ]);
-    const [subId, setSubId] = useState("local");
+    const [subs, setSubs] = useState<SubEntity[]>([]);
+    const [subId, setSubId] = useState("");
+    const [subsLoading, setSubsLoading] = useState(true);
+    const [subsErr, setSubsErr] = useState("");
+    const loadSubs = useCallback(async (eid: string) => {
+        setSubsLoading(true);
+        setSubsErr("");
+        try {
+            const list = await subEntityService.list(eid);
+            setSubs(list);
+            setSubId((cur) => (list.some((s) => s.id === cur) ? cur : list[0]?.id ?? ""));
+        } catch (e) {
+            setSubsErr(e instanceof Error ? e.message : "Failed to load sub entities");
+        } finally {
+            setSubsLoading(false);
+        }
+    }, []);
+    useEffect(() => { if (id) void loadSubs(id); }, [id, loadSubs]);
     const [enabled, setEnabled] = useState<Record<string, boolean>>({});
     const [tokens, setTokens] = useState<Record<string, TokenRec>>({});
     const [info, setInfo] = useState<Partial<Pick<Instance, "name" | "description" | "status">>>({});
     const [editingInfo, setEditingInfo] = useState(false);
     const [infoDraft, setInfoDraft] = useState<{ name: string; description: string; status: Status } | null>(null);
     const [infoErr, setInfoErr] = useState("");
+    if (loading) return <LoadingBox />;
+    if (loadErr) return <ErrorBox message={loadErr} onRetry={() => id && void load(id)} backTo={BASE} />;
     if (!inst) return <NotFound backTo={BASE} />;
     const view = { ...inst, ...info };
     const startInfoEdit = () => {
@@ -385,22 +426,32 @@ export default function InstanceDetail() {
         setEditingInfo(true);
     };
     const cancelInfoEdit = () => { setEditingInfo(false); setInfoDraft(null); setInfoErr(""); };
-    const saveInfo = () => {
+    const saveInfo = async () => {
         if (!infoDraft) return;
         if (!infoDraft.name.trim()) { setInfoErr("Name is required"); return; }
-        setInfo({ name: infoDraft.name.trim(), description: infoDraft.description.trim(), status: infoDraft.status });
-        cancelInfoEdit();
-        toast("Instance details updated");
+        try {
+            await entityService.update(inst.id, {
+                name: infoDraft.name.trim(),
+                description: infoDraft.description.trim(),
+                status: infoDraft.status,
+            });
+            setInfo({ name: infoDraft.name.trim(), description: infoDraft.description.trim(), status: infoDraft.status });
+            cancelInfoEdit();
+            toast("Entity details updated");
+        } catch (e) {
+            setInfoErr(e instanceof Error ? e.message : "Update failed"); // duplicate name shows under the field
+        }
     };
 
-    const addSub = (name: string, description: string) => {
-        const s = { id: `s${Date.now()}`, name, description };
+    const addSub = async (name: string, description: string) => {
+        const s = await subEntityService.create(inst.id, { name, description });
         setSubs((l) => [...l, s]);
         setSubId(s.id);
         toast("Sub entity created");
     };
-    const editSub = (sid: string, name: string, description: string) => {
-        setSubs((l) => l.map((s) => (s.id === sid ? { ...s, name, description } : s)));
+    const editSub = async (sid: string, name: string, description: string) => {
+        const s = await subEntityService.update(sid, { name, description });
+        setSubs((l) => l.map((x) => (x.id === sid ? s : x)));
         toast("Sub entity updated");
     };
 
@@ -415,7 +466,7 @@ export default function InstanceDetail() {
                     <div className="min-w-0 flex-1">
                         {editingInfo && infoDraft ? (
                             <div className="grid gap-4 rounded-xl border border-line bg-surfacealt p-4 md:grid-cols-2">
-                                <Field label="Instance Name" required error={infoErr}>
+                                <Field label="Entity Name" required error={infoErr}>
                                     <TextInput value={infoDraft.name} onChange={(e) => setInfoDraft((d) => d && { ...d, name: e.target.value })} />
                                 </Field>
                                 <Field label="Status">
@@ -430,7 +481,7 @@ export default function InstanceDetail() {
                             <>
                                 <div className="flex items-center gap-4">
                                     <h2 className="truncate text-base font-bold text-sidebar-text-active">{view.name}</h2>
-                                    <button type="button" aria-label="Edit instance details" title="Edit"
+                                    <button type="button" aria-label="Edit entity details" title="Edit"
                                         className="ml-2 inline-flex size-8 shrink-0 items-center justify-center rounded-lg border border-white/30 bg-white/10 text-white transition hover:bg-white/20"
                                         onClick={startInfoEdit}>
                                         <Pencil className="size-3.5" />
@@ -444,11 +495,16 @@ export default function InstanceDetail() {
                     <div className="flex shrink-0 items-center gap-2">
                         {editingInfo ? (
                             <>
-                                <button className="inline-flex min-h-9 items-center rounded-lg border border-white/40 px-4 text-sm font-semibold text-white transition hover:bg-white/10" onClick={cancelInfoEdit}>Cancel</button>
-                                <button className="inline-flex min-h-9 items-center rounded-lg border border-white bg-white px-4 text-sm font-semibold text-ink transition hover:bg-white/90" onClick={saveInfo}>Save</button>
+                                <button className={btn.cancel} onClick={cancelInfoEdit}>Cancel</button>
+                                <button className={btn.primary} onClick={() => void saveInfo()}>Save</button>
                             </>
                         ) : (
-                            <StatusBadge status={view.status} />
+                            <>
+                                <StatusBadge status={view.status} />
+                                <button type="button" className={btn.brand} onClick={startInfoEdit}>
+                                    <Pencil className="size-4" /> Edit
+                                </button>
+                            </>
                         )}
                     </div>
                 </div>
@@ -484,12 +540,21 @@ export default function InstanceDetail() {
                     </button>
                 </section>
 
-                <TokenStatusLine name={subs.find((s) => s.id === subId)?.name ?? ""} rec={tokens[subId]} />
-
-                <section className="rounded-xl border border-line bg-white p-5">
-                    <ProductsTab inst={inst} subId={subId} enabled={enabled}
-                        onToggle={(pid, on) => setEnabled((m) => ({ ...m, [`${subId}:${pid}`]: on }))} />
-                </section>
+                {subsLoading ? <LoadingBox /> : subsErr ? (
+                    <ErrorBox message={subsErr} onRetry={() => void loadSubs(inst.id)} />
+                ) : subs.length === 0 ? (
+                    <div className="rounded-xl border border-line bg-white">
+                        <EmptyState title="No sub entities yet" message='Click "New Sub Entity" to add one.' />
+                    </div>
+                ) : (
+                    <>
+                        <TokenStatusLine name={subs.find((s) => s.id === subId)?.name ?? ""} rec={tokens[subId]} />
+                        <section className="rounded-xl border border-line bg-white p-5">
+                            <ProductsTab inst={inst} subId={subId} enabled={enabled}
+                                onToggle={(pid, on) => setEnabled((m) => ({ ...m, [`${subId}:${pid}`]: on }))} />
+                        </section>
+                    </>
+                )}
             </div>
             <div className={tab === "token" ? "" : "hidden"}>
                 <TokenTab subs={subs} tokens={tokens}

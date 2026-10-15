@@ -95,9 +95,9 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
     },
     instances: {
         title: "Entity", nav: "Entity", path: "/instances", icon: "▥",
-        subtitle: "Manage instances, their products and access tokens.",
-        dateLabel: "Created on", search: "instance name", statuses: ["all", "Active", "Inactive"], statusLabel: "Status",
-        scope: "All instances.",
+        subtitle: "Manage entities, their products and access tokens.",
+        dateLabel: "Created on", search: "entities name", statuses: ["all", "Active", "Inactive"], statusLabel: "Status",
+        scope: "All entities.",
     },
     engineConfig: {
         title: "Engine configuration", nav: "Engine configuration", path: "/catalog/engine-configuration", icon: "⚙",
