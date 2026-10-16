@@ -125,14 +125,11 @@ function ProductForm({ initial, categories, bundleOpts }: FormProps) {
             const dv = num(f.discountValue);
             if (dv > 0 && f.discountType === "percent" && dv > 100) e.discountValue = "Percentage cannot exceed 100";
             if (dv > 0 && f.discountType === "fixed" && dv > num(f.retail)) e.discountValue = "Discount cannot be more than the retail price";
-        }
-        if (s === 3) {
-            if (f.audience === "provider" && !f.productConfig) e.productConfig = "Product configuration is required";
-            if (!f.retail.trim()) e.retail = "Retail price is required";
             if (!f.wholesale.trim() || num(f.wholesale) < 0.01) e.wholesale = "Wholesale price must be at least 0.01";
             if (!f.markupValue.trim()) e.markup = "Roja markup is required";
-            if (!e.wholesale && !e.markup && !e.retail && m.margin < 0) e.markup = "Margin vs. retail cannot be negative. Lower the markup or raise the retail price.";
+            if (!e.retail && !e.wholesale && !e.markup && m.margin < 0) e.markup = "Margin vs. retail cannot be negative. Lower the markup or raise the retail price.";
         }
+        if (s === 3 && f.audience === "provider" && !f.productConfig) e.productConfig = "Product configuration is required";
         if (s === 4) {
             if (!f.placements.length) e.placements = "Select at least one placement";
             if (!f.freqCap.trim() || num(f.freqCap) < 1) e.freqCap = "Enter a frequency cap of 1 or more";
@@ -288,6 +285,21 @@ function ProductForm({ initial, categories, bundleOpts }: FormProps) {
                         <Field label="Selling Price">
                             <MoneyInput value={selling.toFixed(2)} readOnly />
                         </Field>
+                        <div className="hidden md:block" />
+                        <Field label="Wholesale Price" required error={errors.wholesale}>
+                            <MoneyInput value={f.wholesale} onChange={(v) => set("wholesale", v)} />
+                        </Field>
+                        <Field label="Roja Markup" required error={errors.markup}>
+                            <div className="grid grid-cols-2 gap-2">
+                                {dd("mtype", f.markupType, markupTypes, (v) => set("markupType", v as "flat" | "percent"))}
+                                <MoneyInput prefix={f.markupType === "percent" ? "%" : "$"} value={f.markupValue}
+                                    onChange={(v) => set("markupValue", v)} />
+                            </div>
+                        </Field>
+                        <Field label="Roja Buy Rate"><MoneyInput value={m.buy.toFixed(2)} readOnly /></Field>
+                        <Field label="Margin vs. Retail" note={m.margin < 0 ? `Negative margin: ${usd(m.margin)}` : undefined}>
+                            <MoneyInput value={m.margin.toFixed(2)} readOnly />
+                        </Field>
                         <Field label="Bundled" className="md:col-span-2">
                             <MultiSelect
                                 options={opts.map((o) => o.label)}
@@ -315,25 +327,6 @@ function ProductForm({ initial, categories, bundleOpts }: FormProps) {
                                     onChange={(e) => set("productConfig", e.target.value)} />
                             </Field>
                         )}
-                        <div className="grid gap-5 md:grid-cols-2">
-                            <Field label="Wholesale Price" required error={errors.wholesale}>
-                                <MoneyInput value={f.wholesale} onChange={(v) => set("wholesale", v)} />
-                            </Field>
-                            <Field label="Retail Price" required error={errors.retail}>
-                                <MoneyInput value={f.retail} onChange={(v) => set("retail", v)} />
-                            </Field>
-                            <Field label="Roja Markup" required error={errors.markup}>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {dd("mtype", f.markupType, markupTypes, (v) => set("markupType", v as "flat" | "percent"))}
-                                    <MoneyInput prefix={f.markupType === "percent" ? "%" : "$"} value={f.markupValue}
-                                        onChange={(v) => set("markupValue", v)} />
-                                </div>
-                            </Field>
-                            <Field label="Roja Buy Rate"><MoneyInput value={m.buy.toFixed(2)} readOnly /></Field>
-                            <Field label="Margin vs. Retail" note={m.margin < 0 ? `Negative margin: ${usd(m.margin)}` : undefined}>
-                                <MoneyInput value={m.margin.toFixed(2)} readOnly />
-                            </Field>
-                        </div>
                     </div>
                 </Section>
             )}
