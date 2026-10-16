@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
-import { Calendar, Check as CheckIcon, Clock, Copy, Globe, KeyRound, Layers, Pencil, Plus, RefreshCw, Settings, Trash2 } from "lucide-react";
+import { Calendar, Check as CheckIcon, ChevronRight, Clock, Copy, Globe, KeyRound, Layers, MousePointerClick, Package, Pencil, Percent, Plus, RefreshCw, Settings, Trash2 } from "lucide-react";
 import { useApp } from "@/hooks/useApp";
 import Drawer from "@/components/shared/Drawer";
 import Dropdownbox from "@/components/shared/Dropdownbox";
@@ -17,6 +17,9 @@ import type { Status } from "@/data/catalog";
 import { statusFormOptions, usd } from "@/utils/catalog";
 import EmptyState from "@/components/shared/EmptyState";
 import { apiKeyService, type Env, type TokenRec } from "@/services/api-key.service";
+import { marginsService, type MarginRec } from "@/services/margins.service";
+import EnvProductsDrawer from "@/components/catalog/EnvProductsDrawer";
+import EnvMarginsDrawer from "@/components/catalog/EnvMarginsDrawer";
 
 const BASE = "/instances";
 const ENVS: { value: Env; label: string }[] = [{ value: "sandbox", label: "Sandbox" }, { value: "live", label: "Live" }];
@@ -189,7 +192,7 @@ function TokenDrawer({ entityName, envLabel, regenerate, defaultNote, onSave }: 
     return (
         <Drawer
             title={`${regenerate ? "Regenerate" : "Generate"} ${envLabel} Token`}
-            kicker={`${entityName} · sub entity`}
+            kicker={`${entityName} · Environment`}
             width="min(460px, calc(100vw - 20px))"
             footer={(close) => (
                 <>
@@ -238,10 +241,11 @@ function TokenDrawer({ entityName, envLabel, regenerate, defaultNote, onSave }: 
     );
 }
 
-function TokenTab({ subs, tokens, loading, error, onRetry, onIssue, onRevoke }: {
+function TokenTab({ subs, tokens, loading, error, onRetry, onIssue, onRevoke, onCreateSub }: {
     subs: SubEntity[]; tokens: Record<string, Record<Env, TokenRec | null>>; loading: boolean; error: string; onRetry: () => void;
     onIssue: (sid: string, env: Env, notes: string, exp: Exp, custom: string) => Promise<{ token: string; expires: string }>;
     onRevoke: (sid: string, env: Env, keyId: string) => Promise<void>;
+    onCreateSub: () => void;
 }) {
     const { openDrawer, toast } = useApp();
     const [issued, setIssued] = useState<{ token: string; expires: string } | null>(null);
@@ -262,13 +266,21 @@ function TokenTab({ subs, tokens, loading, error, onRetry, onIssue, onRevoke }: 
 
     return (
         <div className="flex flex-col gap-4">
-            <DCard title="Manage the API tokens for each sub entity">
-                <p className="text-sm text-muted">Each sub entity can have one active Sandbox token and one active Live token. Regenerate to replace the current one.</p>
+            <DCard title="Manage the API tokens for each Environment">
+                <p className="text-sm text-muted">Each Environment can have one active Sandbox token and one active Live token. Regenerate to replace the current one.</p>
             </DCard>
 
             {subs.length === 0 && (
-                <div className="rounded-xl border border-line bg-white">
-                    <EmptyState title="No sub entities yet" message="Create a sub entity to generate its tokens." />
+                <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dotted border-brand bg-brandsoft px-6 py-10 text-center">
+                    <KeyRound className="size-8 text-brand" />
+                    <div>
+                        <h3 className="text-sm font-bold text-ink">Create an environment first</h3>
+                        <p className="mt-1 text-xs text-muted">Tokens are generated per Environment, with a Sandbox and a Live token each.</p>
+                        <p className="mt-2 text-xs font-semibold text-brand">Once it is created, you will be redirected to the Environment tab.</p>
+                    </div>
+                    <button className={btn.navy} onClick={onCreateSub}>
+                        <Plus className="size-4" /> New Environment
+                    </button>
                 </div>
             )}
 
@@ -321,28 +333,57 @@ function TokenTab({ subs, tokens, loading, error, onRetry, onIssue, onRevoke }: 
     );
 }
 
-/* ---------------- Token status line ---------------- */
-function TokenStatusLine({ name, recs }: { name: string; recs?: Record<Env, TokenRec | null> }) {
+/* ---------------- Summary cards ---------------- */
+function EnvSummaryCards({ name, total, picked, margined, recs, onProducts, onMargins }: {
+    name: string; total: number; picked: number; margined: number; recs?: Record<Env, TokenRec | null>;
+    onProducts: () => void; onMargins: () => void;
+}) {
+    const clickable = "group flex flex-col gap-3 rounded-xl border border-line bg-white p-5 text-left transition hover:-translate-y-0.5 hover:border-brand hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30";
+    const tile = "grid size-10 shrink-0 place-items-center rounded-lg bg-brandsoft text-brand";
+    const label = "text-xs font-bold uppercase tracking-wide text-muted";
+    const hint = (
+        <span className="mt-auto inline-flex items-center gap-1 text-xs font-semibold text-brand">
+            Click to manage <ChevronRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+        </span>
+    );
     return (
-        <section className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-white px-5 py-3 text-xs">
-            <strong className="text-ink">{name} Token Details -</strong>
-            {ENVS.map((en) => {
-                const rec = recs?.[en.value];
-                const left = rec ? daysLeftOf(rec) : null;
-                return (
-                    <span key={en.value} className="inline-flex items-center gap-1.5">
-                        <span className={`size-2 rounded-full ${rec ? "bg-good" : "bg-gray-300"}`} />
-                        <KeyRound className="size-3.5 text-muted" />
-                        <span className="font-semibold text-ink">{en.label}:</span>
-                        <span className="text-muted">{!rec ? "Not generated yet" : left == null ? "Never expires" : `${left} days left`}</span>
-                    </span>
-                );
-            })}
-        </section>
+        <div className="flex flex-col gap-2">
+            <p className="flex items-center gap-1.5 text-xs text-muted">
+                <MousePointerClick className="size-3.5" /> The Products and Margins cards are clickable. Click one to open it.
+            </p>
+            <div className="grid gap-4 md:grid-cols-3">
+                <button type="button" onClick={onProducts} className={clickable}>
+                    <span className="flex items-center gap-3"><span className={tile}><Package className="size-5" /></span><span className={label}>Total Products</span></span>
+                    <span className="text-3xl font-bold text-ink">{picked}<span className="ml-2 text-sm font-medium text-muted">of {total} available</span></span>
+                    {hint}
+                </button>
+                <button type="button" onClick={onMargins} className={clickable}>
+                    <span className="flex items-center gap-3"><span className={tile}><Percent className="size-5" /></span><span className={label}>Margined Products</span></span>
+                    <span className="text-3xl font-bold text-ink">{margined}<span className="ml-2 text-sm font-medium text-muted">of {picked} selected</span></span>
+                    {hint}
+                </button>
+                <section className="flex flex-col gap-3 rounded-xl border border-line bg-white p-5">
+                    <span className="flex items-center gap-3"><span className={tile}><KeyRound className="size-5" /></span><span className={label}>{name} Token Details</span></span>
+                    <div className="flex flex-col gap-2 text-xs">
+                        {ENVS.map((en) => {
+                            const rec = recs?.[en.value];
+                            const left = rec ? daysLeftOf(rec) : null;
+                            return (
+                                <span key={en.value} className="inline-flex items-center gap-1.5">
+                                    <span className={`size-2 rounded-full ${rec ? "bg-good" : "bg-gray-300"}`} />
+                                    <span className="font-semibold text-ink">{en.label}:</span>
+                                    <span className="text-muted">{!rec ? "Not generated yet" : left == null ? "Never expires" : `${left} days left`}</span>
+                                </span>
+                            );
+                        })}
+                    </div>
+                </section>
+            </div>
+        </div>
     );
 }
 
-/* ---------------- Sub entity drawer (create + edit) ---------------- */
+/* ---------------- Environment drawer (create + edit) ---------------- */
 interface SubEntity { id: string; name: string; description: string }
 
 function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (name: string, description: string) => Promise<void> }) {
@@ -352,8 +393,8 @@ function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (na
     const [saving, setSaving] = useState(false);
     return (
         <Drawer
-            title={initial ? "Edit Sub Entity" : "New Sub Entity"}
-            kicker="Sub entity"
+            title={initial ? "Edit Environment" : "New Environment"}
+            kicker="Environment"
             width="min(420px, calc(100vw - 20px))"
             footer={(close) => (
                 <>
@@ -373,11 +414,11 @@ function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (na
                 </>
             )}
         >
-            <Field label="Sub Entity Name" required error={err}>
+            <Field label="Environment Name" required error={err}>
                 <TextInput value={name} placeholder="e.g. Local" onChange={(e) => setName(e.target.value)} />
             </Field>
             <Field label="Description">
-                <TextArea rows={4} value={desc} placeholder="What is this sub entity used for?" onChange={(e) => setDesc(e.target.value)} />
+                <TextArea rows={4} value={desc} placeholder="What is this Environment used for?" onChange={(e) => setDesc(e.target.value)} />
             </Field>
         </Drawer>
     );
@@ -386,7 +427,7 @@ function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (na
 /* ---------------- Page ---------------- */
 export default function InstanceDetail() {
     const { id } = useParams();
-    const { openDrawer, toast } = useApp();
+    const { openDrawer, toast, toastError } = useApp();
     const [inst, setInst] = useState<Instance | null>(null);
     const [loading, setLoading] = useState(true);
     const [loadErr, setLoadErr] = useState("");
@@ -411,13 +452,20 @@ export default function InstanceDetail() {
             setSubs(list);
             setSubId((cur) => (list.some((s) => s.id === cur) ? cur : list[0]?.id ?? ""));
         } catch (e) {
-            setSubsErr(e instanceof Error ? e.message : "Failed to load sub entities");
+            setSubsErr(e instanceof Error ? e.message : "Failed to load environments");
         } finally {
             setSubsLoading(false);
         }
     }, []);
     useEffect(() => { if (id) void loadSubs(id); }, [id, loadSubs]);
     const [enabled, setEnabled] = useState<Record<string, boolean>>({});
+    const [allProducts, setAllProducts] = useState<ProductRec[]>([]);
+    const [margins, setMargins] = useState<MarginRec[]>([]);
+    const [picked, setPicked] = useState<Record<string, string[]>>({}); // mock: subId -> product ids
+    useEffect(() => {
+        productsService.list().then(setAllProducts).catch(() => toastError("Failed to load products"));
+        marginsService.list().then(setMargins).catch(() => toastError("Failed to load margins"));
+    }, [toastError]);
     const [tokens, setTokens] = useState<Record<string, Record<Env, TokenRec | null>>>({});
     const [tokenLoading, setTokenLoading] = useState(true);
     const [tokenErr, setTokenErr] = useState("");
@@ -430,7 +478,7 @@ export default function InstanceDetail() {
         } catch (e) { setTokenErr(e instanceof Error ? e.message : "Failed to load tokens"); }
         finally { setTokenLoading(false); }
     }, []);
-    // runs after the sub entity list loads, not when one is added
+    // runs after the Environment list loads, not when one is added
     useEffect(() => { if (!subsLoading) void loadTokens(subs); }, [subsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
     const [info, setInfo] = useState<Partial<Pick<Instance, "name" | "description" | "status">>>({});
     const [editingInfo, setEditingInfo] = useState(false);
@@ -440,6 +488,19 @@ export default function InstanceDetail() {
     if (loadErr) return <ErrorBox message={loadErr} onRetry={() => id && void load(id)} backTo={BASE} />;
     if (!inst) return <NotFound backTo={BASE} />;
     const view = { ...inst, ...info };
+    const envName = subs.find((s) => s.id === subId)?.name ?? view.name;
+    const pickedIds = picked[subId] ?? [];
+    const marginedIds = new Set(margins.map((m) => m.productId));
+    const marginedCount = pickedIds.filter((pid) => marginedIds.has(pid)).length;
+    const openProducts = () => openDrawer(
+        <EnvProductsDrawer envName={envName} products={allProducts} initial={pickedIds}
+            onSave={(ids) => { setPicked((m) => ({ ...m, [subId]: ids })); toast("Products saved"); }} />);
+    const openMargins = () => {
+        if (!pickedIds.length) { toastError("Select products first"); return; }
+        openDrawer(
+            <EnvMarginsDrawer envName={envName} products={allProducts.filter((p) => pickedIds.includes(p.id))} margins={margins}
+                onSaved={(recs) => setMargins((l) => [...l.filter((x) => !recs.some((r) => r.productId === x.productId)), ...recs])} />);
+    };
     const startInfoEdit = () => {
         setInfoDraft({ name: view.name, description: view.description ?? "", status: view.status });
         setInfoErr("");
@@ -468,12 +529,12 @@ export default function InstanceDetail() {
         setSubs((l) => [...l, s]);
         setSubId(s.id);
         setTokens((m) => ({ ...m, [s.id]: { sandbox: null, live: null } }));
-        toast("Sub entity created");
+        toast("Environment created");
     };
     const editSub = async (sid: string, name: string, description: string) => {
         const s = await subEntityService.update(sid, { name, description });
         setSubs((l) => l.map((x) => (x.id === sid ? s : x)));
-        toast("Sub entity updated");
+        toast("Environment updated");
     };
 
     const issueToken = async (sid: string, env: Env, notes: string, exp: Exp, custom: string) => {
@@ -539,7 +600,7 @@ export default function InstanceDetail() {
                     </div>
                 </div>
                 <div role="tablist" aria-label="Entity tabs" className="flex gap-1 bg-sidebar-border px-2 pt-2">
-                    {([["entity", "Sub Entity", Layers], ["token", "Token Generation", KeyRound]] as const).map(([k, t, Icon]) => (
+                    {([["entity", "Environments", Layers], ["token", "Token Generation", KeyRound]] as const).map(([k, t, Icon]) => (
                         <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
                             className={`inline-flex items-center gap-2 rounded-t-lg border border-b-0 px-5 py-3 text-xs font-bold normal-case transition ${tab === k
                                 ? "border-brand bg-brand text-white"
@@ -552,7 +613,7 @@ export default function InstanceDetail() {
 
             {/* both tabs stay mounted so unsaved edits and the token form survive tab switches */}
             <div className={tab === "entity" ? "flex flex-col gap-4" : "hidden"}>
-                <section className="flex w-full min-w-0 items-center gap-2 rounded-xl border border-line bg-white p-3">
+                <section className={`${subs.length === 0 ? "hidden" : "flex"} w-full min-w-0 items-center gap-2 rounded-xl border border-line bg-white p-3`}>
                     <div className="thin-scrollbar flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1">
                         {subs.map((s) => {
                             const active = s.id === subId;
@@ -568,19 +629,27 @@ export default function InstanceDetail() {
                         })}
                     </div>
                     <button className={`${btn.navy} shrink-0`} onClick={() => openDrawer(<SubEntityDrawer onSave={addSub} />)}>
-                        <Plus className="size-4" /> New Sub Entity
+                        <Plus className="size-4" /> New Environment
                     </button>
                 </section>
 
                 {subsLoading ? <LoadingBox /> : subsErr ? (
                     <ErrorBox message={subsErr} onRetry={() => void loadSubs(inst.id)} />
                 ) : subs.length === 0 ? (
-                    <div className="rounded-xl border border-line bg-white">
-                        <EmptyState title="No sub entities yet" message='Click "New Sub Entity" to add one.' />
+                    <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dotted border-brand bg-brandsoft px-6 py-10 text-center">
+                        <Layers className="size-8 text-brand" />
+                        <div>
+                            <h3 className="text-sm font-bold text-ink">No environments yet</h3>
+                            <p className="mt-1 text-xs text-muted">Create an environment to manage its products and tokens.</p>
+                        </div>
+                        <button className={btn.navy} onClick={() => openDrawer(<SubEntityDrawer onSave={addSub} />)}>
+                            <Plus className="size-4" /> New Environment
+                        </button>
                     </div>
                 ) : (
                     <>
-                        <TokenStatusLine name={subs.find((s) => s.id === subId)?.name ?? view.name} recs={tokens[subId]} />
+                        <EnvSummaryCards name={envName} total={allProducts.length} picked={pickedIds.length} margined={marginedCount}
+                            recs={tokens[subId]} onProducts={openProducts} onMargins={openMargins} />
                         <section className="rounded-xl border border-line bg-white p-5">
                             <ProductsTab subId={subId} enabled={enabled}
                                 onToggle={(pid, env, on) => setEnabled((m) => ({ ...m, [`${subId}:${env}:${pid}`]: on }))}
@@ -591,7 +660,8 @@ export default function InstanceDetail() {
             </div>
             <div className={tab === "token" ? "" : "hidden"}>
                 <TokenTab subs={subs} tokens={tokens} loading={tokenLoading} error={tokenErr}
-                    onRetry={() => void loadTokens(subs)} onIssue={issueToken} onRevoke={revokeToken} />
+                    onRetry={() => void loadTokens(subs)} onIssue={issueToken} onRevoke={revokeToken}
+                    onCreateSub={() => openDrawer(<SubEntityDrawer onSave={async (n, d) => { await addSub(n, d); setTab("entity"); }} />)} />
             </div>
         </div>
     );

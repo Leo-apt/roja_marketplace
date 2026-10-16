@@ -148,10 +148,10 @@ export default function ListShell<T extends { id: string }>({
                             <tr>
                                 <th className={`${th} pl-5`}>S.No</th>
                                 {shown.map((c) => (
-                                    <th key={c.key} className={`${th} ${c.align === "right" ? "text-right" : c.align === "center" ? "text-center" : ""}`}>
+                                    <th key={c.key} className={th}>
                                         {canSort(c) ? (
                                             <button type="button" onClick={() => toggleSort(c.key)}
-                                                className={`inline-flex items-center gap-1 ${c.align === "right" ? "flex-row-reverse" : ""}`}>
+                                                className="inline-flex items-center gap-1">
                                                 {c.label}
                                                 {sort?.key === c.key
                                                     ? (sort.dir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />)
@@ -168,7 +168,7 @@ export default function ListShell<T extends { id: string }>({
                                 <tr key={r.id} className="hover:bg-row-hover">
                                     <td className={`${td} pl-5`}>{start + i + 1}</td>
                                     {shown.map((c) => (
-                                        <td key={c.key} className={`${td} ${c.align === "right" ? "text-right tabular-nums" : c.align === "center" ? "text-center tabular-nums" : ""}`}>
+                                        <td key={c.key} className={`${td} ${c.align ? "tabular-nums" : ""}`}>
                                             {c.link ? (
                                                 <button type="button" onClick={() => nav(`${basePath}/${r.id}`)}
                                                     className="text-left font-semibold text-link hover:underline">

@@ -42,6 +42,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
             if (e.key !== "Escape") return;
+            if (e.defaultPrevented) return;
             if (dialog) setDialog(null);
             else setDrawer(null);
         };
