@@ -128,9 +128,10 @@ function ProductForm({ initial, categories, bundleOpts }: FormProps) {
         }
         if (s === 3) {
             if (f.audience === "provider" && !f.productConfig) e.productConfig = "Product configuration is required";
+            if (!f.retail.trim()) e.retail = "Retail price is required";
             if (!f.wholesale.trim() || num(f.wholesale) < 0.01) e.wholesale = "Wholesale price must be at least 0.01";
             if (!f.markupValue.trim()) e.markup = "Roja markup is required";
-            if (!e.wholesale && !e.markup && m.margin < 0) e.markup = "Margin vs. retail cannot be negative. Lower the markup or raise the retail price.";
+            if (!e.wholesale && !e.markup && !e.retail && m.margin < 0) e.markup = "Margin vs. retail cannot be negative. Lower the markup or raise the retail price.";
         }
         if (s === 4) {
             if (!f.placements.length) e.placements = "Select at least one placement";
@@ -317,6 +318,9 @@ function ProductForm({ initial, categories, bundleOpts }: FormProps) {
                         <div className="grid gap-5 md:grid-cols-2">
                             <Field label="Wholesale Price" required error={errors.wholesale}>
                                 <MoneyInput value={f.wholesale} onChange={(v) => set("wholesale", v)} />
+                            </Field>
+                            <Field label="Retail Price" required error={errors.retail}>
+                                <MoneyInput value={f.retail} onChange={(v) => set("retail", v)} />
                             </Field>
                             <Field label="Roja Markup" required error={errors.markup}>
                                 <div className="grid grid-cols-2 gap-2">
