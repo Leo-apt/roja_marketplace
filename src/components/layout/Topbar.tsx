@@ -22,6 +22,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 
@@ -30,7 +31,7 @@ type QuickAction = {
   hint: string;
   icon: LucideIcon;
   tone: string; // tailwind classes for the icon tile
-  onSelect: () => void;
+  path: string;
 };
 
 const QUICK_ACTIONS: QuickAction[] = [
@@ -39,35 +40,35 @@ const QUICK_ACTIONS: QuickAction[] = [
     hint: "Create and manage product categories",
     icon: FolderTree,
     tone: "bg-blue-50 text-blue-600 ring-1 ring-inset ring-blue-100 group-hover/item:bg-blue-100",
-    onSelect: () => {},
+    path: "/catalog/product-categories",
   },
   {
     label: "Add Bundles",
     hint: "Create and manage product bundles",
     icon: PackagePlus,
     tone: "bg-violet-50 text-violet-600 ring-1 ring-inset ring-violet-100 group-hover/item:bg-violet-100",
-    onSelect: () => {},
+    path: "/catalog/bundles",
   },
   {
     label: "Create Product",
     hint: "Add new products and manage details",
     icon: Package,
     tone: "bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-100 group-hover/item:bg-emerald-100",
-    onSelect: () => {},
+    path: "/catalog/products",
   },
   {
     label: "Margins",
     hint: "Configure product profit margins",
     icon: Percent,
     tone: "bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-100 group-hover/item:bg-amber-100",
-    onSelect: () => {},
+    path: "/catalog/margins",
   },
   {
     label: "Engine Configuration",
     hint: "Configure engines and business rules",
     icon: SlidersHorizontal,
     tone: "bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-100 group-hover/item:bg-rose-100",
-    onSelect: () => {},
+    path: "/catalog/engine-configuration",
   },
 ];
 
@@ -135,6 +136,7 @@ function IconButton({
 }
 
 function QuickActions() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -187,9 +189,8 @@ function QuickActions() {
         className={`group/trigger inline-flex h-12 items-center gap-3 rounded-2xl pl-1.5 pr-3 ${cardBase}`}
       >
         <span
-          className={`grid size-9 place-items-center rounded-xl bg-topbar-avatar-bg text-topbar-avatar-text transition-transform duration-500 tb-spring group-hover/trigger:rotate-6 ${
-            open ? "rotate-12 scale-110" : ""
-          }`}
+          className={`grid size-9 place-items-center rounded-xl bg-topbar-avatar-bg text-topbar-avatar-text transition-transform duration-500 tb-spring group-hover/trigger:rotate-6 ${open ? "rotate-12 scale-110" : ""
+            }`}
         >
           <Zap className="size-[18px]" />
         </span>
@@ -198,9 +199,8 @@ function QuickActions() {
           <span className="text-[11px] text-muted">Shortcuts &amp; Tools</span>
         </span>
         <ChevronDown
-          className={`size-4 text-muted transition-transform duration-500 tb-ease max-[850px]:hidden ${
-            open ? "rotate-180" : ""
-          }`}
+          className={`size-4 text-muted transition-transform duration-500 tb-ease max-[850px]:hidden ${open ? "rotate-180" : ""
+            }`}
         />
       </button>
 
@@ -242,7 +242,7 @@ function QuickActions() {
                 tabIndex={open ? 0 : -1}
                 onClick={() => {
                   setOpen(false);
-                  a.onSelect();
+                  navigate(a.path);
                 }}
                 style={{ "--i": i } as React.CSSProperties}
                 className={`group/item relative flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left outline-none transition-[background-color,transform] duration-200 tb-ease hover:bg-gray-50 focus-visible:bg-gray-50 focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.985]`}
@@ -328,9 +328,8 @@ function ProfileMenu({
           {displayName}
         </span>
         <ChevronDown
-          className={`size-4 text-muted transition-transform duration-300 ease-out max-[850px]:hidden ${
-            open ? "rotate-180" : ""
-          }`}
+          className={`size-4 text-muted transition-transform duration-300 ease-out max-[850px]:hidden ${open ? "rotate-180" : ""
+            }`}
         />
       </button>
 
@@ -387,11 +386,11 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
   // Replace with user.name (or similar) if you have it.
   const displayName = email
     ? email
-        .split("@")[0]
-        .split(/[._-]+/)
-        .filter(Boolean)
-        .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-        .join(" ")
+      .split("@")[0]
+      .split(/[._-]+/)
+      .filter(Boolean)
+      .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+      .join(" ")
     : "Account";
 
   // TODO: drive this from your notifications state
@@ -400,7 +399,7 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
   const shortcut = useMemo(
     () =>
       typeof navigator !== "undefined" &&
-      /Mac|iPhone|iPad/i.test(navigator.platform)
+        /Mac|iPhone|iPad/i.test(navigator.platform)
         ? "⌘K"
         : "Ctrl K",
     [],
@@ -489,16 +488,14 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
         </button>
 
         <div
-          className={`relative w-full max-w-[340px] rounded-xl transition-[max-width,box-shadow] duration-500 tb-ease ${
-            focused
-              ? "max-w-[440px] shadow-[0_0_0_3px] shadow-brand/[0.06]"
-              : ""
-          }`}
+          className={`relative w-full max-w-[340px] rounded-xl transition-[max-width,box-shadow] duration-500 tb-ease ${focused
+            ? "max-w-[440px] shadow-[0_0_0_3px] shadow-brand/[0.06]"
+            : ""
+            }`}
         >
           <Search
-            className={`pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 transition-colors duration-200 ${
-              focused ? "text-brand" : "text-muted"
-            }`}
+            className={`pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 transition-colors duration-200 ${focused ? "text-brand" : "text-muted"
+              }`}
           />
           <input
             ref={inputRef}
@@ -525,18 +522,16 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
               setQuery("");
               inputRef.current?.focus();
             }}
-            className={`absolute right-2.5 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-muted transition-all duration-200 hover:bg-gray-100 hover:text-ink ${
-              query
-                ? "scale-100 opacity-100"
-                : "pointer-events-none scale-75 opacity-0"
-            }`}
+            className={`absolute right-2.5 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-muted transition-all duration-200 hover:bg-gray-100 hover:text-ink ${query
+              ? "scale-100 opacity-100"
+              : "pointer-events-none scale-75 opacity-0"
+              }`}
           >
             <X className="size-4" />
           </button>
           <kbd
-            className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-sans text-[10px] font-semibold text-muted transition-opacity duration-200 max-[850px]:hidden ${
-              query || focused ? "opacity-0" : "opacity-100"
-            }`}
+            className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-sans text-[10px] font-semibold text-muted transition-opacity duration-200 max-[850px]:hidden ${query || focused ? "opacity-0" : "opacity-100"
+              }`}
           >
             {shortcut}
           </kbd>

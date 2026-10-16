@@ -15,15 +15,15 @@ const sellOf = (b: Bundle) =>
 const cols: Col<Bundle>[] = [
     { key: "name", label: "Name", link: true, render: (r) => r.name },
     { key: "pricingType", label: "Pricing Type", render: (r) => r.pricingType },
-    { key: "price", label: "Price ($)", align: "right", render: (r) => usd(r.price) },
+    { key: "price", label: "Price ($)", align: "center", render: (r) => usd(r.price) },
     { key: "discount", label: "Discount", render: (r) => discountOf(r) },
-    { key: "selling", label: "Selling Price ($)", align: "right", render: (r) => usd(sellOf(r)) },
+    { key: "selling", label: "Selling Price ($)", align: "center", render: (r) => usd(sellOf(r)) },
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
 ];
 
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong");
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 10;
 
 export default function BundlesList() {
     const isAdmin = useIsAdmin();
@@ -37,6 +37,16 @@ export default function BundlesList() {
     const [tick, setTick] = useState(0);
     const [del, setDel] = useState<Bundle | null>(null);
     const [deleting, setDeleting] = useState(false);
+    const [stats, setStats] = useState<{ total: number; addOn: number; bundle: number } | null>(null);
+
+    useEffect(() => {
+        if (!isAdmin) return;
+        let live = true;
+        bundlesService.dashboard()
+            .then((d) => { if (live) setStats({ total: d.totalData, addOn: d.pricingTypeCounts.addOn, bundle: d.pricingTypeCounts.bundle }); })
+            .catch(() => { /* cards show "-" if this fails */ });
+        return () => { live = false; };
+    }, [isAdmin, tick]);
 
     useEffect(() => {
         if (!isAdmin) return;
@@ -77,10 +87,10 @@ export default function BundlesList() {
                 createLabel="Create Bundle"
                 rowLabel="bundles"
                 searchPlaceholder="Search name, short code, description…"
-                cards={(r) => [
-                    { label: "Total Bundles", value: total },
-                    { label: "Add Ons (this page)", value: r.filter((x) => x.pricingType === "Add On").length },
-                    { label: "Bundles (this page)", value: r.filter((x) => x.pricingType === "Bundle").length },
+                cards={() => [
+                    { label: "Total Bundles", value: stats?.total ?? "-" },
+                    { label: "Add Ons", value: stats?.addOn ?? "-" },
+                    { label: "Bundles", value: stats?.bundle ?? "-" },
                 ]}
                 filterFields={[]}
                 match={() => true}

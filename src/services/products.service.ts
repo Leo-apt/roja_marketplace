@@ -21,7 +21,9 @@ interface ApiProduct {
     marketplace?: { termsUrl?: string; imageUrl?: string; imageBackgroundColor?: string; shortDescription?: string; longDescription?: string; pricingRenewalContent?: string };
     dashboard?: { template?: string; title?: string; callToAction?: string; featureTitle?: string; shortDescription?: string };
     retailPrice?: number | null; discountType?: string | null; discountValue?: number | null; sellingPrice?: number;
-    bundled?: (Ref | string)[]; audienceType?: string; configurationId?: string | null; placements?: string[]; perUserFrequencyCap?: number | null;
+    wholesalePrice?: number | null; markupType?: "flat" | "percent" | null; markupValue?: number | null;
+    markupAmount?: number | null; markupPercent?: number | null; buyRate?: number | null; marginVsRetail?: number | null;
+    bundled?: (Ref | string)[]; audienceType?: string; configurationId?: Ref | string | null; placements?: string[]; perUserFrequencyCap?: number | null;
     publishMode?: string; scheduledAt?: string | null; expiresAt?: string | null;
     createdBy: unknown; updatedBy: unknown; createdAt: string; updatedAt: string;
 }
@@ -31,8 +33,10 @@ export interface ProductRec {
     termsUrl: string; imageUrl: string; imageBg: string; shortDescription: string; longDescription: string; pricingContent: string;
     template: string; dashTitle: string; cta: string; featureTitle: string; dashShort: string;
     retail: number | null; discountType: DiscountType | ""; discountValue: number | null; sellingPrice: number | null;
+    wholesale: number | null; markupType: "flat" | "percent"; markupValue: number | null;
+    markupAmount: number | null; markupPercent: number | null; buyRate: number | null; marginVsRetail: number | null;
     bundles: { id: string; name: string; shortCode: string }[];
-    audience: "everyone" | "provider"; configurationId: string; placements: string[]; freqCap: number | null;
+    audience: "everyone" | "provider"; configurationId: string; configurationName: string; placements: string[]; freqCap: number | null;
     publish: "now" | "later"; availableFrom: string; expiresOn: string;
     createdBy: string; createdOn: string; updatedBy: string; updatedOn: string;
 }
@@ -42,6 +46,7 @@ export interface ProductInput {
     imageBg: string; shortDescription: string; longDescription: string; pricingContent: string;
     template: string; dashTitle: string; cta: string; featureTitle: string; dashShort: string;
     retail: string; discountType: DiscountType; discountValue: string; bundleIds: string[];
+    wholesale: string; markupType: "flat" | "percent"; markupValue: string;
     audience: "everyone" | "provider"; productConfig: string; placements: string[]; freqCap: string;
     publish: "now" | "later"; availableFrom: string; expires: boolean; expiresOn: string;
 }
@@ -69,6 +74,7 @@ const ref = (v: Ref | string | undefined) =>
 
 const toUi = (a: ApiProduct): ProductRec => {
     const cat = ref(a.category);
+    const cfg = ref(a.configurationId ?? undefined);
     const m = a.marketplace ?? {};
     const d = a.dashboard ?? {};
     return {
@@ -81,9 +87,16 @@ const toUi = (a: ApiProduct): ProductRec => {
         discountType: a.discountType === API_PERCENT ? "percent" : a.discountType === API_FIXED ? "fixed" : "",
         discountValue: a.discountValue ?? null,
         sellingPrice: a.sellingPrice ?? a.retailPrice ?? null,
+        wholesale: a.wholesalePrice ?? null,
+        markupType: a.markupType ?? "flat",
+        markupValue: a.markupValue ?? null,
+        markupAmount: a.markupAmount ?? null,
+        markupPercent: a.markupPercent ?? null,
+        buyRate: a.buyRate ?? null,
+        marginVsRetail: a.marginVsRetail ?? null,
         bundles: (a.bundled ?? []).map(ref).filter((b): b is NonNullable<typeof b> => !!b),
         audience: a.audienceType === "providerRules" ? "provider" : "everyone",
-        configurationId: a.configurationId ?? "",
+        configurationId: cfg?.id ?? "", configurationName: cfg?.name ?? "",
         placements: a.placements ?? [], freqCap: a.perUserFrequencyCap ?? null,
         publish: a.publishMode === "scheduled" ? "later" : "now",
         availableFrom: ymd(a.scheduledAt), expiresOn: ymd(a.expiresAt),
@@ -118,6 +131,9 @@ function toPayload(i: ProductInput, isEdit: boolean) {
         retailPrice: i.retail.trim() ? num(i.retail) : clear,
         discountType: hasDisc ? (i.discountType === "percent" ? API_PERCENT : API_FIXED) : clear,
         discountValue: hasDisc ? dv : clear,
+        wholesalePrice: i.wholesale.trim() ? num(i.wholesale) : clear,
+        markupType: i.markupType,
+        markupValue: i.markupValue.trim() ? num(i.markupValue) : clear,
         bundled: i.bundleIds,
         audienceType: i.audience === "provider" ? "providerRules" : "everyone",
         configurationId: i.audience === "provider" ? opt(i.productConfig) : clear,
@@ -144,6 +160,20 @@ export const productsService = {
             page++;
         }
         return out.map(toUi);
+    },
+    /** One server page, for the list screen. status is the API value: active | inactive | draft | scheduled. */
+    listPage: (page = 1, limit = 8, search = "", status = "") => {
+        const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
+        if (search) qs.set("search", search);
+        if (status) qs.set("status", status);
+        return call<ApiProduct[]>(`/products/get-all-products?${qs}`)
+            .then((r) => ({ rows: r.data.map(toUi), total: r.meta?.total ?? r.data.length }));
+    },
+    /** Total records for a status (or all), used by the stat cards. */
+    count: (status = "") => {
+        const qs = new URLSearchParams({ page: "1", limit: "1" });
+        if (status) qs.set("status", status);
+        return call<ApiProduct[]>(`/products/get-all-products?${qs}`).then((r) => r.meta?.total ?? r.data.length);
     },
     get: (id: string) => call<ApiProduct>(`/products/${id}/get-product`).then((r) => toUi(r.data)),
     create: (i: ProductInput) =>

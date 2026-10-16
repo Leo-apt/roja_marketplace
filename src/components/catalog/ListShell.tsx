@@ -13,7 +13,7 @@ export interface Col<T> {
     key: string;
     label: string;
     render: (r: T) => ReactNode;
-    align?: "right";
+    align?: "right" | "center";
     link?: boolean;
     sortValue?: (r: T) => string | number | null;
 }
@@ -148,7 +148,7 @@ export default function ListShell<T extends { id: string }>({
                             <tr>
                                 <th className={`${th} pl-5`}>S.No</th>
                                 {shown.map((c) => (
-                                    <th key={c.key} className={`${th} ${c.align === "right" ? "text-right" : ""}`}>
+                                    <th key={c.key} className={`${th} ${c.align === "right" ? "text-right" : c.align === "center" ? "text-center" : ""}`}>
                                         {canSort(c) ? (
                                             <button type="button" onClick={() => toggleSort(c.key)}
                                                 className={`inline-flex items-center gap-1 ${c.align === "right" ? "flex-row-reverse" : ""}`}>
@@ -168,7 +168,7 @@ export default function ListShell<T extends { id: string }>({
                                 <tr key={r.id} className="hover:bg-row-hover">
                                     <td className={`${td} pl-5`}>{start + i + 1}</td>
                                     {shown.map((c) => (
-                                        <td key={c.key} className={`${td} ${c.align === "right" ? "text-right tabular-nums" : ""}`}>
+                                        <td key={c.key} className={`${td} ${c.align === "right" ? "text-right tabular-nums" : c.align === "center" ? "text-center tabular-nums" : ""}`}>
                                             {c.link ? (
                                                 <button type="button" onClick={() => nav(`${basePath}/${r.id}`)}
                                                     className="text-left font-semibold text-link hover:underline">

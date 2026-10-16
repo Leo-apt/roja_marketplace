@@ -78,10 +78,6 @@ export default function ProductCategoriesList() {
                 createLabel="Create Category"
                 rowLabel="categories"
                 searchPlaceholder="Search categories…"
-                cards={() => [
-                    { label: "Total Categories", value: data.total },
-                    { label: "Active", value: data.total },
-                ]}
                 filterFields={fields}
                 match={() => true}
                 server={{ total: data.total, pageSize: PAGE_SIZE, loading, onChange: (p, s) => { setPage(p); setQ(s); } }}

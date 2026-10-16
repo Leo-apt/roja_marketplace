@@ -20,8 +20,8 @@ import {
 } from "lucide-react";
 import { viewInfo, type ViewKey } from "@/utils/views";
 import { displayGroups } from "@/utils/navGroups";
-import logo from "@/assets/logo.png";
-import logoIcon from "@/assets/logo-icon.png";
+import logo from "@/assets/roja-logo.png";
+import logoIcon from "@/assets/roja-logo.png";
 
 const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
     overview: LayoutDashboard,
@@ -226,8 +226,8 @@ export default function Sidebar({
                 {/* Logo */}
                 <div
                     className={`relative mt-1 shrink-0 transition-all duration-300 ${collapsed
-                        ? "mb-5 h-14 min-[851px]:mb-4 min-[851px]:h-12"
-                        : "mb-5 h-14"
+                        ? "mb-1 h-14 min-[851px]:mb-4 min-[851px]:h-12"
+                        : "mb-1 h-14"
                         }`}
                 >
                     <div className="pointer-events-none absolute left-1/2 top-1/2 size-16 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand/10 blur-2xl" />

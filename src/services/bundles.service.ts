@@ -128,6 +128,9 @@ export const bundlesService = {
             total: r.data.total,
         }));
     },
+    dashboard: () =>
+        apiCall<{ totalData: number; pricingTypeCounts: { addOn: number; bundle: number } }>("/bundles/dashBoard-bundles")
+            .then((r) => r.data),
     get: (id: string) => apiCall<ApiBundle>(`/bundles/${id}/get-bundle`).then((r) => toUi(r.data)),
     create: (i: BundleInput) =>
         apiCall<ApiBundle>("/bundles/create-bundles", { method: "POST", body: toPayload(i, false) }).then((r) => toUi(r.data)),

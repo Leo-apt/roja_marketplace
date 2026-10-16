@@ -16,17 +16,19 @@ import {
     btn, Check, Field, MoneyInput, MultiSelect, RadioCard, Section, Stepper, TextArea, TextInput,
 } from "@/components/catalog/FormBits";
 import { productTemplates, type Status } from "@/data/catalog";
-import { discountTypeFormOptions, isHex, num, sellingPrice, statusFormOptions, usd, type DiscountType } from "@/utils/catalog";
+import { calcMargin, discountTypeFormOptions, isHex, num, sellingPrice, statusFormOptions, usd, type DiscountType } from "@/utils/catalog";
 
 const BASE = "/catalog/products";
 const TODAY = ymd(new Date().toISOString());
 const STEPS = ["Overview", "Content", "Pricing & Bundle", "Audience", "Placement", "Preview"];
+const markupTypes = [{ value: "flat", label: "$ Flat" }, { value: "percent", label: "% Percent" }];
 
 interface Form {
     name: string; categoryId: string; providerId: string; status: Status;
     termsFile: File | null; imageFile: File | null; imageBg: string; shortDescription: string; longDescription: string; pricingContent: string;
     template: string; dashTitle: string; cta: string; featureTitle: string; dashShort: string;
     retail: string; discountType: DiscountType; discountValue: string; bundleIds: string[];
+    wholesale: string; markupType: "flat" | "percent"; markupValue: string;
     audience: "everyone" | "provider"; productConfig: string;
     placements: string[]; freqCap: string; publish: "now" | "later"; availableFrom: string; expires: boolean; expiresOn: string;
 }
@@ -37,6 +39,7 @@ const empty: Form = {
     termsFile: null, imageFile: null, imageBg: "", shortDescription: "", longDescription: "", pricingContent: "",
     template: "", dashTitle: "", cta: "", featureTitle: "", dashShort: "",
     retail: "", discountType: "fixed", discountValue: "", bundleIds: [],
+    wholesale: "", markupType: "flat", markupValue: "",
     audience: "everyone", productConfig: "", placements: [], freqCap: "", publish: "now", availableFrom: "", expires: false, expiresOn: "",
 };
 
@@ -54,6 +57,8 @@ const fromRec = (r: ProductRec): Form => ({
     template: r.template, dashTitle: r.dashTitle, cta: r.cta, featureTitle: r.featureTitle, dashShort: r.dashShort,
     retail: r.retail == null ? "" : String(r.retail), discountType: r.discountType || "fixed",
     discountValue: r.discountValue == null ? "" : String(r.discountValue), bundleIds: r.bundles.map((b) => b.id),
+    wholesale: r.wholesale == null ? "" : String(r.wholesale), markupType: r.markupType,
+    markupValue: r.markupValue == null ? "" : String(r.markupValue),
     audience: r.audience, productConfig: r.configurationId, placements: r.placements, freqCap: r.freqCap == null ? "" : String(r.freqCap),
     publish: r.publish, availableFrom: r.availableFrom, expires: !!r.expiresOn, expiresOn: r.expiresOn,
 });
@@ -70,7 +75,9 @@ function ProductForm({ initial, categories, bundleOpts }: FormProps) {
     const [apiError, setApiError] = useState("");
     const [busy, setBusy] = useState<"" | "draft" | "publish">("");
     const [opts, setOpts] = useState(bundleOpts);
-    const [cfgOpts, setCfgOpts] = useState<{ value: string; label: string }[]>([]);
+    const [cfgOpts, setCfgOpts] = useState<{ value: string; label: string }[]>(
+        initial?.configurationId ? [{ value: initial.configurationId, label: initial.configurationName || initial.configurationId }] : [],
+    );
     const [cfgLoading, setCfgLoading] = useState(false);
     const [cfgLoaded, setCfgLoaded] = useState(false);
     const loadConfigs = () => {
@@ -87,6 +94,7 @@ function ProductForm({ initial, categories, bundleOpts }: FormProps) {
 
     const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((p) => ({ ...p, [k]: v }));
     const selling = sellingPrice(num(f.retail), f.discountType, num(f.discountValue));
+    const m = calcMargin(num(f.wholesale), num(f.retail), num(f.markupValue), f.markupType);
     const catName = categories.find((c) => c.id === f.categoryId)?.name ?? "-";
 
     const validate = (s: number): Errors => {
@@ -118,7 +126,12 @@ function ProductForm({ initial, categories, bundleOpts }: FormProps) {
             if (dv > 0 && f.discountType === "percent" && dv > 100) e.discountValue = "Percentage cannot exceed 100";
             if (dv > 0 && f.discountType === "fixed" && dv > num(f.retail)) e.discountValue = "Discount cannot be more than the retail price";
         }
-        if (s === 3 && f.audience === "provider" && !f.productConfig) e.productConfig = "Product configuration is required";
+        if (s === 3) {
+            if (f.audience === "provider" && !f.productConfig) e.productConfig = "Product configuration is required";
+            if (!f.wholesale.trim() || num(f.wholesale) < 0.01) e.wholesale = "Wholesale price must be at least 0.01";
+            if (!f.markupValue.trim()) e.markup = "Roja markup is required";
+            if (!e.wholesale && !e.markup && m.margin < 0) e.markup = "Margin vs. retail cannot be negative. Lower the markup or raise the retail price.";
+        }
         if (s === 4) {
             if (!f.placements.length) e.placements = "Select at least one placement";
             if (!f.freqCap.trim() || num(f.freqCap) < 1) e.freqCap = "Enter a frequency cap of 1 or more";
@@ -301,6 +314,22 @@ function ProductForm({ initial, categories, bundleOpts }: FormProps) {
                                     onChange={(e) => set("productConfig", e.target.value)} />
                             </Field>
                         )}
+                        <div className="grid gap-5 md:grid-cols-2">
+                            <Field label="Wholesale Price" required error={errors.wholesale}>
+                                <MoneyInput value={f.wholesale} onChange={(v) => set("wholesale", v)} />
+                            </Field>
+                            <Field label="Roja Markup" required error={errors.markup}>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {dd("mtype", f.markupType, markupTypes, (v) => set("markupType", v as "flat" | "percent"))}
+                                    <MoneyInput prefix={f.markupType === "percent" ? "%" : "$"} value={f.markupValue}
+                                        onChange={(v) => set("markupValue", v)} />
+                                </div>
+                            </Field>
+                            <Field label="Roja Buy Rate"><MoneyInput value={m.buy.toFixed(2)} readOnly /></Field>
+                            <Field label="Margin vs. Retail" note={m.margin < 0 ? `Negative margin: ${usd(m.margin)}` : undefined}>
+                                <MoneyInput value={m.margin.toFixed(2)} readOnly />
+                            </Field>
+                        </div>
                     </div>
                 </Section>
             )}
@@ -438,14 +467,14 @@ export default function CatalogProductsManage() {
         let live = true;
         Promise.all([
             categoriesService.list(),
-            bundlesService.list(),
+            bundlesService.list(1, 100),
             id ? productsService.get(id) : Promise.resolve(undefined),
         ])
             .then(([cats, bs, rec]) => {
                 if (!live) return;
                 const c = cats.map((x) => ({ id: x.id, name: x.name }));
                 if (rec && rec.categoryId && !c.some((x) => x.id === rec.categoryId)) c.push({ id: rec.categoryId, name: rec.categoryName });
-                setData({ rec, cats: c, opts: bs.map((b) => ({ id: b.id, label: `${b.name} (${b.shortCode})` })) });
+                setData({ rec, cats: c, opts: bs.rows.map((b) => ({ id: b.id, label: `${b.name} (${b.shortCode})` })) });
             })
             .catch((e) => { if (live) setError(e instanceof Error ? e.message : "Failed to load"); });
         return () => { live = false; };

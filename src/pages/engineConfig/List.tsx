@@ -82,7 +82,6 @@ export default function EngineConfigList() {
                 createLabel="Create Config"
                 rowLabel="configs"
                 searchPlaceholder="Search configs…"
-                cards={() => [{ label: "Total Configs", value: data.total }]}
                 filterFields={fields}
                 match={() => true}
                 server={{
