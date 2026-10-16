@@ -41,6 +41,12 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
 
 type Tip = { label: string; top: number; left: number };
 
+// Menu items to hide. Add or remove keys here to show or hide them.
+const HIDDEN: ViewKey[] = ["margins"];
+const visibleGroups = displayGroups
+    .map((g) => ({ ...g, items: g.items.filter((k) => !HIDDEN.includes(k)) }))
+    .filter((g) => g.items.length > 0);
+
 const CLOSED_KEY = "sidebar-closed-groups";
 
 function loadClosed(): string[] {
@@ -106,7 +112,7 @@ export default function Sidebar({
 
     // Navigating to a page re-opens the group that contains it
     useEffect(() => {
-        const g = displayGroups.find((grp) =>
+        const g = visibleGroups.find((grp) =>
             grp.items.some((k) => isActivePath(pathname, viewInfo[k].path)),
         );
         if (g && closed.includes(g.label)) {
@@ -258,7 +264,7 @@ export default function Sidebar({
                         }}
                         className="thin-scrollbar h-full overflow-y-auto overflow-x-hidden"
                     >
-                        {displayGroups.map((g, gi) => {
+                        {visibleGroups.map((g, gi) => {
                             // when the sidebar is icon-only, every group stays open
                             const groupOpen = collapsed || !closed.includes(g.label);
                             const hasActive = g.items.some((k) =>

@@ -471,7 +471,7 @@ export default function CatalogProductsManage() {
                 if (!live) return;
                 const c = cats.map((x) => ({ id: x.id, name: x.name }));
                 if (rec && rec.categoryId && !c.some((x) => x.id === rec.categoryId)) c.push({ id: rec.categoryId, name: rec.categoryName });
-                setData({ rec, cats: c, opts: bs.rows.map((b) => ({ id: b.id, label: `${b.name} (${b.shortCode})` })) });
+                setData({ rec, cats: c, opts: bs.rows.map((b) => ({ id: b.id, label: b.shortCode ? `${b.name} (${b.shortCode})` : b.name })) });
             })
             .catch((e) => { if (live) setError(e instanceof Error ? e.message : "Failed to load"); });
         return () => { live = false; };
