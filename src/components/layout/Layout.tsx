@@ -34,7 +34,7 @@ export default function Layout() {
     return (
         <>
             <Sidebar open={navOpen} onNavigate={() => setNavOpen(false)} collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
-            <main className={`min-w-0 transition-[margin] duration-300 ease-in-out max-[850px]:ml-0 print:ml-0 ${collapsed ? "ml-[226px] min-[851px]:ml-20" : "ml-[226px] max-[1180px]:ml-[198px]"}`}>
+            <main className={`min-w-0 transition-[margin] duration-300 ease-in-out max-[850px]:ml-0 print:ml-0 ${collapsed ? "ml-[250px] min-[851px]:ml-20" : "ml-[250px] max-[1180px]:ml-[220px]"}`}>
                 <Topbar onMenu={() => setNavOpen((o) => !o)} />
                 <div className="mx-auto max-w-[1650px] px-7 pb-8 pt-0 max-[1180px]:px-5 max-[850px]:px-4 max-[850px]:py-3 print:max-w-none print:p-0">
                     <div className="z-[25] mb-[14px] pb-2 min-[851px]:sticky min-[851px]:top-[70px] min-[851px]:-mx-5 min-[851px]:bg-white/40 min-[851px]:px-5 min-[851px]:pt-3 min-[851px]:backdrop-blur-md min-[1181px]:-mx-7 min-[1181px]:px-7 min-[1600px]:pt-4 print:hidden">

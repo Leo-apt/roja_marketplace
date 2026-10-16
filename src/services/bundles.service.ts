@@ -73,6 +73,7 @@ const toUi = (a: ApiBundle): Bundle => ({
     title: a.template?.title ?? "", shortDescription: a.template?.shortDescription ?? "",
     tIconFamily: a.template?.iconFamily ?? "", tAppIcon: a.template?.appIcon ?? "", tWebIcon: a.template?.webIcon ?? "",
     cardBg: a.template?.cardBackgroundColor ?? "", iconBg: a.template?.iconBackground ?? "",
+    bgImage: a.template?.backgroundImage ?? "",
     createdBy: who(a.createdBy), updatedBy: who(a.updatedBy), createdOn: fmt(a.createdAt), updatedOn: fmt(a.updatedAt),
 });
 
@@ -119,7 +120,14 @@ function toPayload(i: BundleInput, isEdit: boolean) {
 }
 
 export const bundlesService = {
-    list: () => apiCall<ApiBundle[]>("/bundles/admin/all").then((r) => r.data.map(toUi)),
+    list: (page = 1, limit = 8, search = "") => {
+        const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
+        if (search) qs.set("search", search);
+        return apiCall<{ data: ApiBundle[]; total: number }>(`/bundles/get-all-bundles?${qs}`).then((r) => ({
+            rows: r.data.data.map(toUi),
+            total: r.data.total,
+        }));
+    },
     get: (id: string) => apiCall<ApiBundle>(`/bundles/${id}/get-bundle`).then((r) => toUi(r.data)),
     create: (i: BundleInput) =>
         apiCall<ApiBundle>("/bundles/create-bundles", { method: "POST", body: toPayload(i, false) }).then((r) => toUi(r.data)),

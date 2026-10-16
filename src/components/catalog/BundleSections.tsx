@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Pencil } from "lucide-react";
 import type { Bundle } from "@/data/catalog";
-import { usd } from "@/utils/catalog";
+import { discountShort, sellingPrice, usd } from "@/utils/catalog";
 import { StatusBadge } from "./DetailBits";
 import { btn } from "./FormBits";
 
@@ -57,8 +57,20 @@ export default function BundleSections({ b, variant = "bundle", editTo }: {
                 </div>
                 <dl className="grid gap-3 p-6 sm:grid-cols-2 lg:grid-cols-3">
                     <Tile label="Pricing Type">{b.pricingType}</Tile>
+                    <Tile label="Discount">
+                        {b.discountOn && b.discountValue ? discountShort(b.discountType, b.discountValue) : "No discount"}
+                    </Tile>
+                    <Tile label="Selling Price">
+                        {b.price == null ? "-" : usd(sellingPrice(b.price, b.discountOn ? b.discountType : "", b.discountValue ?? 0))}
+                    </Tile>
                     <Tile label={p ? "Product Short Code" : "Feature Short Code"}>{b.shortCode}</Tile>
-                    <Tile label="Banner Image">N/A</Tile>
+                    <Tile label="Banner Image">
+                        {b.bgImage ? (
+                            <img
+                                src={b.bgImage.startsWith("http") ? b.bgImage : `data:image/jpeg;base64,${b.bgImage}`}
+                                alt="Banner" className="h-20 w-full rounded-md object-cover" />
+                        ) : "N/A"}
+                    </Tile>
                 </dl>
             </section>
 
@@ -70,6 +82,8 @@ export default function BundleSections({ b, variant = "bundle", editTo }: {
                             dangerouslySetInnerHTML={{ __html: b.longDescription || "-" }} />
                     </Row>
                     <Row label="Credential Note">{b.disclosure || "-"}</Row>
+                    <Row label="Disclaimer">{b.disclaimer || "-"}</Row>
+                    <Row label="Additional Information">{b.additionalInfo || "-"}</Row>
                     <Row label="Benefits List">
                         {b.benefits.length ? (
                             <ul className="grid gap-2 sm:grid-cols-2">

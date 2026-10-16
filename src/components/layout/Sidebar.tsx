@@ -220,7 +220,7 @@ export default function Sidebar({
 
             <aside
                 aria-label="Marketplace navigation"
-                className={`sb-root fixed inset-y-0 left-0 z-[15] flex w-[226px] flex-col overflow-x-hidden border-r border-sidebar-border bg-sidebar-bg px-4 py-6 text-sidebar-text shadow-[2px_0_8px_rgba(15,23,42,0.04)] transition-[width,transform] duration-300 ease-in-out max-[850px]:-translate-x-full print:hidden ${collapsed ? "min-[851px]:w-20" : "max-[1180px]:w-[198px]"
+                className={`sb-root fixed inset-y-0 left-0 z-[15] flex w-[250px] flex-col overflow-x-hidden border-r border-sidebar-border bg-sidebar-bg px-4 py-6 text-sidebar-text shadow-[2px_0_8px_rgba(15,23,42,0.04)] transition-[width,transform] duration-300 ease-in-out max-[850px]:-translate-x-full print:hidden ${collapsed ? "min-[851px]:w-20" : "max-[1180px]:w-[220px]"
                     } ${open ? "max-[850px]:translate-x-0" : ""}`}
             >
                 {/* Logo */}
@@ -387,7 +387,7 @@ export default function Sidebar({
                                                             data-label
                                                             className={`relative truncate transition-all duration-300 ${collapsed
                                                                 ? "min-[851px]:max-w-0 min-[851px]:opacity-0"
-                                                                : "max-w-[170px] opacity-100"
+                                                                : "max-w-[194px] opacity-100"
                                                                 }`}
                                                         >
                                                             {v.nav}

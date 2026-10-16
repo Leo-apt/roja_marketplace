@@ -3,6 +3,7 @@ import { useApp } from "@/hooks/useApp";
 import Drawer from "@/components/shared/Drawer";
 import SubscriptionBody from "./SubscriptionBody";
 import OrderDrawer from "./OrderDrawer";
+import { btn } from "@/components/catalog/FormBits";
 
 export default function SubscriptionDrawer({ id }: { id: string }) {
     const { openDrawer, closeLayers } = useApp();
@@ -15,13 +16,13 @@ export default function SubscriptionDrawer({ id }: { id: string }) {
             footer={
                 <>
                     <button
-                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
+                        className={btn.secondary}
                         onClick={() => openDrawer(<OrderDrawer id={s.order} />)}
                     >
                         View original order
                     </button>
                     <button
-                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
+                        className={btn.secondary}
                         onClick={closeLayers}
                     >
                         Close

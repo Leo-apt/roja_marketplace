@@ -6,6 +6,7 @@ import { viewInfo, type ViewKey } from "@/utils/views";
 import Drawer from "@/components/shared/Drawer";
 import Dropdownbox from "@/components/shared/Dropdownbox";
 import DatePicker from "@/components/shared/DatePicker";
+import { btn } from "@/components/catalog/FormBits";
 
 type Draft = Pick<Filters, "from" | "to" | "provider" | "status" | "type" | "stage" | "channel" | "negative">;
 
@@ -35,8 +36,6 @@ export default function FiltersDrawer({ view }: { view: ViewKey }) {
         close();
     };
 
-    const btn = "inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-[7px] font-semibold";
-
     return (
         <Drawer
             title="Filters"
@@ -44,8 +43,8 @@ export default function FiltersDrawer({ view }: { view: ViewKey }) {
             width="min(460px, calc(100vw - 20px))"
             footer={(close) => (
                 <>
-                    <button className={`${btn} border-line bg-white text-ink`} onClick={() => setD(pick(defaultFilters))}>Clear</button>
-                    <button className={`${btn} border-btn-primary bg-btn-primary text-white hover:bg-btn-primary-hover`} onClick={() => apply(close)}>Apply filters</button>
+                    <button className={btn.secondary} onClick={() => setD(pick(defaultFilters))}>Clear</button>
+                    <button className={btn.primary} onClick={() => apply(close)}>Apply filters</button>
                 </>
             )}
         >

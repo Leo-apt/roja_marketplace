@@ -1,5 +1,4 @@
 import ListShell, { type Col } from "@/components/catalog/ListShell";
-import type { FilterField } from "@/components/catalog/ListDrawers";
 import { StatusBadge } from "@/components/catalog/DetailBits";
 import { useEffect, useState } from "react";
 import type { Bundle } from "@/data/catalog";
@@ -7,8 +6,7 @@ import { AdminNotice, ErrorBox, LoadingBox, useIsAdmin } from "@/components/cata
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { useApp } from "@/hooks/useApp";
 import { bundlesService } from "@/services/bundles.service";
-import { discountShort, sellingPrice, statusFilterOptions, usd } from "@/utils/catalog";
-import { avg } from "@/components/catalog/StatCards";
+import { discountShort, sellingPrice, usd } from "@/utils/catalog";
 
 const discountOf = (b: Bundle) => (b.discountOn && b.discountValue ? discountShort(b.discountType, b.discountValue) : "No discount");
 const sellOf = (b: Bundle) =>
@@ -23,26 +21,19 @@ const cols: Col<Bundle>[] = [
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
 ];
 
-const fields: FilterField[] = [
-    {
-        key: "pricingType", label: "Pricing Type", options: [
-            { value: "all", label: "Select pricing type" }, { value: "Bundle", label: "Bundle" }, { value: "Add On", label: "Add On" }]
-    },
-    {
-        key: "discount", label: "Discount Type", options: [
-            { value: "all", label: "Select discount type" }, { value: "fixed", label: "Fixed" },
-            { value: "percent", label: "Percentage" }, { value: "none", label: "No discount" }]
-    },
-    { key: "status", label: "Status", options: statusFilterOptions },
-];
-
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong");
+
+const PAGE_SIZE = 8;
 
 export default function BundlesList() {
     const isAdmin = useIsAdmin();
     const { toast, toastError } = useApp();
-    const [rows, setRows] = useState<Bundle[] | null>(null);
+    const [rows, setRows] = useState<Bundle[]>([]);
+    const [total, setTotal] = useState(0);
+    const [ready, setReady] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [query, setQuery] = useState({ page: 1, q: "" });
     const [tick, setTick] = useState(0);
     const [del, setDel] = useState<Bundle | null>(null);
     const [deleting, setDeleting] = useState(false);
@@ -50,24 +41,26 @@ export default function BundlesList() {
     useEffect(() => {
         if (!isAdmin) return;
         let live = true;
-        bundlesService.list()
-            .then((r) => { if (live) setRows(r); })
-            .catch((e) => { if (live) setError(msg(e)); });
+        setLoading(true);
+        bundlesService.list(query.page, PAGE_SIZE, query.q)
+            .then((r) => { if (live) { setRows(r.rows); setTotal(r.total); setReady(true); } })
+            .catch((e) => { if (live) setError(msg(e)); })
+            .finally(() => { if (live) setLoading(false); });
         return () => { live = false; };
-    }, [isAdmin, tick]);
+    }, [isAdmin, query, tick]);
 
     if (!isAdmin) return <AdminNotice />;
-    if (error) return <ErrorBox message={error} onRetry={() => { setError(""); setRows(null); setTick((t) => t + 1); }} />;
-    if (!rows) return <LoadingBox />;
+    if (error) return <ErrorBox message={error} onRetry={() => { setError(""); setTick((t) => t + 1); }} />;
+    if (!ready) return <LoadingBox />;
 
     const confirmDelete = async () => {
         if (!del) return;
         setDeleting(true);
         try {
             await bundlesService.remove(del.id);
-            setRows((r) => (r ? r.filter((x) => x.id !== del.id) : r));
             toast("Bundle deleted");
             setDel(null);
+            setTick((t) => t + 1); // reload the current page from the server
         } catch (e) {
             toastError(msg(e));
         } finally {
@@ -83,20 +76,19 @@ export default function BundlesList() {
                 basePath="/catalog/bundles"
                 createLabel="Create Bundle"
                 rowLabel="bundles"
-                searchPlaceholder="Search bundles…"
+                searchPlaceholder="Search name, short code, description…"
                 cards={(r) => [
-                    { label: "Total Bundles", value: r.length },
-                    { label: "Add Ons", value: r.filter((x) => x.pricingType === "Add On").length },
-                    { label: "Bundles", value: r.filter((x) => x.pricingType === "Bundle").length },
-                    { label: "Avg Add-On Price", value: usd(avg(r.flatMap((x) => (x.price == null ? [] : [x.price])))) },
+                    { label: "Total Bundles", value: total },
+                    { label: "Add Ons (this page)", value: r.filter((x) => x.pricingType === "Add On").length },
+                    { label: "Bundles (this page)", value: r.filter((x) => x.pricingType === "Bundle").length },
                 ]}
-                filterFields={fields}
-                match={(r, q, f) => {
-                    const dKind = r.discountOn && r.discountValue ? r.discountType : "none";
-                    return (f.pricingType === "all" || r.pricingType === f.pricingType)
-                        && (f.discount === "all" || dKind === f.discount)
-                        && (f.status === "all" || r.status === f.status)
-                        && (!q || r.name.toLowerCase().includes(q));
+                filterFields={[]}
+                match={() => true}
+                server={{
+                    total,
+                    pageSize: PAGE_SIZE,
+                    loading,
+                    onChange: (page, q) => setQuery((p) => (p.page === page && p.q === q ? p : { page, q })),
                 }}
                 onDelete={(id) => setDel(rows.find((x) => x.id === id) ?? null)}
             />

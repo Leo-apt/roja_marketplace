@@ -30,9 +30,23 @@ export default function ProductCategoriesDetail() {
                 subtitle={`Slug · ${rec.slug}`}
                 status={rec.status}
                 editTo={`${BASE}/${rec.id}/edit`}
-            >
-                <p className="text-sm text-cell-text">{rec.description || "No description"}</p>
-            </DetailHeader>
+            />
+
+            <DSection title="Details">
+                <p className="break-words text-sm text-cell-text mb-6">
+                    <span className="font-semibold text-ink">Description :</span> {rec.description || "No description"}
+                </p>
+                <DTiles>
+                    <DTile label="Background Color">
+                        {rec.bgColor ? (
+                            <span className="inline-flex items-center gap-2">
+                                <span className="size-5 rounded-sm border border-line" style={{ background: rec.bgColor }} />
+                                <span className="font-mono">{rec.bgColor}</span>
+                            </span>
+                        ) : "-"}
+                    </DTile>
+                </DTiles>
+            </DSection>
 
             <DSection title="Audit">
                 <DTiles four>

@@ -1,4 +1,4 @@
-import { apiCall } from "./auth.service";
+import { apiCall, type Wrapped } from "./auth.service";
 import type { Status } from "@/data/catalog";
 
 interface ApiCategory {
@@ -58,11 +58,33 @@ const payload = (i: CategoryInput, isEdit: boolean) => {
 
 let listInflight: Promise<CategoryRec[]> | null = null; // shares one request between overlapping calls
 
+// pulls every page (100 per request), same approach as the products list
+type CategoryPage = ApiCategory[] | { data: ApiCategory[]; total: number };
+
+// the list comes back as { data, total, ... } inside the wrapper's data; a plain array (with meta) also works
+const unpack = (r: Wrapped<CategoryPage>) => {
+    const d = r.data;
+    return Array.isArray(d)
+        ? { items: d, total: r.meta?.total ?? d.length }
+        : { items: d.data, total: d.total };
+};
+
+async function fetchAll(): Promise<CategoryRec[]> {
+    const out: ApiCategory[] = [];
+    for (let page = 1; ; page++) {
+        const { items } = unpack(await apiCall<CategoryPage>(`/categories/get-all-categories?page=${page}&limit=100`));
+        out.push(...items);
+        if (items.length < 100) break; // last page
+    }
+    return out.map(toUi);
+}
+
 export const categoriesService = {
-    list: () =>
-    (listInflight ??= apiCall<ApiCategory[]>("/categories/get-all-categories")
-        .then((r) => r.data.map(toUi))
-        .finally(() => { listInflight = null; })),
+    list: () => (listInflight ??= fetchAll().finally(() => { listInflight = null; })),
+    // one page at a time, with the backend search (name, description, hex code)
+    listPage: (page: number, limit: number, search = "") =>
+        apiCall<CategoryPage>(`/categories/get-all-categories?page=${page}&limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ""}`)
+            .then((r) => { const p = unpack(r); return { rows: p.items.map(toUi), total: p.total }; }),
     get: (id: string) => apiCall<ApiCategory>(`/categories/${id}/get-categories`).then((r) => toUi(r.data)),
     create: (i: CategoryInput) =>
         apiCall<ApiCategory>("/categories/create-categories", { method: "POST", body: payload(i, false) }).then((r) => toUi(r.data)),

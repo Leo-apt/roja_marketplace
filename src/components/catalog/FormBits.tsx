@@ -141,6 +141,18 @@ export function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boo
     );
 }
 
+export function StatusToggle({ on, onChange, label, onText = "Active", offText = "Inactive" }: {
+    on: boolean; onChange: (v: boolean) => void; label: string; onText?: string; offText?: string;
+}) {
+    return (
+        <button type="button" role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)}
+            className={`relative h-7 w-24 shrink-0 rounded-full text-xs font-semibold text-white transition-colors ${on ? "bg-brand" : "bg-gray-500"}`}>
+            <span className={`absolute inset-y-0 flex items-center ${on ? "left-3" : "right-3"}`}>{on ? onText : offText}</span>
+            <span className={`absolute left-0.5 top-0.5 size-6 rounded-full bg-white shadow transition-transform ${on ? "translate-x-[68px]" : ""}`} />
+        </button>
+    );
+}
+
 export function FileInput({ accept, file, onChange }: { accept?: string; file: File | null; onChange: (f: File | null) => void }) {
     return (
         <label className="flex min-h-10 cursor-pointer items-stretch overflow-hidden rounded-md border border-line bg-white text-sm">

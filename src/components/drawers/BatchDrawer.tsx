@@ -6,11 +6,11 @@ import { DetailTable, Kv } from "@/components/shared/Kv";
 import { OrderLink } from "@/components/shared/Links";
 import { useState } from "react";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
-import PaidDialog from "@/components/dialogs/PaidDialog";
 import { money } from "@/utils/money";
+import { btn } from "@/components/catalog/FormBits";
 
 export default function BatchDrawer({ id }: { id: string }) {
-    const { batches, role, actor, advanceBatch, openDialog, closeLayers, toast } = useApp();
+    const { batches, role, actor, advanceBatch, closeLayers, toast } = useApp();
     const [showVoid, setShowVoid] = useState(false);
     const [voidReason, setVoidReason] = useState("");
     const b = batches.find((x) => x.id === id);
@@ -42,7 +42,7 @@ export default function BatchDrawer({ id }: { id: string }) {
                 kicker={`${b.payee} · supplier payout`}
                 footer={<>
                     <button
-                        className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-ink hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
+                        className={btn.secondary}
                         onClick={closeLayers}
                     >
                         Close
@@ -50,14 +50,14 @@ export default function BatchDrawer({ id }: { id: string }) {
                     {b.status === "Draft" && (
                         <>
                             <button
-                                className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-line bg-white px-3 py-[7px] font-semibold text-bad hover:enabled:border-btn-secondary-hover-border hover:enabled:bg-btn-secondary-hover-bg disabled:cursor-not-allowed disabled:opacity-50"
+                                className={`${btn.danger} disabled:opacity-50`}
                                 disabled={role !== "preparer"}
                                 onClick={() => setShowVoid(true)}
                             >
                                 Void draft
                             </button>
                             <button
-                                className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-btn-primary bg-btn-primary px-3 py-[7px] font-semibold text-white hover:enabled:border-btn-primary-hover hover:enabled:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+                                className={btn.primary}
                                 disabled={role !== "preparer"}
                                 onClick={() => advanceBatch(id, "Pending approval", "Submitted for independent approval")}
                             >
@@ -67,7 +67,7 @@ export default function BatchDrawer({ id }: { id: string }) {
                     )}
                     {b.status === "Pending approval" && (
                         <button
-                            className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-btn-primary bg-btn-primary px-3 py-[7px] font-semibold text-white hover:enabled:border-btn-primary-hover hover:enabled:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+                            className={btn.primary}
                             disabled={!canApprove}
                             onClick={() => advanceBatch(id, "Approved", "Approved by separate finance actor", { approvedBy: actor })}
                         >
@@ -76,7 +76,7 @@ export default function BatchDrawer({ id }: { id: string }) {
                     )}
                     {b.status === "Approved" && (
                         <button
-                            className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-btn-primary bg-btn-primary px-3 py-[7px] font-semibold text-white hover:enabled:border-btn-primary-hover hover:enabled:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+                            className={btn.primary}
                             disabled={role !== "approver"}
                             onClick={() => advanceBatch(id, "Payment submitted", "External payment submission recorded; not yet paid")}
                         >
@@ -85,7 +85,7 @@ export default function BatchDrawer({ id }: { id: string }) {
                     )}
                     {b.status === "Payment submitted" && (
                         <button
-                            className="inline-flex min-h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-btn-primary bg-btn-primary px-3 py-[7px] font-semibold text-white hover:enabled:border-btn-primary-hover hover:enabled:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+                            className={btn.primary}
                             disabled={role !== "approver"}
                             onClick={() => setShowVoid(true)}
                         >

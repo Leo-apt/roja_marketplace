@@ -1,4 +1,4 @@
-import { apiCall } from "./auth.service";
+import { apiCall, type Wrapped } from "./auth.service";
 import { fmt, who } from "./categories.service";
 import type { Status } from "@/data/catalog";
 import { newUid, type EngineConfig, type Signal, type WeightType } from "@/data/engine";
@@ -15,7 +15,7 @@ interface ApiSignal {
 interface ApiConfig {
     _id: string; providerId: string; offerType: string; name: string; category?: string; baseScore?: number;
     thresholds: { show: number; review: number; hide?: number };
-    signals?: ApiSignal[]; status: "active" | "inactive";
+    signals?: ApiSignal[]; status: boolean | "active" | "inactive";
     createdBy: unknown; updatedBy: unknown; createdAt: string; updatedAt: string;
 }
 
@@ -41,7 +41,7 @@ const toSignal = (s: ApiSignal): Signal => ({
 const toUi = (a: ApiConfig): EngineConfig => ({
     id: a._id, name: a.name, providerId: a.providerId, offerType: a.offerType, category: a.category ?? "",
     baseScore: str(a.baseScore), show: str(a.thresholds?.show), review: str(a.thresholds?.review), hide: str(a.thresholds?.hide),
-    status: a.status === "inactive" ? "Inactive" : "Active",
+    status: a.status === false || a.status === "inactive" ? "Inactive" : "Active",
     signals: (a.signals ?? []).map(toSignal),
     createdBy: who(a.createdBy), updatedBy: who(a.updatedBy), createdOn: fmt(a.createdAt), updatedOn: fmt(a.updatedAt),
 });
@@ -65,11 +65,38 @@ const toConfigPayload = (i: EngineConfigInput) => ({
     providerId: i.providerId, offerType: i.offerType, name: i.name.trim(), category: i.category.trim(),
     baseScore: num(i.baseScore),
     thresholds: { show: num(i.show), review: num(i.review), hide: num(i.hide) },
-    status: i.status === "Active" ? "active" : "inactive",
+    status: i.status === "Active",
 });
 
+type ConfigPage = ApiConfig[] | { data: ApiConfig[]; total: number };
+
+// the list comes back as { data, total, ... } inside the wrapper's data; a plain array (with meta) also works
+const unpack = (r: Wrapped<ConfigPage>) => {
+    const d = r.data;
+    return Array.isArray(d)
+        ? { items: d, total: r.meta?.total ?? d.length }
+        : { items: d.data, total: d.total };
+};
+
 export const engineConfigsService = {
-    list: () => apiCall<ApiConfig[]>(`${BASE}/get-all-configs?limit=100`).then((r) => r.data.map(toUi)),
+    // every page (100 per request)
+    list: async () => {
+        const out: ApiConfig[] = [];
+        for (let page = 1; ; page++) {
+            const { items } = unpack(await apiCall<ConfigPage>(`${BASE}/get-all-configs?page=${page}&limit=100`));
+            out.push(...items);
+            if (items.length < 100) break; // last page
+        }
+        return out.map(toUi);
+    },
+    // one page, with the backend search (name, provider id, offer type) and the offer type filter
+    listPage: (page: number, limit: number, search = "", offerType = "") => {
+        const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
+        if (search) qs.set("search", search);
+        if (offerType) qs.set("offerType", offerType);
+        return apiCall<ConfigPage>(`${BASE}/get-all-configs?${qs}`)
+            .then((r) => { const p = unpack(r); return { rows: p.items.map(toUi), total: p.total }; });
+    },
     get: (id: string) => apiCall<ApiConfig>(`${BASE}/${id}/get-config`).then((r) => toUi(r.data)),
     create: (i: EngineConfigInput) =>
         apiCall<ApiConfig>(`${BASE}/create-config`, {

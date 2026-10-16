@@ -30,6 +30,7 @@ export interface Bundle {
     longDescription: string; benefits: string[]; phone: string; portalUrl: string; promoCode: string; promoNote: string;
     disclosure: string; disclaimer: string; additionalInfo: string; insuranceInstructions: string;
     title: string; shortDescription: string; tIconFamily: string; tAppIcon: string; tWebIcon: string; cardBg: string; iconBg: string;
+    bgImage?: string;
     createdBy: string; updatedBy: string; createdOn: string; updatedOn: string;
 }
 type BundleSeed = Partial<Bundle> & Pick<Bundle, "id" | "name" | "pricingType" | "price">;

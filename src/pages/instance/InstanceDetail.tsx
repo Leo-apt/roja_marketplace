@@ -16,13 +16,15 @@ import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import type { Status } from "@/data/catalog";
 import { statusFormOptions, usd } from "@/utils/catalog";
 import EmptyState from "@/components/shared/EmptyState";
-import { apiKeyService, type TokenRec } from "@/services/api-key.service";
+import { apiKeyService, type Env, type TokenRec } from "@/services/api-key.service";
 
 const BASE = "/instances";
+const ENVS: { value: Env; label: string }[] = [{ value: "sandbox", label: "Sandbox" }, { value: "live", label: "Live" }];
 
 /* ---------------- Products tab ---------------- */
-function ProductsTab({ subId, enabled, onToggle }: {
-    subId: string; enabled: Record<string, boolean>; onToggle: (productId: string, on: boolean) => void;
+function ProductsTab({ subId, enabled, onToggle, onToggleAll }: {
+    subId: string; enabled: Record<string, boolean>; onToggle: (productId: string, env: Env, on: boolean) => void;
+    onToggleAll: (productIds: string[], env: Env, on: boolean) => void;
 }) {
     const [items, setItems] = useState<ProductRec[]>([]);
     const [selId, setSelId] = useState("");
@@ -51,6 +53,19 @@ function ProductsTab({ subId, enabled, onToggle }: {
 
     return (
         <div className="grid gap-4 md:grid-cols-[240px_1fr]">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surfacealt px-4 py-3 md:col-span-2">
+                <span className="text-xs font-bold uppercase tracking-wide text-ink">Select all products ({items.length})</span>
+                <div className="flex flex-wrap items-center gap-4">
+                    {ENVS.map((en) => (
+                        <div key={en.value} className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-ink">{en.label}</span>
+                            <Toggle label={`All products active in ${en.label}`}
+                                on={items.every((p) => enabled[`${subId}:${en.value}:${p.id}`] ?? true)}
+                                onChange={(v) => onToggleAll(items.map((p) => p.id), en.value, v)} />
+                        </div>
+                    ))}
+                </div>
+            </div>
             <div className="md:border-r md:border-line md:pr-3">
                 <h3 className="mb-3 border-b border-line px-1 pb-3 text-xs font-bold uppercase tracking-wide text-ink">Products</h3>
                 <div role="tablist" aria-orientation="vertical" className="thin-scrollbar flex max-h-[420px] flex-col gap-1 overflow-y-auto">
@@ -68,10 +83,14 @@ function ProductsTab({ subId, enabled, onToggle }: {
                     <h3 className="mb-3 border-b border-line px-1 pb-3 text-xs font-bold uppercase tracking-wide text-ink">Product Details</h3>
                     <div className="mb-4 flex items-center justify-between gap-3">
                         <h3 className="truncate text-sm font-bold text-ink">{sel.name}</h3>
-                        <div className="flex items-center gap-3">
-                            <span className="text-xs font-semibold text-ink">Active for this sub entity</span>
-                            <Toggle label="Product active for this sub entity" on={enabled[`${subId}:${sel.id}`] ?? true}
-                                onChange={(v) => onToggle(sel.id, v)} />
+                        <div className="flex flex-wrap items-center gap-4">
+                            {ENVS.map((en) => (
+                                <div key={en.value} className="flex items-center gap-2">
+                                    <span className="text-xs font-semibold text-ink">{en.label}</span>
+                                    <Toggle label={`Product active in ${en.label}`} on={enabled[`${subId}:${en.value}:${sel.id}`] ?? true}
+                                        onChange={(v) => onToggle(sel.id, en.value, v)} />
+                                </div>
+                            ))}
                         </div>
                     </div>
 
@@ -158,8 +177,8 @@ const toDays = (exp: Exp, custom: string): number | undefined => {
     return Math.ceil(ms / 86400000);
 };
 
-function TokenDrawer({ entityName, regenerate, defaultNote, onSave }: {
-    entityName: string; regenerate: boolean; defaultNote?: string;
+function TokenDrawer({ entityName, envLabel, regenerate, defaultNote, onSave }: {
+    entityName: string; envLabel: string; regenerate: boolean; defaultNote?: string;
     onSave: (notes: string, exp: Exp, custom: string) => Promise<void>;
 }) {
     const [notes, setNotes] = useState(defaultNote ?? "");
@@ -169,10 +188,9 @@ function TokenDrawer({ entityName, regenerate, defaultNote, onSave }: {
     const [saving, setSaving] = useState(false);
     return (
         <Drawer
-            title={regenerate ? "Regenerate Token" : "Generate Token"}
-            kicker={`${entityName} · entity`}
+            title={`${regenerate ? "Regenerate" : "Generate"} ${envLabel} Token`}
+            kicker={`${entityName} · sub entity`}
             width="min(460px, calc(100vw - 20px))"
-            colored
             footer={(close) => (
                 <>
                     <button className={btn.cancel} onClick={close} disabled={saving}>Cancel</button>
@@ -220,10 +238,10 @@ function TokenDrawer({ entityName, regenerate, defaultNote, onSave }: {
     );
 }
 
-function TokenTab({ entityName, token, loading, error, onRetry, onIssue, onRevoke }: {
-    entityName: string; token: TokenRec | null; loading: boolean; error: string; onRetry: () => void;
-    onIssue: (notes: string, exp: Exp, custom: string) => Promise<{ token: string; expires: string }>;
-    onRevoke: (keyId: string) => Promise<void>;
+function TokenTab({ subs, tokens, loading, error, onRetry, onIssue, onRevoke }: {
+    subs: SubEntity[]; tokens: Record<string, Record<Env, TokenRec | null>>; loading: boolean; error: string; onRetry: () => void;
+    onIssue: (sid: string, env: Env, notes: string, exp: Exp, custom: string) => Promise<{ token: string; expires: string }>;
+    onRevoke: (sid: string, env: Env, keyId: string) => Promise<void>;
 }) {
     const { openDrawer, toast } = useApp();
     const [issued, setIssued] = useState<{ token: string; expires: string } | null>(null);
@@ -231,53 +249,72 @@ function TokenTab({ entityName, token, loading, error, onRetry, onIssue, onRevok
     if (loading) return <LoadingBox />;
     if (error) return <ErrorBox message={error} onRetry={onRetry} />;
 
-    const left = token ? daysLeftOf(token) : null;
-    const expired = !!token?.expiresAt && left === 0;
-    const open = (regenerate: boolean) =>
-        openDrawer(<TokenDrawer entityName={entityName} regenerate={regenerate} defaultNote={token?.notes}
-            onSave={async (n, e, c) => { setIssued(await onIssue(n, e, c)); }} />);
-    const revoke = async () => {
+    const open = (s: SubEntity, env: Env, regenerate: boolean) =>
+        openDrawer(<TokenDrawer entityName={s.name} envLabel={ENVS.find((x) => x.value === env)?.label ?? ""} regenerate={regenerate}
+            defaultNote={tokens[s.id]?.[env]?.notes}
+            onSave={async (n, e, c) => { setIssued(await onIssue(s.id, env, n, e, c)); }} />);
+    const revoke = async (s: SubEntity, env: Env) => {
+        const token = tokens[s.id]?.[env];
         if (!token) return;
-        try { await onRevoke(token.id); toast("Token deleted"); }
+        try { await onRevoke(s.id, env, token.id); toast("Token deleted"); }
         catch (e) { toast(e instanceof Error ? e.message : "Delete failed"); }
     };
 
     return (
         <div className="flex flex-col gap-4">
-            <DCard title="Manage the API token for this entity">
-                <p className="text-sm text-muted">An entity can have one active token. Regenerate it to replace the current one.</p>
+            <DCard title="Manage the API tokens for each sub entity">
+                <p className="text-sm text-muted">Each sub entity can have one active Sandbox token and one active Live token. Regenerate to replace the current one.</p>
             </DCard>
 
-            <section className="max-w-md rounded-xl border border-line bg-white p-5">
-                <h3 className="mb-4 flex items-center gap-2 truncate text-sm font-bold text-ink">
-                    <Globe className="size-4 shrink-0" /> <span className="truncate">{entityName}</span>
-                </h3>
-                {token ? (
-                    <div className="overflow-hidden rounded-xl border border-line">
-                        <div className="flex items-center justify-between bg-surfacealt px-4 py-3">
-                            <span className="inline-flex items-center gap-2 text-sm font-semibold text-ink"><KeyRound className="size-4" /> Token</span>
-                            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${expired ? "bg-badbg text-bad" : "bg-goodbg text-good"}`}>
-                                {expired ? "Expired" : "Active"}
-                            </span>
-                        </div>
-                        <div className="flex flex-col gap-2 px-4 py-3 text-xs text-muted">
-                            <span className="inline-flex items-center gap-2"><KeyRound className="size-3.5 shrink-0" /> <span className="truncate">{token.notes || "-"}</span></span>
-                            <span className="inline-flex items-center gap-2 font-mono">{token.prefix}••••••••</span>
-                            <span className="inline-flex items-center gap-2"><Calendar className="size-3.5 shrink-0" /> Created {token.created}</span>
-                            <span className="inline-flex items-center gap-2"><Clock className="size-3.5 shrink-0" /> {left == null ? "Never expires" : expired ? "Expired" : `${left} days left`}</span>
-                            <div className="flex flex-wrap gap-2 pt-3">
-                                <button className={btn.info} onClick={() => open(true)}><RefreshCw className="size-4" /> Regenerate</button>
-                                <button className={btn.danger} onClick={() => void revoke()}><Trash2 className="size-4" /> Delete</button>
-                            </div>
-                        </div>
+            {subs.length === 0 && (
+                <div className="rounded-xl border border-line bg-white">
+                    <EmptyState title="No sub entities yet" message="Create a sub entity to generate its tokens." />
+                </div>
+            )}
+
+            {subs.map((s) => (
+                <section key={s.id} className="rounded-xl border border-line bg-white p-5">
+                    <h3 className="mb-4 flex items-center gap-2 truncate text-sm font-bold text-ink">
+                        <Globe className="size-4 shrink-0" /> <span className="truncate">{s.name}</span>
+                    </h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {ENVS.map((en) => {
+                            const token = tokens[s.id]?.[en.value] ?? null;
+                            const left = token ? daysLeftOf(token) : null;
+                            const expired = !!token?.expiresAt && left === 0;
+                            return (
+                                <div key={en.value}>
+                                    {token ? (
+                                        <div className="overflow-hidden rounded-xl border border-line">
+                                            <div className="flex items-center justify-between bg-surfacealt px-4 py-3">
+                                                <span className="inline-flex items-center gap-2 text-sm font-semibold text-ink"><KeyRound className="size-4" /> {en.label} Token</span>
+                                                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${expired ? "bg-badbg text-bad" : "bg-goodbg text-good"}`}>
+                                                    {expired ? "Expired" : "Active"}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col gap-2 px-4 py-3 text-xs text-muted">
+                                                <span className="inline-flex items-center gap-2"><KeyRound className="size-3.5 shrink-0" /> <span className="truncate">{token.notes || "-"}</span></span>
+                                                <span className="inline-flex items-center gap-2 font-mono">{token.prefix}••••••••</span>
+                                                <span className="inline-flex items-center gap-2"><Calendar className="size-3.5 shrink-0" /> Created {token.created}</span>
+                                                <span className="inline-flex items-center gap-2"><Clock className="size-3.5 shrink-0" /> {left == null ? "Never expires" : expired ? "Expired" : `${left} days left`}</span>
+                                                <div className="flex flex-wrap gap-2 pt-3">
+                                                    <button className={btn.info} onClick={() => open(s, en.value, true)}><RefreshCw className="size-4" /> Regenerate</button>
+                                                    <button className={btn.danger} onClick={() => void revoke(s, en.value)}><Trash2 className="size-4" /> Delete</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button type="button" onClick={() => open(s, en.value, false)}
+                                            className="flex min-h-[180px] w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dotted border-brand bg-brandsoft text-sm font-bold text-brand transition hover:bg-white">
+                                            <KeyRound className="size-5" /> Generate {en.label} Token <Plus className="size-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
-                ) : (
-                    <button type="button" onClick={() => open(false)}
-                        className="flex min-h-[180px] w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dotted border-brand bg-brandsoft text-sm font-bold text-brand transition hover:bg-white">
-                        <KeyRound className="size-5" /> Generate Token <Plus className="size-4" />
-                    </button>
-                )}
-            </section>
+                </section>
+            ))}
 
             {issued && <TokenModal token={issued.token} expires={issued.expires} onDone={() => setIssued(null)} />}
         </div>
@@ -285,16 +322,22 @@ function TokenTab({ entityName, token, loading, error, onRetry, onIssue, onRevok
 }
 
 /* ---------------- Token status line ---------------- */
-function TokenStatusLine({ name, rec }: { name: string; rec?: TokenRec }) {
-    const left = rec ? daysLeftOf(rec) : null;
+function TokenStatusLine({ name, recs }: { name: string; recs?: Record<Env, TokenRec | null> }) {
     return (
-        <section className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line bg-white px-5 py-3 text-xs">
+        <section className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-white px-5 py-3 text-xs">
             <strong className="text-ink">{name} Token Details -</strong>
-            <span className="inline-flex items-center gap-1.5">
-                <span className={`size-2 rounded-full ${rec ? "bg-good" : "bg-gray-300"}`} />
-                <KeyRound className="size-3.5 text-muted" />
-                <span className="text-muted">{!rec ? "Not generated yet" : left == null ? "Never expires" : `${left} days left`}</span>
-            </span>
+            {ENVS.map((en) => {
+                const rec = recs?.[en.value];
+                const left = rec ? daysLeftOf(rec) : null;
+                return (
+                    <span key={en.value} className="inline-flex items-center gap-1.5">
+                        <span className={`size-2 rounded-full ${rec ? "bg-good" : "bg-gray-300"}`} />
+                        <KeyRound className="size-3.5 text-muted" />
+                        <span className="font-semibold text-ink">{en.label}:</span>
+                        <span className="text-muted">{!rec ? "Not generated yet" : left == null ? "Never expires" : `${left} days left`}</span>
+                    </span>
+                );
+            })}
         </section>
     );
 }
@@ -312,7 +355,6 @@ function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (na
             title={initial ? "Edit Sub Entity" : "New Sub Entity"}
             kicker="Sub entity"
             width="min(420px, calc(100vw - 20px))"
-            colored
             footer={(close) => (
                 <>
                     <button className={btn.cancel} onClick={close} disabled={saving}>Cancel</button>
@@ -376,17 +418,20 @@ export default function InstanceDetail() {
     }, []);
     useEffect(() => { if (id) void loadSubs(id); }, [id, loadSubs]);
     const [enabled, setEnabled] = useState<Record<string, boolean>>({});
-    const [token, setToken] = useState<TokenRec | null>(null);
+    const [tokens, setTokens] = useState<Record<string, Record<Env, TokenRec | null>>>({});
     const [tokenLoading, setTokenLoading] = useState(true);
     const [tokenErr, setTokenErr] = useState("");
-    const loadToken = useCallback(async (eid: string) => {
+    const loadTokens = useCallback(async (list: SubEntity[]) => {
         setTokenLoading(true);
         setTokenErr("");
-        try { setToken(await apiKeyService.active(eid)); }
-        catch (e) { setTokenErr(e instanceof Error ? e.message : "Failed to load token"); }
+        try {
+            const recs = await Promise.all(list.map((s) => apiKeyService.active(s.id)));
+            setTokens(Object.fromEntries(list.map((s, i) => [s.id, recs[i]])));
+        } catch (e) { setTokenErr(e instanceof Error ? e.message : "Failed to load tokens"); }
         finally { setTokenLoading(false); }
     }, []);
-    useEffect(() => { if (id) void loadToken(id); }, [id, loadToken]);
+    // runs after the sub entity list loads, not when one is added
+    useEffect(() => { if (!subsLoading) void loadTokens(subs); }, [subsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
     const [info, setInfo] = useState<Partial<Pick<Instance, "name" | "description" | "status">>>({});
     const [editingInfo, setEditingInfo] = useState(false);
     const [infoDraft, setInfoDraft] = useState<{ name: string; description: string; status: Status } | null>(null);
@@ -422,6 +467,7 @@ export default function InstanceDetail() {
         const s = await subEntityService.create(inst.id, { name, description });
         setSubs((l) => [...l, s]);
         setSubId(s.id);
+        setTokens((m) => ({ ...m, [s.id]: { sandbox: null, live: null } }));
         toast("Sub entity created");
     };
     const editSub = async (sid: string, name: string, description: string) => {
@@ -430,15 +476,16 @@ export default function InstanceDetail() {
         toast("Sub entity updated");
     };
 
-    const issueToken = async (notes: string, exp: Exp, custom: string) => {
+    const issueToken = async (sid: string, env: Env, notes: string, exp: Exp, custom: string) => {
         const b = { note: notes, expiresInDays: toDays(exp, custom) };
-        const r = token ? await apiKeyService.regenerate(token.id, b) : await apiKeyService.create(inst.id, b);
-        setToken(r.rec);
+        const cur = tokens[sid]?.[env];
+        const r = cur ? await apiKeyService.regenerate(cur.id, b) : await apiKeyService.create(sid, env, b);
+        setTokens((m) => ({ ...m, [sid]: { ...(m[sid] ?? { sandbox: null, live: null }), [env]: r.rec } }));
         return { token: r.key, expires: r.rec.expires };
     };
-    const revokeToken = async (keyId: string) => {
+    const revokeToken = async (sid: string, env: Env, keyId: string) => {
         await apiKeyService.revoke(keyId);
-        setToken(null);
+        setTokens((m) => ({ ...m, [sid]: { ...(m[sid] ?? { sandbox: null, live: null }), [env]: null } }));
     };
 
     return (
@@ -513,7 +560,7 @@ export default function InstanceDetail() {
                                 <div key={s.id} className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-lg border text-xs font-semibold ${active ? "border-action bg-action text-white" : "border-line bg-surfacealt text-muted"}`}>
                                     <button type="button" className="px-3 py-2" onClick={() => setSubId(s.id)}>{s.name}</button>
                                     <button type="button" aria-label={`Edit ${s.name}`} title="Edit" className="py-2 pr-2.5"
-                                        onClick={() => openDrawer(<SubEntityDrawer initial={s} onSave={(n, d) => editSub(s.id, n, d)} />)}>
+                                        onClick={() => { setSubId(s.id); openDrawer(<SubEntityDrawer initial={s} onSave={(n, d) => editSub(s.id, n, d)} />); }}>
                                         <Settings className="size-3.5" />
                                     </button>
                                 </div>
@@ -533,17 +580,18 @@ export default function InstanceDetail() {
                     </div>
                 ) : (
                     <>
-                        <TokenStatusLine name={view.name} rec={token ?? undefined} />
+                        <TokenStatusLine name={subs.find((s) => s.id === subId)?.name ?? view.name} recs={tokens[subId]} />
                         <section className="rounded-xl border border-line bg-white p-5">
                             <ProductsTab subId={subId} enabled={enabled}
-                                onToggle={(pid, on) => setEnabled((m) => ({ ...m, [`${subId}:${pid}`]: on }))} />
+                                onToggle={(pid, env, on) => setEnabled((m) => ({ ...m, [`${subId}:${env}:${pid}`]: on }))}
+                                onToggleAll={(ids, env, on) => setEnabled((m) => ({ ...m, ...Object.fromEntries(ids.map((pid) => [`${subId}:${env}:${pid}`, on])) }))} />
                         </section>
                     </>
                 )}
             </div>
             <div className={tab === "token" ? "" : "hidden"}>
-                <TokenTab entityName={view.name} token={token} loading={tokenLoading} error={tokenErr}
-                    onRetry={() => void loadToken(inst.id)} onIssue={issueToken} onRevoke={revokeToken} />
+                <TokenTab subs={subs} tokens={tokens} loading={tokenLoading} error={tokenErr}
+                    onRetry={() => void loadTokens(subs)} onIssue={issueToken} onRevoke={revokeToken} />
             </div>
         </div>
     );

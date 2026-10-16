@@ -1,7 +1,8 @@
-import { useEffect, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, Eye, Pencil, Plus, Settings, SlidersHorizontal } from "lucide-react";
 import { useApp } from "@/hooks/useApp";
+import { useDebounce } from "@/hooks/useDebounce";
 import Pagination from "@/components/shared/Pagination";
 import { btn, SearchField } from "./FormBits";
 import { CatalogFilterDrawer, ColumnsDrawer, type FilterField } from "./ListDrawers";
@@ -30,6 +31,8 @@ interface Props<T extends { id: string }> {
     onDelete?: (id: string) => void;
     onCreate?: () => void;
     onEdit?: (id: string) => void;
+    /** Server mode: rows is the current page only; paging and search go through onChange. */
+    server?: { total: number; pageSize: number; loading?: boolean; onChange: (page: number, q: string, f: Record<string, string>) => void };
 }
 
 const SIZE = 8;
@@ -37,7 +40,7 @@ const th = "whitespace-nowrap border-b border-linesoft bg-surfacealt px-3 py-3 t
 const td = "whitespace-nowrap border-b border-linesoft px-3 py-3 align-middle text-xs text-td-text";
 
 export default function ListShell<T extends { id: string }>({
-    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, onCreate, onEdit,
+    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, onCreate, onEdit, server,
 }: Props<T>) {
     const nav = useNavigate();
     const { openDrawer } = useApp();
@@ -53,6 +56,18 @@ export default function ListShell<T extends { id: string }>({
         setSort((s) => (!s || s.key !== key ? { key, dir: "asc" } : s.dir === "asc" ? { key, dir: "desc" } : null));
         setPage(1);
     };
+
+    // server mode: ask the parent for a page whenever the page or the search text changes
+    const dq = useDebounce(q.trim(), 600);
+    const prevQ = useRef(dq);
+    useEffect(() => {
+        if (!server) return;
+        if (prevQ.current !== dq) { // search text changed: go back to page 1 in the same request
+            prevQ.current = dq;
+            if (page !== 1) { setPage(1); return; }
+        }
+        server.onChange(page, dq, f);
+    }, [page, dq, f]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const [menu, setMenu] = useState<{ id: string; top: number; left: number } | null>(null);
 
@@ -80,7 +95,7 @@ export default function ListShell<T extends { id: string }>({
         setMenu({ id, top, left: Math.max(8, r.right - 144) });
     };
 
-    const base = rows.filter((r) => match(r, q.trim().toLowerCase(), f));
+    const base = server ? rows : rows.filter((r) => match(r, q.trim().toLowerCase(), f));
     const sortCol = sort ? cols.find((c) => c.key === sort.key) : undefined;
     const filtered = sortCol && sort
         ? [...base].sort((a, b) => {
@@ -90,10 +105,12 @@ export default function ListShell<T extends { id: string }>({
             return sort.dir === "asc" ? r : -r;
         })
         : base;
-    const pages = Math.max(1, Math.ceil(filtered.length / SIZE));
+    const size = server?.pageSize ?? SIZE;
+    const count = server ? server.total : filtered.length;
+    const pages = Math.max(1, Math.ceil(count / size));
     const cur = Math.min(page, pages);
-    const start = (cur - 1) * SIZE;
-    const pageRows = filtered.slice(start, start + SIZE);
+    const start = (cur - 1) * size;
+    const pageRows = server ? filtered : filtered.slice(start, start + size);
     const shown = cols.filter((c) => !hidden.includes(c.key));
     const filtersActive = Object.values(f).some((v) => v !== "all") || q !== "";
 
@@ -102,7 +119,7 @@ export default function ListShell<T extends { id: string }>({
             {cards && <StatCards items={cards(filtered)} />}
             <div className="flex flex-wrap items-center gap-3">
                 <div className="min-w-[240px] max-w-[360px] flex-1">
-                    <SearchField value={q} placeholder={searchPlaceholder} onChange={(v) => { setQ(v); setPage(1); }} />
+                    <SearchField value={q} placeholder={searchPlaceholder} onChange={(v) => { setQ(v); if (!server) setPage(1); }} />
                 </div>
                 <div className="ml-auto flex flex-wrap items-center gap-2">
                     <button className={btn.secondary}
@@ -125,7 +142,7 @@ export default function ListShell<T extends { id: string }>({
             </div>
 
             <section className="min-w-0 overflow-hidden rounded-xl border border-line bg-white">
-                <div className="w-full overflow-auto">
+                <div className={`w-full overflow-auto transition-opacity ${server?.loading ? "opacity-50" : ""}`}>
                     <table className="w-full border-collapse text-left text-xs">
                         <thead>
                             <tr>
@@ -171,7 +188,7 @@ export default function ListShell<T extends { id: string }>({
                             ))}
                         </tbody>
                     </table>
-                    {filtered.length === 0 && (
+                    {pageRows.length === 0 && !server?.loading && (
                         <EmptyState
                             title={filtersActive ? "No matching records" : "No records found"}
                             message={filtersActive ? "Try a different search or clear the filters." : "Records you create will show up here."}
@@ -182,8 +199,8 @@ export default function ListShell<T extends { id: string }>({
                     currentPage={cur}
                     totalPages={pages}
                     start={start}
-                    end={Math.min(start + SIZE, filtered.length)}
-                    total={filtered.length}
+                    end={Math.min(start + size, count)}
+                    total={count}
                     itemLabel={rowLabel}
                     onPageChange={setPage}
                 />

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ListShell, { type Col } from "@/components/catalog/ListShell";
 import type { FilterField } from "@/components/catalog/ListDrawers";
-import { Toggle } from "@/components/catalog/FormBits";
+import { StatusToggle } from "@/components/catalog/FormBits";
 import { AdminNotice, ErrorBox, LoadingBox, useIsAdmin } from "@/components/catalog/PageState";
 import InstanceDrawer, { type InstanceDraft } from "@/components/catalog/InstanceDrawer";
 import { useApp } from "@/hooks/useApp";
@@ -17,12 +17,10 @@ const fields: FilterField[] = [{ key: "status", label: "Status", options: status
 export default function InstancesList() {
     const isAdmin = useIsAdmin();
     const nav = useNavigate();
-    const { toast } = useApp();
+    const { toast, openDrawer } = useApp();
     const [rows, setRows] = useState<Instance[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [drawer, setDrawer] = useState(false);
-    const [editing, setEditing] = useState<Instance | null>(null);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -49,7 +47,7 @@ export default function InstancesList() {
         }
     };
 
-    const save = async (d: InstanceDraft) => {
+    const save = async (d: InstanceDraft, editing?: Instance) => {
         if (editing) {
             const rec = await entityService.update(editing.id, {
                 name: d.name,
@@ -70,10 +68,7 @@ export default function InstancesList() {
         { key: "name", label: "Entity Name", link: true, render: (r) => r.name },
         {
             key: "status", label: "Status", render: (r) => (
-                <div className="flex items-center gap-2">
-                    <Toggle label={`Toggle ${r.name}`} on={r.status === "Active"} onChange={(v) => void setStatus(r.id, v)} />
-                    <span>{r.status}</span>
-                </div>
+                <StatusToggle label={`Toggle ${r.name}`} on={r.status === "Active"} onChange={(v) => void setStatus(r.id, v)} />
             ),
         },
         {
@@ -101,11 +96,9 @@ export default function InstancesList() {
                 ]}
                 filterFields={fields}
                 match={(r, q, f) => (f.status === "all" || r.status === f.status) && (!q || r.name.toLowerCase().includes(q))}
-                onCreate={() => { setEditing(null); setDrawer(true); }}
-                onEdit={(id) => { const r = rows.find((x) => x.id === id); if (r) { setEditing(r); setDrawer(true); } }}
+                onCreate={() => openDrawer(<InstanceDrawer onSubmit={(d) => save(d)} />)}
+                onEdit={(id) => { const r = rows.find((x) => x.id === id); if (r) openDrawer(<InstanceDrawer initial={r} onSubmit={(d) => save(d, r)} />); }}
             />
-            <InstanceDrawer open={drawer} initial={editing}
-                onClose={() => { setDrawer(false); setEditing(null); }} onSubmit={save} />
         </>
     );
 }

@@ -7,7 +7,6 @@ import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { useApp } from "@/hooks/useApp";
 import { offerTypes, providers, type EngineConfig } from "@/data/engine";
 import { engineConfigsService } from "@/services/engineConfigs.service";
-import { statusFilterOptions } from "@/utils/catalog";
 
 const providerName = (v: string) => providers.find((p) => p.value === v)?.label ?? v;
 const msg = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong");
@@ -16,18 +15,24 @@ const cols: Col<EngineConfig>[] = [
     { key: "name", label: "Name", link: true, render: (r) => r.name },
     { key: "providerId", label: "Provider ID", render: (r) => providerName(r.providerId) },
     { key: "offerType", label: "Offer Type", render: (r) => r.offerType },
+    { key: "category", label: "Category", render: (r) => r.category || "-" },
+    { key: "baseScore", label: "Base Score", align: "right", render: (r) => r.baseScore || "-" },
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
 ];
 
+const PAGE_SIZE = 10;
 const fields: FilterField[] = [
     { key: "offerType", label: "Offer Type", options: [{ value: "all", label: "Select offer type" }, ...offerTypes] },
-    { key: "status", label: "Status", options: statusFilterOptions },
 ];
 
 export default function EngineConfigList() {
     const isAdmin = useIsAdmin();
     const { toast, toastError } = useApp();
-    const [rows, setRows] = useState<EngineConfig[] | null>(null);
+    const [data, setData] = useState<{ rows: EngineConfig[]; total: number } | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [q, setQ] = useState("");
+    const [offerType, setOfferType] = useState("all");
     const [error, setError] = useState("");
     const [tick, setTick] = useState(0);
     const [del, setDel] = useState<EngineConfig | null>(null);
@@ -36,22 +41,29 @@ export default function EngineConfigList() {
     useEffect(() => {
         if (!isAdmin) return;
         let live = true;
-        engineConfigsService.list()
-            .then((r) => { if (live) setRows(r); })
-            .catch((e) => { if (live) setError(msg(e)); });
+        setLoading(true);
+        engineConfigsService.listPage(page, PAGE_SIZE, q, offerType === "all" ? "" : offerType)
+            .then((r) => {
+                if (!live) return;
+                // the last item of the last page was deleted: go to the new last page
+                if (!r.rows.length && r.total > 0 && page > 1) { setPage(Math.ceil(r.total / PAGE_SIZE)); return; }
+                setData(r);
+            })
+            .catch((e) => { if (live) setError(msg(e)); })
+            .finally(() => { if (live) setLoading(false); });
         return () => { live = false; };
-    }, [isAdmin, tick]);
+    }, [isAdmin, page, q, offerType, tick]);
 
     if (!isAdmin) return <AdminNotice />;
-    if (error) return <ErrorBox message={error} onRetry={() => { setError(""); setRows(null); setTick((t) => t + 1); }} />;
-    if (!rows) return <LoadingBox />;
+    if (error) return <ErrorBox message={error} onRetry={() => { setError(""); setPage(1); setQ(""); setOfferType("all"); setTick((t) => t + 1); }} />;
+    if (!data) return <LoadingBox />;
 
     const confirmDelete = async () => {
         if (!del) return;
         setDeleting(true);
         try {
             await engineConfigsService.remove(del.id);
-            setRows((r) => (r ? r.filter((x) => x.id !== del.id) : r));
+            setTick((t) => t + 1);
             toast("Config deleted");
             setDel(null);
         } catch (e) {
@@ -64,23 +76,20 @@ export default function EngineConfigList() {
     return (
         <>
             <ListShell
-                rows={rows}
+                rows={data.rows}
                 cols={cols}
                 basePath="/catalog/engine-configuration"
                 createLabel="Create Config"
                 rowLabel="configs"
                 searchPlaceholder="Search configs…"
-                cards={(r) => [
-                    { label: "Total Configs", value: r.length },
-                    { label: "Active", value: r.filter((x) => x.status === "Active").length },
-                    { label: "Inactive", value: r.filter((x) => x.status === "Inactive").length },
-                ]}
+                cards={() => [{ label: "Total Configs", value: data.total }]}
                 filterFields={fields}
-                match={(r, q, f) =>
-                    (f.offerType === "all" || r.offerType === f.offerType)
-                    && (f.status === "all" || r.status === f.status)
-                    && (!q || r.name.toLowerCase().includes(q))}
-                onDelete={(id) => setDel(rows.find((x) => x.id === id) ?? null)}
+                match={() => true}
+                server={{
+                    total: data.total, pageSize: PAGE_SIZE, loading,
+                    onChange: (p, s, f) => { setPage(p); setQ(s); setOfferType(f.offerType ?? "all"); },
+                }}
+                onDelete={(id) => setDel(data.rows.find((x) => x.id === id) ?? null)}
             />
             <ConfirmDialog
                 isOpen={!!del}
