@@ -94,7 +94,7 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
         scope: "All margin records.",
     },
     instances: {
-        title: "Entity", nav: "Entity", path: "/instances", icon: "▥",
+        title: "Clients", nav: "Clients", path: "/instances", icon: "▥",
         subtitle: "Manage entities, their products and access tokens.",
         dateLabel: "Created on", search: "entities name", statuses: ["all", "Active", "Inactive"], statusLabel: "Status",
         scope: "All entities.",
@@ -111,5 +111,5 @@ export const navGroups: { label: string; items: ViewKey[] }[] = [
     // { label: "ARS Marketplace", items: ["overview", "products", "purchases", "subscriptions"] },
     // { label: "Finance & control", items: ["margin", "settlements", "reconciliation"] },
     { label: "Catalog", items: ["productCategories", "bundles", "catalogProducts", "margins", "engineConfig"] },
-    { label: "Entity", items: ["instances"] },
+    { label: "Business", items: ["instances"] },
 ];

@@ -435,7 +435,7 @@ export default function InstanceDetail() {
         setLoading(true);
         setLoadErr("");
         try { setInst(await entityService.get(iid)); }
-        catch (e) { setLoadErr(e instanceof Error ? e.message : "Failed to load entity"); }
+        catch (e) { setLoadErr(e instanceof Error ? e.message : "Failed to load client"); }
         finally { setLoading(false); }
     }, []);
     useEffect(() => { if (id) void load(id); }, [id, load]);
@@ -518,7 +518,7 @@ export default function InstanceDetail() {
             });
             setInfo({ name: infoDraft.name.trim(), description: infoDraft.description.trim(), status: infoDraft.status });
             cancelInfoEdit();
-            toast("Entity details updated");
+            toast("Client details updated");
         } catch (e) {
             setInfoErr(e instanceof Error ? e.message : "Update failed"); // duplicate name shows under the field
         }
@@ -560,7 +560,7 @@ export default function InstanceDetail() {
                     <div className="min-w-0 flex-1">
                         {editingInfo && infoDraft ? (
                             <div className="grid gap-4 rounded-xl border border-line bg-surfacealt p-4 md:grid-cols-2">
-                                <Field label="Entity Name" required error={infoErr}>
+                                <Field label="Client Name" required error={infoErr}>
                                     <TextInput value={infoDraft.name} onChange={(e) => setInfoDraft((d) => d && { ...d, name: e.target.value })} />
                                 </Field>
                                 <Field label="Status">
@@ -599,7 +599,7 @@ export default function InstanceDetail() {
                         )}
                     </div>
                 </div>
-                <div role="tablist" aria-label="Entity tabs" className="flex gap-1 bg-sidebar-border px-2 pt-2">
+                <div role="tablist" aria-label="Client tabs" className="flex gap-1 bg-sidebar-border px-2 pt-2">
                     {([["entity", "Environments", Layers], ["token", "Token Generation", KeyRound]] as const).map(([k, t, Icon]) => (
                         <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
                             className={`inline-flex items-center gap-2 rounded-t-lg border border-b-0 px-5 py-3 text-xs font-bold normal-case transition ${tab === k

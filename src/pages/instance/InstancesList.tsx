@@ -26,7 +26,7 @@ export default function InstancesList() {
         setLoading(true);
         setError("");
         try { setRows(await entityService.list()); }
-        catch (e) { setError(e instanceof Error ? e.message : "Failed to load entities"); }
+        catch (e) { setError(e instanceof Error ? e.message : "Failed to load clients"); }
         finally { setLoading(false); }
     }, []);
 
@@ -41,7 +41,7 @@ export default function InstancesList() {
         try {
             await entityService.update(id, { status: s });
             setRows((r) => r.map((x) => (x.id === id ? { ...x, status: s } : x)));
-            toast(`Entity ${on ? "activated" : "deactivated"}`);
+            toast(`Client ${on ? "activated" : "deactivated"}`);
         } catch (e) {
             toast(e instanceof Error ? e.message : "Update failed");
         }
@@ -56,16 +56,16 @@ export default function InstancesList() {
                 imageUrl: d.imageUrl !== editing.imageUrl ? d.imageUrl : undefined,
             });
             setRows((r) => r.map((x) => (x.id === editing.id ? { ...rec, products: x.products } : x)));
-            toast("Entity updated");
+            toast("Client updated");
             return;
         }
         const rec = await entityService.create(d);
         setRows((r) => [rec, ...r]);
-        toast("Entity created");
+        toast("Client created");
     };
 
     const cols: Col<Instance>[] = [
-        { key: "name", label: "Entity Name", link: true, render: (r) => r.name },
+        { key: "name", label: "Client Name", link: true, render: (r) => r.name },
         {
             key: "status", label: "Status", render: (r) => (
                 <StatusToggle label={`Toggle ${r.name}`} on={r.status === "Active"} onChange={(v) => void setStatus(r.id, v)} />
@@ -86,11 +86,11 @@ export default function InstancesList() {
                 rows={rows}
                 cols={cols}
                 basePath={BASE}
-                createLabel="Create Entity"
-                rowLabel="entities"
-                searchPlaceholder="Search entities…"
+                createLabel="Create Client"
+                rowLabel="clients"
+                searchPlaceholder="Search clients…"
                 cards={(r) => [
-                    { label: "Total Entities", value: r.length },
+                    { label: "Total Clients", value: r.length },
                     { label: "Active", value: r.filter((x) => x.status === "Active").length },
                     { label: "Total Products", value: r.reduce((n, x) => n + x.products.length, 0) },
                 ]}
