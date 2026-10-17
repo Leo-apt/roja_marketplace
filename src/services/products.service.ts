@@ -136,7 +136,7 @@ function toPayload(i: ProductInput, isEdit: boolean) {
         markupValue: i.markupValue.trim() ? num(i.markupValue) : clear,
         bundled: i.bundleIds,
         audienceType: i.audience === "provider" ? "providerRules" : "everyone",
-        configurationId: i.audience === "provider" ? opt(i.productConfig) : clear,
+        configurationId: opt(i.productConfig),
         placements: i.placements,
         perUserFrequencyCap: i.freqCap.trim() ? Math.floor(num(i.freqCap)) : clear,
         publishMode: later ? "scheduled" : "immediate",

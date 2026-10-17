@@ -7,10 +7,19 @@ import { StatusBadge } from "@/components/catalog/DetailBits";
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import { providersService, type ProviderRec } from "@/services/providers.service";
 
+// +12124567890 -> +1 (212) 456-7890 (US/Canada); other numbers are left as they are
+export const fmtPhone = (v?: string) => {
+    const d = (v ?? "").replace(/\D/g, "");
+    if (d.length === 11 && d.startsWith("1")) return `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`;
+    if (d.length === 10) return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+    return v ?? "";
+};
+
 const cols: Col<ProviderRec>[] = [
-    { key: "providerId", label: "Provider ID", link: true, render: (r) => r.providerId },
+    { key: "providerId", label: "Provider ID", link: true, render: (r) => r.providerId || "N/A" },
+    { key: "name", label: "Name", render: (r) => r.name },
     { key: "email", label: "Email", render: (r) => r.email },
-    { key: "phone", label: "Cell Phone Number", render: (r) => r.phone },
+    { key: "phone", label: "Cell Phone Number", render: (r) => fmtPhone(r.phone) },
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
 ];
 const PAGE_SIZE = 10;

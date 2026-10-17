@@ -43,7 +43,7 @@ export default function InstanceDrawer({ onSubmit, initial }: {
 
     return (
         <Drawer
-            title={initial ? "Edit Entity" : "Create Entity"}
+            title={initial ? "Edit Client" : "Add Client"}
             kicker="Entity"
             width="min(460px, calc(100vw - 20px))"
             footer={(close) => (

@@ -6,16 +6,17 @@ import { btn, Field, Radio, TextInput } from "@/components/catalog/FormBits";
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import { useApp } from "@/hooks/useApp";
 import { providersService, type ProviderCreds, type ProviderRec } from "@/services/providers.service";
+import { fmtPhone } from "./List";
 
 const BASE = "/catalog/providers";
 const na = (v?: string) => (v ? v : "N/A");
 const emptyCreds: ProviderCreds = { mode: "live", apiUrl: "", tokenUrl: "", clientId: "", clientSecret: "", refreshToken: "", instanceUrl: "" };
 
-function Secret({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function Secret({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
     const [show, setShow] = useState(false);
     return (
         <div className="relative">
-            <TextInput type={show ? "text" : "password"} value={value} className="pr-10" onChange={(e) => onChange(e.target.value)} />
+            <TextInput type={show ? "text" : "password"} value={value} placeholder={placeholder} className="pr-10" onChange={(e) => onChange(e.target.value)} />
             <button type="button" aria-label={show ? "Hide" : "Show"} onClick={() => setShow((s) => !s)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink">
                 {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -25,18 +26,30 @@ function Secret({ value, onChange }: { value: string; onChange: (v: string) => v
 }
 
 function Credentials({ id }: { id: string }) {
-    const { toast } = useApp();
+    const { toast, toastError } = useApp();
+    const [has, setHas] = useState({ exists: false, secret: false, refresh: false });
     const [saved, setSaved] = useState<ProviderCreds>(emptyCreds);
     const [c, setC] = useState<ProviderCreds>(emptyCreds);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
 
+    const mode = c.mode;
     useEffect(() => {
         let live = true;
-        providersService.getCreds(id).then((r) => { if (live) { setSaved(r ?? emptyCreds); setC(r ?? emptyCreds); } }).finally(() => { if (live) setLoading(false); });
+        setLoading(true);
+        setErrors({});
+        providersService.getCreds(id, mode)
+            .then((r) => {
+                if (!live) return;
+                const base = r?.creds ?? { ...emptyCreds, mode };
+                setSaved(base); setC(base);
+                setHas({ exists: !!r, secret: !!r?.hasSecret, refresh: !!r?.hasRefresh });
+            })
+            .catch((e) => { if (live) toastError(e instanceof Error ? e.message : "Failed to load credentials"); })
+            .finally(() => { if (live) setLoading(false); });
         return () => { live = false; };
-    }, [id]);
+    }, [id, mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const set = <K extends keyof ProviderCreds>(k: K, v: ProviderCreds[K]) => {
         setC((p) => ({ ...p, [k]: v }));
@@ -45,11 +58,20 @@ function Credentials({ id }: { id: string }) {
     const save = async () => {
         const e: Record<string, string> = {};
         const req: [keyof ProviderCreds, string][] = [["apiUrl", "API URL"], ["tokenUrl", "Token URL"], ["clientId", "Client ID"], ["clientSecret", "Client Secret"], ["refreshToken", "Refresh Token"], ["instanceUrl", "Instance URL"]];
-        for (const [k, label] of req) if (!c[k].trim()) e[k] = `${label} is required`;
+        for (const [k, label] of req) {
+            const kept = (k === "clientSecret" && has.secret) || (k === "refreshToken" && has.refresh);
+            if (!c[k].trim() && !kept) e[k] = `${label} is required`;
+        }
         setErrors(e);
         if (Object.keys(e).length) return;
         setSaving(true);
-        try { await providersService.saveCreds(id, c); setSaved(c); toast("Credentials saved"); }
+        try {
+            await providersService.saveCreds(id, c, has.exists);
+            setHas({ exists: true, secret: has.secret || !!c.clientSecret.trim(), refresh: has.refresh || !!c.refreshToken.trim() });
+            const next = { ...c, clientSecret: "", refreshToken: "" }; // secrets are never shown again
+            setSaved(next); setC(next);
+            toast("Credentials saved");
+        } catch (e) { toastError(e instanceof Error ? e.message : "Save failed"); }
         finally { setSaving(false); }
     };
 
@@ -67,8 +89,8 @@ function Credentials({ id }: { id: string }) {
                     <Field label="API URL" required error={errors.apiUrl}><TextInput value={c.apiUrl} onChange={(e) => set("apiUrl", e.target.value)} /></Field>
                     <Field label="Token URL" required error={errors.tokenUrl}><TextInput value={c.tokenUrl} onChange={(e) => set("tokenUrl", e.target.value)} /></Field>
                     <Field label="Client ID" required error={errors.clientId}><TextInput value={c.clientId} onChange={(e) => set("clientId", e.target.value)} /></Field>
-                    <Field label="Client Secret" required error={errors.clientSecret}><Secret value={c.clientSecret} onChange={(v) => set("clientSecret", v)} /></Field>
-                    <Field label="Refresh Token" required error={errors.refreshToken}><Secret value={c.refreshToken} onChange={(v) => set("refreshToken", v)} /></Field>
+                    <Field label="Client Secret" required error={errors.clientSecret}><Secret value={c.clientSecret} placeholder={has.secret ? "Saved. Leave blank to keep" : ""} onChange={(v) => set("clientSecret", v)} /></Field>
+                    <Field label="Refresh Token" required error={errors.refreshToken}><Secret value={c.refreshToken} placeholder={has.refresh ? "Saved. Leave blank to keep" : ""} onChange={(v) => set("refreshToken", v)} /></Field>
                     <Field label="Instance URL" required error={errors.instanceUrl}><TextInput value={c.instanceUrl} onChange={(e) => set("instanceUrl", e.target.value)} /></Field>
                 </div>
                 <div className="flex justify-end gap-2">
@@ -112,7 +134,7 @@ export default function ProvidersDetail() {
                         : <span className="grid size-14 place-items-center rounded-lg bg-brandsoft text-lg font-bold text-brand">{rec.name[0]}</span>}
                     <div className="min-w-0 flex-1">
                         <h2 className="truncate text-base font-bold text-sidebar-text-active">{rec.name}</h2>
-                        <p className="text-xs text-sidebar-group">{rec.providerId}</p>
+                        <p className="text-xs text-sidebar-group">{rec.providerId || "N/A"}</p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                         <span className={`inline-flex h-8 w-24 items-center justify-center rounded-full text-xs font-bold capitalize text-white ${rec.status === "Active" ? "bg-good" : "bg-bad"}`}>{rec.status}</span>
@@ -138,7 +160,7 @@ export default function ProvidersDetail() {
                     <DTiles>
                         <DTile label="Company Name">{na(rec.name)}</DTile>
                         <DTile label="Email ID">{na(rec.email)}</DTile>
-                        <DTile label="Cell Phone No">{na(rec.phone)}</DTile>
+                        <DTile label="Cell Phone No">{na(fmtPhone(rec.phone))}</DTile>
                         <DTile label="Status"><StatusBadge status={rec.status} /></DTile>
                         <DTile label="Created On">{na(rec.createdOn)}</DTile>
                         <DTile label="Last Updated On">{na(rec.updatedOn)}</DTile>

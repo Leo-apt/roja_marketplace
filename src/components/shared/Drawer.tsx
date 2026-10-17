@@ -88,10 +88,6 @@ export default function Drawer({
                             ×
                         </button>
                     </div>
-                    <div className="flex flex-col gap-0.5 border-b border-line bg-surfacesoft px-[26px] py-3 max-[850px]:px-[18px]">
-                        <small className="text-xs text-muted">{kicker}</small>
-                        {!hideNote && <span className="text-xs text-muted">Presentation sample · no production mutation</span>}
-                    </div>
                 </>
                 {tabs && <Tabs tabs={tabs} value={tab ?? ""} onChange={(k) => onTab?.(k)} label="Detail sections" />}
                 <div className="flex flex-1 flex-col gap-[18px] overflow-auto px-[26px] py-[22px] max-[850px]:p-[18px]">{children}</div>

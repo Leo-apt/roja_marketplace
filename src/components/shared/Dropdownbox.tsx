@@ -237,7 +237,7 @@ const Dropdownbox: React.FC<DropdownProps> = ({
                     ${disabled
                         ? `cursor-not-allowed border border-gray-200 bg-gray-100 text-gray-400 ${rounded}`
                         : error
-                            ? `cursor-pointer border-2 border-red-400 bg-white hover:border-red-500 ${rounded}`
+                            ? `cursor-pointer border-2 border-red-400 bg-white hover:border-red-500 focus:border-red-500! focus:ring-4! focus:ring-red-200! ${rounded}`
                             : `cursor-pointer border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 ${rounded}`
                     }
                     ${buttonClassName}

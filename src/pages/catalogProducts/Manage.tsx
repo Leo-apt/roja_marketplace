@@ -14,6 +14,7 @@ import RichTextEditor from "@/components/catalog/RichTextEditor";
 import BundledSelect, { type BundleOpt } from "@/components/catalog/BundledSelect";
 import BundleCreateDrawer from "@/components/catalog/BundleCreateDrawer";
 import { engineConfigsService } from "@/services/engineConfigs.service";
+import { providersService } from "@/services/providers.service";
 import {
     btn, Check, ColorField, Field, FileInput, HexNote, MoneyInput, Radio, RadioCard, Section, Stepper, TextArea, TextInput,
 } from "@/components/catalog/FormBits";
@@ -43,12 +44,6 @@ const addDays = (base: string, n: number) => {
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
-// providers to choose from: add { value: "<provider id>", label: "<name>" } here, or load them from the API later
-const PROVIDER_OPTIONS: { value: string; label: string }[] = [
-    { value: "000000000000000000000001", label: "PROV_ID0000001 - Alternative Revenue Solutions" },
-];
-const DEFAULT_PROVIDER = PROVIDER_OPTIONS[0].value;
-
 interface Form {
     name: string; categoryId: string; providerId: string; status: Status;
     termsFile: File | null; imageFile: File | null; imageBg: string; shortDescription: string; longDescription: string; pricingContent: string;
@@ -61,7 +56,7 @@ interface Form {
 type Errors = Record<string, string>;
 
 const empty: Form = {
-    name: "", categoryId: "", providerId: DEFAULT_PROVIDER, status: "Active",
+    name: "", categoryId: "", providerId: "", status: "Active",
     termsFile: null, imageFile: null, imageBg: "", shortDescription: "", longDescription: "", pricingContent: "",
     template: "", dashTitle: "", cta: "", featureTitle: "", dashShort: "",
     retail: "", discountType: "fixed", discountValue: "", bundleIds: [],
@@ -81,6 +76,7 @@ type TextKey = "name" | "providerId" | "shortDescription" | "pricingContent" | "
 const rules: Record<string, (f: Form) => string> = {
     name: (f) => textError("Product name", f.name, ...LIMITS.name),
     categoryId: (f) => (f.categoryId ? "" : "Product category is required"),
+    providerId: (f) => (f.providerId ? "" : "Provider ID is required"),
     termsFile: (f) => imageError(f.termsFile),
     imageFile: (f) => imageError(f.imageFile),
     imageBg: (f) => (f.imageBg && !isHex(f.imageBg) ? "Enter a valid HEX code, e.g. #000000" : ""),
@@ -116,7 +112,7 @@ const rules: Record<string, (f: Form) => string> = {
         }
         return "";
     },
-    productConfig: (f) => (f.audience === "provider" && !f.productConfig ? "Product configuration is required" : ""),
+    productConfig: (f) => (f.productConfig ? "" : "Product configuration is required"),
     placements: (f) => (f.placements.length ? "" : "Select at least one placement"),
     freqCap: (f) => {
         const v = f.freqCap.trim();
@@ -135,7 +131,7 @@ const rules: Record<string, (f: Form) => string> = {
 
 // which rules each step checks (the Content step checks both tabs)
 const STEP_KEYS: string[][] = [
-    ["name", "categoryId"],
+    ["name", "categoryId", "providerId"],
     ["termsFile", "imageFile", "imageBg", "mShort", "mLong", "mPricing", "dTemplate", "dTitle", "dCta", "dFeature", "dShort"],
     ["retail", "discountValue", "wholesale", "markup"],
     ["productConfig"],
@@ -147,11 +143,12 @@ interface FormProps {
     initial?: ProductRec;
     categories: { id: string; name: string }[];
     bundleOpts: BundleOpt[];
+    providerOpts: { value: string; label: string }[];
 }
 
 const fromRec = (r: ProductRec): Form => ({
     ...empty,
-    name: r.name, categoryId: r.categoryId, providerId: r.providerId || DEFAULT_PROVIDER,
+    name: r.name, categoryId: r.categoryId, providerId: r.providerId,
     status: r.status === "Inactive" ? "Inactive" : "Active", // UI only: the API sets status itself
     imageBg: r.imageBg, shortDescription: r.shortDescription, longDescription: r.longDescription, pricingContent: r.pricingContent,
     template: r.template, dashTitle: r.dashTitle, cta: r.cta, featureTitle: r.featureTitle, dashShort: r.dashShort,
@@ -164,7 +161,7 @@ const fromRec = (r: ProductRec): Form => ({
     publish: r.publish, availableFrom: r.availableFrom, expires: !!r.expiresOn, expiresOn: r.expiresOn,
 });
 
-function ProductForm({ initial, categories, bundleOpts }: FormProps) {
+function ProductForm({ initial, categories, bundleOpts, providerOpts }: FormProps) {
     const nav = useNavigate();
     const { toast, toastError, openDrawer } = useApp();
     const isEdit = !!initial;
@@ -390,11 +387,11 @@ function ProductForm({ initial, categories, bundleOpts }: FormProps) {
                             <Field label="Product Category" required error={errors.categoryId}>
                                 {dd("category", f.categoryId, categories.map((c) => ({ value: c.id, label: c.name })), (v) => set("categoryId", v), "Select category")}
                             </Field>
-                            <Field label="Provider ID">
+                            <Field label="Provider ID" required error={errors.providerId}>
                                 {dd("provider", f.providerId,
-                                    f.providerId && !PROVIDER_OPTIONS.some((o) => o.value === f.providerId)
-                                        ? [{ value: f.providerId, label: f.providerId }, ...PROVIDER_OPTIONS]
-                                        : PROVIDER_OPTIONS,
+                                    f.providerId && !providerOpts.some((o) => o.value === f.providerId)
+                                        ? [{ value: f.providerId, label: f.providerId }, ...providerOpts]
+                                        : providerOpts,
                                     (v) => set("providerId", v), "Select provider ID")}
                             </Field>
                             <Field label="Status" required>
@@ -516,14 +513,14 @@ function ProductForm({ initial, categories, bundleOpts }: FormProps) {
                         <div className="flex flex-col gap-4">
                             <div className="grid gap-3 md:grid-cols-2">
                                 <RadioCard name="aud" title="Everyone" note="No promotional targeting rules. Available to all customers."
-                                    checked={f.audience === "everyone"} onChange={() => setF((p) => ({ ...p, audience: "everyone", productConfig: "" }))} />
+                                    checked={f.audience === "everyone"} onChange={() => set("audience", "everyone")} />
                                 <RadioCard name="aud" title="Provider rules" note="Available only to selected customers identified by the ML engine based on transaction signals."
                                     checked={f.audience === "provider"} onChange={() => set("audience", "provider")} />
                             </div>
-                            {f.audience === "provider" && (
+                            {(
                                 <Field label="Product Configuration" required error={errors.productConfig} className="md:max-w-[50%]">
                                     <Dropdownbox name="config" value={f.productConfig} options={cfgOpts} placeholder="Select configuration"
-                                        rounded="rounded-md" compact loading={cfgLoading} onOpen={loadConfigs}
+                                        rounded="rounded-md" compact error={errors.productConfig} loading={cfgLoading} onOpen={loadConfigs}
                                         onChange={(e) => set("productConfig", e.target.value)} />
                                 </Field>
                             )}
@@ -649,7 +646,7 @@ function ProductForm({ initial, categories, bundleOpts }: FormProps) {
 export default function CatalogProductsManage() {
     const { id } = useParams();
     const isAdmin = useIsAdmin();
-    const [data, setData] = useState<{ rec?: ProductRec; cats: { id: string; name: string }[]; opts: BundleOpt[] } | null>(null);
+    const [data, setData] = useState<{ rec?: ProductRec; cats: { id: string; name: string }[]; opts: BundleOpt[]; provs: { value: string; label: string }[] } | null>(null);
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -659,12 +656,13 @@ export default function CatalogProductsManage() {
             categoriesService.list(),
             bundlesService.list(1, 100),
             id ? productsService.get(id) : Promise.resolve(undefined),
+            providersService.listPage(1, 1000),
         ])
-            .then(([cats, bs, rec]) => {
+            .then(([cats, bs, rec, ps]) => {
                 if (!live) return;
                 const c = cats.map((x) => ({ id: x.id, name: x.name }));
                 if (rec && rec.categoryId && !c.some((x) => x.id === rec.categoryId)) c.push({ id: rec.categoryId, name: rec.categoryName });
-                setData({ rec, cats: c, opts: bs.rows.map((b) => ({ id: b.id, label: b.shortCode ? `${b.name} (${b.shortCode})` : b.name, type: b.pricingType })) });
+                setData({ rec, cats: c, provs: ps.rows.map((p) => ({ value: p.id, label: p.providerId ? `${p.name} - ${p.providerId}` : p.name })), opts: bs.rows.map((b) => ({ id: b.id, label: b.shortCode ? `${b.name} (${b.shortCode})` : b.name, type: b.pricingType })) });
             })
             .catch((e) => { if (live) setError(e instanceof Error ? e.message : "Failed to load"); });
         return () => { live = false; };
@@ -673,5 +671,5 @@ export default function CatalogProductsManage() {
     if (!isAdmin) return <AdminNotice />;
     if (error) return <ErrorBox message={error} backTo={BASE} />;
     if (!data || (id && data.rec?.id !== id)) return <LoadingBox />;
-    return <ProductForm key={id ?? "new"} initial={data.rec} categories={data.cats} bundleOpts={data.opts} />;
+    return <ProductForm key={id ?? "new"} initial={data.rec} categories={data.cats} bundleOpts={data.opts} providerOpts={data.provs} />;
 }

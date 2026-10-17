@@ -47,7 +47,7 @@ async function raw<T>(path: string, init: RequestInit = {}, token?: string): Pro
         res = await fetch(`${BASE}${path}`, {
             ...init,
             headers: {
-                "Content-Type": "application/json",
+                ...(init.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 ...(init.headers as Record<string, string> | undefined),
             },

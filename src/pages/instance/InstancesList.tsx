@@ -109,7 +109,7 @@ export default function InstancesList() {
                 rows={rows}
                 cols={cols}
                 basePath={BASE}
-                createLabel="Create Client"
+                createLabel="Add Client"
                 rowLabel="clients"
                 searchPlaceholder="Search clients…"
                 cards={(r) => [
