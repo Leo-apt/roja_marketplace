@@ -1,83 +1,126 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
-@theme {
+/* "static" emits every token as a CSS variable, so inline styles and
+   <style> blocks (like the loader) can use var(--color-brand) etc. */
+@theme static {
   /* Fonts */
   --font-sans: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
 
-  /* Brand */
-  --color-brand: #059669;
-  --color-brandhover: #047857;
-  --color-brandsoft: #d1fae5;
+  /* Shape and depth (very soft) */
+  --radius-card: 14px;
+  --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 20px rgba(30, 58, 138, 0.07);
+  --shadow-pop: 0 10px 30px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.06);
+
+  /* Smooth easing used by the sidebar (utility: ease-smooth) */
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Brand (deep navy, from the New Environment button) with a full tonal scale */
+  --color-brand: #1e3a8a;
+  --color-brandhover: #172554;
+  --color-brandsoft: #eef2fb;
+  --color-brandring: #c7d2ec;
+  --color-brand-50: #eef2fb;
+  --color-brand-100: #dbe3f5;
+  --color-brand-200: #c7d2ec;
+  --color-brand-300: #8fa3d9;
+  --color-brand-500: #2f4fa8;
+  --color-brand-600: #1e3a8a;
+  --color-brand-700: #172554;
+
+  /* Secondary accent (sky) */
+  --color-accent: #0ea5e9;
+  --color-accenthover: #0284c7;
+  --color-accentsoft: #e0f2fe;
 
   /* Text and surfaces */
-  --color-ink: #111827;
-  --color-muted: #6b7280;
-  --color-page: #ffffff;
-  --color-line: #e5e7eb;
-  --color-linesoft: #f3f4f6;
-  --color-surfacealt: #f8fafc;
+  --color-ink: #0f172a;
+  --color-muted: #64748b;
+  --color-page: #f8fafc;
+  --color-card: #ffffff;
+  --color-line: #e2e8f0;
+  --color-linesoft: #f1f5f9;
+  --color-surfacealt: #f1f5f9;
+  --color-tint: #f1f5fc;
 
   /* Sidebar (legacy tokens) */
-  --color-nav: #F8FAFC;
-  --color-navhover: #e6f1fb;
+  --color-nav: #ffffff;
+  --color-navhover: #eef2fb;
   --color-navactive: #ffffff;
-  --color-navmuted: #6b7280;
+  --color-navmuted: #64748b;
 
-  /* Status */
-  --color-good: #116846;
-  --color-goodbg: #e8f6ef;
-  --color-warn: #8b530a;
-  --color-warnbg: #fff3dc;
-  --color-bad: #a22c36;
-  --color-badbg: #ffedf0;
-  --color-purple: #6941ab;
-  --color-purplebg: #f1ebfa;
+  /* Status (muted, peaceful) */
+  --color-good: #1f7a4f;
+  --color-goodbg: #ecf8f1;
+  --color-goodline: #c9e8d6;
+  --color-warn: #92580b;
+  --color-warnbg: #fff6e0;
+  --color-warnline: #f3e1b5;
+  --color-bad: #b4343f;
+  --color-badbg: #fef1f2;
+  --color-badline: #f6d0d4;
+  --color-info: #0369a1;
+  --color-infobg: #f0f9ff;
+  --color-infoline: #bae6fd;
+  --color-purple: #6d4bb5;
+  --color-purplebg: #f4effb;
 
   /* Buttons */
-  --color-btn-primary: #047857;
-  --color-btn-primary-hover: #065f46;
+  --color-btn-primary: #1e3a8a;
+  --color-btn-primary-hover: #172554;
   --color-btn-danger: #ef4444;
   --color-btn-danger-hover: #dc2626;
-  --color-btn-dark: #0f766e;
-  --color-btn-dark-hover: #115e59;
-  --color-btn-secondary-hover-border: #a7e3c9;
-  --color-btn-secondary-hover-bg: #f0fdf7;
+  --color-btn-dark: #172554;
+  --color-btn-dark-hover: #0f1a3d;
+  --color-btn-secondary-hover-border: #c7d2ec;
+  --color-btn-secondary-hover-bg: #eef2fb;
+
+  /* Form fields */
+  --color-field-bg: #ffffff;
+  --color-field-border: #d7dee8;
+  --color-field-border-hover: #b8c4d3;
+  --color-field-focus: #2563eb;
+  --color-field-placeholder: #94a3b8;
+  --color-disabled-bg: #f1f5f9;
+  --color-disabled-text: #a3afc0;
 
   /* Table action button, active page number, links */
-  --color-action: #1e293b;
-  --color-action-hover: #0f172a;
-  --color-link: #2563eb;
+  --color-action: #1e3a8a;
+  --color-action-hover: #172554;
+  --color-link: #1e40af;
 
-  /* Sidebar: mint (light) */
-  --color-sidebar-bg: #ecfdf5;
-  --color-sidebar-border: #cdefe0;
-  --color-sidebar-text: #3f6b5a;
-  --color-sidebar-text-active: #064e3b;
-  --color-sidebar-group: #6b9a87;
-  --color-sidebar-icon: #4f7f6c;
-  --color-sidebar-hover: #d5f5e6;
-  --color-sidebar-active: #ffffff;
-  --color-sidebar-active-border: #cdefe0;
-  --color-sidebar-divider: #cdefe0;
-  --color-sidebar-logo-bg: #f0f4f8;
-  --color-sidebar-logo-text: #235fce;
+  /* Sidebar: clean white */
+  --color-sidebar-bg: #ffffff;
+  --color-sidebar-border: #e2e8f0;
+  --color-sidebar-text: #475569;
+  --color-sidebar-text-active: #1e3a8a;
+  --color-sidebar-group: #94a3b8;
+  --color-sidebar-icon: #64748b;
+  --color-sidebar-hover: #f1f5f9;
+  --color-sidebar-active: #eef2fb;
+  --color-sidebar-active-border: #dbe3f5;
+  --color-sidebar-divider: #e2e8f0;
+  --color-sidebar-logo-bg: #eef2fb;
+  --color-sidebar-logo-text: #1e3a8a;
+  --color-sidebar-logo-line: #e2e8f0;
+  --color-sidebar-logo-line-accent: #1e3a8a;
 
   /* Topbar */
   --color-topbar-bg: #ffffff;
-  --color-topbar-border: #cdefe0;
-  --color-topbar-avatar-bg: #065f46;
+  --color-topbar-border: #e2e8f0;
+  --color-topbar-avatar-bg: #1e3a8a;
   --color-topbar-avatar-text: #ffffff;
 
   /* Breadcrumb */
   --color-crumb-bg: #ffffff;
-  --color-crumb-border: #cdefe0;
+  --color-crumb-border: #e2e8f0;
   --color-crumb-title: #0f172a;
   --color-crumb-text: #64748b;
   --color-crumb-current: #334155;
-  --color-crumb-sep: #b9dccd;
-  --color-crumb-hover: #f0fdf7;
+  --color-crumb-sep: #cbd5e1;
+  --color-crumb-hover: #eef2fb;
 
   /* Dialog states */
   --color-danger-soft: #fef2f2;
@@ -90,45 +133,56 @@
   --color-caution-ping: #fbbf24;
 
   /* Table */
-  --color-row-hover: #fafcff;
-  --color-th-text: #6a7790;
+  --color-row-hover: #f8fbff;
+  --color-th-text: #64748b;
 
-  /* Surfaces, overlay, neutral tag */
-  --color-surfacesoft: #f6f8fc;
-  --color-overlay: #10243f;
-  --color-tag-neutral-bg: #eef1f6;
-  --color-tag-neutral-text: #56647b;
+  /* Surfaces, overlay, tooltip, neutral tag */
+  --color-surfacesoft: #f1f5f9;
+  --color-overlay: #0f172a;
+  --color-tooltip: #1e293b;
+  --color-tag-neutral-bg: #eef2f6;
+  --color-tag-neutral-text: #475569;
 
   /* Page shell chips */
-  --color-chip-bg: #eef2fa;
-  --color-chip-text: #5d7293;
-  --color-sample-text: #566a88;
-  --color-sample-dot: #e8a239;
+  --color-chip-bg: #eef2fb;
+  --color-chip-text: #1e3a8a;
+  --color-sample-text: #475569;
+  --color-sample-dot: #f0b04a;
 
   /* Info and warning note boxes, timeline */
-  --color-note-info-bg: #f1f6ff;
-  --color-note-info-border: #cbdcf9;
-  --color-note-info-text: #415d83;
-  --color-note-warn-bg: #fff9ef;
-  --color-note-warn-border: #f0d8ab;
-  --color-note-warn-text: #77501b;
-  --color-timeline-dot: #5f91e5;
+  --color-note-info-bg: #eef2fb;
+  --color-note-info-border: #c7d2ec;
+  --color-note-info-text: #1e3a8a;
+  --color-note-warn-bg: #fffaee;
+  --color-note-warn-border: #f3e1b5;
+  --color-note-warn-text: #7a531c;
+  --color-timeline-dot: #2f4fa8;
 
   /* Text shades, form label, warn border */
-  --color-label: #475569;
-  --color-cell-text: #3c4d66;
-  --color-td-text: #4b5563;
-  --color-sort-icon: #9ca3af;
-  --color-warn-border: #f3dca8;
+  --color-label: #334155;
+  --color-cell-text: #334155;
+  --color-td-text: #475569;
+  --color-sort-icon: #94a3b8;
+  --color-warn-border: #f3e1b5;
 
-  /* Chart */
-  --color-chart-sales: #7b9be9;
-  --color-chart-gain: #25a77a;
-  --color-chart-loss: #cd6272;
-  --color-chart-grid: #dde5f0;
+  /* Skeleton loading */
+  --color-skeleton: #e9eef4;
+  --color-skeleton-shine: #f6f9fc;
+
+  /* Chart (soft set) */
+  --color-chart-sales: #5b7bd0;
+  --color-chart-gain: #34b58a;
+  --color-chart-loss: #e5707f;
+  --color-chart-grid: #e2e8f0;
 }
 
 @layer base {
+
+  /* One height for the sidebar logo row and the topbar, so their bottom lines align */
+  :root {
+    --topbar-h: 76px;
+  }
+
   html {
     scrollbar-gutter: stable;
   }
@@ -140,15 +194,35 @@
     font-family: var(--font-sans);
     font-size: 14px;
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body.locked {
     overflow: hidden;
   }
 
+  ::selection {
+    background: #bfdbfe;
+    color: #0f172a;
+  }
+
+  ::placeholder {
+    color: var(--color-field-placeholder);
+  }
+
   button:not(:disabled),
   [role="button"] {
     cursor: pointer;
+  }
+
+  button:disabled,
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    background-color: var(--color-disabled-bg);
+    color: var(--color-disabled-text);
+    cursor: not-allowed;
   }
 
   button,
@@ -158,12 +232,21 @@
     touch-action: manipulation;
   }
 
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
   button:focus-visible,
   a:focus-visible,
   input:focus-visible,
   select:focus-visible,
   textarea:focus-visible {
-    outline: 3px solid #6ee7b7;
+    outline: 3px solid #bfdbfe;
     outline-offset: 2px;
   }
 
@@ -212,6 +295,16 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 @utility animate-fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }
@@ -224,7 +317,18 @@
   animation: slideInLeft 0.2s ease-out;
 }
 
-/* Thin scrollbar (same as Fintle) */
+/* Skeleton loading placeholder */
+.skeleton {
+  background: linear-gradient(90deg,
+      var(--color-skeleton) 25%,
+      var(--color-skeleton-shine) 50%,
+      var(--color-skeleton) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* Thin scrollbar */
 .thin-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -252,10 +356,13 @@
 }
 
 @keyframes smooth-wave {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scaleY(0.4);
     opacity: 0.6;
   }
+
   50% {
     transform: scaleY(1.2);
     opacity: 1;

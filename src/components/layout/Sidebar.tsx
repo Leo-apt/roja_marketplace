@@ -72,6 +72,15 @@ function saveClosed(list: string[]) {
 const isActivePath = (pathname: string, path: string) =>
   pathname === path || pathname.startsWith(path + "/");
 
+/*
+  Alignment grid (all columns share the same 12px gutter + 8px item padding):
+    sidebar padding ........ 12px  (px-3)
+    item / header padding .. 8px   (px-2)  -> icon tile and group label start at x = 20px
+    icon tile .............. 32px  (size-8) -> centre at x = 36px (collapsed: centre of the 80px rail)
+    icon-to-label gap ...... 12px  (gap-3)  -> label starts at x = 64px
+  The footer button uses the same numbers (1px border + 7px padding = 8px).
+*/
+
 export default function Sidebar({
   open,
   onNavigate,
@@ -161,7 +170,12 @@ export default function Sidebar({
     return () => window.clearTimeout(id);
   }, [closed, updateEdges]);
 
-  /* ---- tooltip helpers ---- */
+  /* ---- tooltip helpers (hover intent: small open delay, instant when moving between items) ---- */
+  const tipTimer = useRef<number | undefined>(undefined);
+  const tipVisible = useRef(false);
+
+  useEffect(() => () => window.clearTimeout(tipTimer.current), []);
+
   const showTip = (e: React.SyntheticEvent<HTMLElement>, label: string) => {
     const el = e.currentTarget;
     if (!collapsed) {
@@ -170,9 +184,26 @@ export default function Sidebar({
       if (!text || text.scrollWidth <= text.clientWidth) return;
     }
     const r = el.getBoundingClientRect();
-    setTip({ label, top: r.top + r.height / 2, left: r.right + 12 });
+    const next: Tip = { label, top: r.top + r.height / 2, left: r.right + 12 };
+    window.clearTimeout(tipTimer.current);
+    if (tipVisible.current) {
+      setTip(next);
+    } else {
+      tipTimer.current = window.setTimeout(() => {
+        tipVisible.current = true;
+        setTip(next);
+      }, 110);
+    }
   };
-  const hideTip = () => setTip(null);
+  const hideTip = (now = false) => {
+    window.clearTimeout(tipTimer.current);
+    const close = () => {
+      tipVisible.current = false;
+      setTip(null);
+    };
+    if (now) close();
+    else tipTimer.current = window.setTimeout(close, 80);
+  };
 
   /* ---- arrow-key navigation between headers and items ---- */
   const onNavKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -194,44 +225,48 @@ export default function Sidebar({
     list[next]?.focus();
   };
 
+  // running index so items can fade in one after another on first load
+  let itemIndex = 0;
+
   return (
     <>
       <style>{`
                 @keyframes sb-tip-in {
-                    from { opacity: 0; transform: translate(-4px, -50%); }
-                    to   { opacity: 1; transform: translate(0, -50%); }
+                    from { opacity: 0; translate: -4px -50%; }
+                    to   { opacity: 1; translate: 0 -50%; }
                 }
                 @keyframes sb-underline-in {
                     from { transform: scaleX(0); opacity: 0; }
                     to   { transform: scaleX(1); opacity: 1; }
                 }
+                @keyframes sb-item-in {
+                    from { opacity: 0; translate: -8px 0; }
+                    to   { opacity: 1; translate: 0 0; }
+                }
                 .sb-tip { animation: sb-tip-in 150ms ease-out both; }
-                /* the one orchestrated moment: the logo underline draws in once on load */
+                /* the orchestrated moment: the logo underline draws in, then the menu items follow */
                 .sb-underline { animation: sb-underline-in 700ms 150ms cubic-bezier(.2,.8,.2,1) both; }
+                .sb-item { animation: sb-item-in 360ms cubic-bezier(.2,.8,.2,1) backwards; }
                 @media (prefers-reduced-motion: reduce) {
-                    .sb-tip, .sb-underline { animation: none; }
+                    .sb-tip, .sb-underline, .sb-item { animation: none; }
                     .sb-root * { transition-duration: 0.01ms !important; }
                 }
             `}</style>
 
       <aside
         aria-label="Marketplace navigation"
-        className={`sb-root fixed inset-y-0 left-0 z-[15] flex w-[250px] flex-col overflow-x-hidden border-r border-sidebar-border bg-sidebar-bg px-3 pb-4 pt-0 text-sidebar-text shadow-[2px_0_8px_rgba(15,23,42,0.04)] transition-[width,transform] duration-300 ease-in-out max-[850px]:-translate-x-full print:hidden ${
+        className={`sb-root fixed inset-y-0 left-0 z-[15] flex w-[250px] flex-col overflow-x-hidden border-r border-sidebar-border bg-sidebar-bg px-3 pb-4 pt-0 text-sidebar-text shadow-[2px_0_12px_rgba(15,23,42,0.04)] transition-[width,transform] duration-[380ms] ease-smooth max-[850px]:-translate-x-full print:hidden ${
           collapsed ? "min-[851px]:w-20" : "max-[1180px]:w-[220px]"
         } ${open ? "max-[850px]:translate-x-0" : ""}`}
       >
         {/* ───────── Logo header with underline ───────── */}
-        <header className="shrink-0">
-          <div
-            className={`relative flex items-center justify-center transition-all duration-300 ${
-              collapsed ? "h-[72px]" : "h-[84px]"
-            }`}
-          >
+        <header className="relative h-[var(--topbar-h,76px)] shrink-0">
+          <div className="absolute inset-x-0 bottom-px top-0 flex items-center justify-center">
             {/* full logo */}
             <img
               src={logo}
               alt="Roja Marketplace"
-              className={`absolute inset-0 m-auto h-12 w-auto max-w-[85%] object-contain transition-opacity duration-300 ${
+              className={`absolute inset-0 m-auto h-12 w-auto max-w-[85%] object-contain transition-opacity duration-300 ease-smooth ${
                 collapsed
                   ? "min-[851px]:pointer-events-none min-[851px]:opacity-0"
                   : "opacity-100"
@@ -241,21 +276,25 @@ export default function Sidebar({
             <img
               src={logoIcon}
               alt="Roja"
-              className={`absolute inset-0 m-auto size-10 object-contain opacity-0 transition-opacity duration-300 ${
+              className={`absolute inset-0 m-auto size-10 object-contain opacity-0 transition-opacity duration-300 ease-smooth ${
                 collapsed ? "min-[851px]:opacity-100" : ""
               }`}
             />
           </div>
 
-          {/* underline: soft full-width line + a short brand-coloured accent in the centre */}
-          <div className="relative mx-1 h-[3px]">
-            <div className="absolute inset-x-0 top-px h-px bg-gradient-to-r from-transparent via-sidebar-divider to-transparent" />
-            <div
-              className={`sb-underline absolute left-1/2 top-0 h-[3px] -translate-x-1/2 origin-center rounded-full bg-brand transition-all duration-300 ${
-                collapsed ? "w-6" : "w-14"
-              }`}
-            />
-          </div>
+          {/* Line sits on the last pixel row of the header, the same row as the topbar's
+              bottom border, and runs edge to edge so the two lines read as one. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-x-3 bottom-0 h-px bg-topbar-border"
+          />
+          {/* brand accent, centred on that line */}
+          <div
+            aria-hidden="true"
+            className={`sb-underline pointer-events-none absolute bottom-[-1px] left-1/2 h-[3px] -translate-x-1/2 origin-center rounded-full bg-brand transition-[width] duration-[380ms] ease-smooth ${
+              collapsed ? "w-6" : "w-14"
+            }`}
+          />
         </header>
 
         {/* ───────── Navigation ───────── */}
@@ -265,7 +304,7 @@ export default function Sidebar({
             onKeyDown={onNavKeyDown}
             onScroll={() => {
               updateEdges();
-              hideTip();
+              hideTip(true);
             }}
             className="thin-scrollbar h-full overflow-y-auto overflow-x-hidden"
           >
@@ -278,8 +317,8 @@ export default function Sidebar({
               const contentId = `sb-group-${gi}`;
 
               return (
-                <div key={g.label} className={gi > 0 ? "mt-1" : ""}>
-                  {/* Group header */}
+                <div key={g.label}>
+                  {/* Group header: label starts at the same x as the icon tiles (px-2) */}
                   <button
                     type="button"
                     data-nav-item
@@ -287,7 +326,7 @@ export default function Sidebar({
                     aria-expanded={groupOpen}
                     aria-controls={contentId}
                     onClick={() => toggleGroup(g.label)}
-                    className={`group/head flex w-full items-center justify-between overflow-hidden whitespace-nowrap rounded-lg px-3 pb-1.5 pt-3 text-left text-[11px] font-semibold tracking-wide text-sidebar-group outline-none transition-all duration-300 hover:text-sidebar-text-active focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                    className={`group/head flex w-full items-center justify-between overflow-hidden whitespace-nowrap rounded-lg px-2 pb-1.5 pt-3 text-left text-[11px] font-semibold uppercase tracking-wider text-sidebar-group outline-none transition-[max-height,opacity,padding,color] duration-[380ms] ease-smooth hover:text-sidebar-text-active focus-visible:ring-2 focus-visible:ring-brand/30 ${
                       collapsed
                         ? "pointer-events-none min-[851px]:max-h-0 min-[851px]:py-0 min-[851px]:opacity-0"
                         : "max-h-10 opacity-100"
@@ -295,12 +334,19 @@ export default function Sidebar({
                   >
                     <span>{g.label}</span>
                     <span className="flex items-center gap-1.5">
-                      {/* a dot marks a folded group that holds the current page */}
-                      {!groupOpen && hasActive && (
-                        <span className="size-1.5 rounded-full bg-brand" />
+                      {/* folded group: show how many pages it holds, plus a dot if the current page is inside */}
+                      {!groupOpen && (
+                        <span className="flex items-center gap-1">
+                          {hasActive && (
+                            <span className="size-1.5 rounded-full bg-brand" />
+                          )}
+                          <span className="rounded-full bg-sidebar-hover px-1.5 text-[10px] font-semibold leading-4 tracking-normal text-sidebar-icon">
+                            {g.items.length}
+                          </span>
+                        </span>
                       )}
                       <ChevronDown
-                        className={`size-3.5 transition-transform duration-300 ease-out ${
+                        className={`size-3.5 transition-transform duration-[380ms] ease-smooth ${
                           groupOpen ? "" : "-rotate-90"
                         }`}
                       />
@@ -309,13 +355,13 @@ export default function Sidebar({
 
                   {/* Divider replaces the label when collapsed */}
                   {collapsed && gi > 0 && (
-                    <div className="mx-3 my-2 hidden h-px bg-sidebar-divider min-[851px]:block" />
+                    <div className="mx-2 my-2.5 hidden h-px bg-sidebar-divider min-[851px]:block" />
                   )}
 
                   {/* Items: height animates via grid rows (0fr to 1fr) */}
                   <div
                     id={contentId}
-                    className={`grid transition-[grid-template-rows,opacity,visibility] duration-300 ease-in-out ${
+                    className={`grid transition-[grid-template-rows,opacity,visibility] duration-[380ms] ease-smooth ${
                       groupOpen
                         ? "visible grid-rows-[1fr] opacity-100"
                         : "invisible grid-rows-[0fr] opacity-0"
@@ -326,61 +372,63 @@ export default function Sidebar({
                         const v = viewInfo[k];
                         const Icon = iconMap[k];
                         const active = isActivePath(pathname, v.path);
+                        const delay = Math.min(itemIndex++ * 28, 420);
                         return (
                           <button
                             key={k}
                             type="button"
                             data-nav-item
+                            style={{ animationDelay: `${delay}ms` }}
                             tabIndex={groupOpen ? 0 : -1}
                             aria-current={active ? "page" : undefined}
                             aria-label={collapsed ? v.nav : undefined}
                             onMouseEnter={(e) => showTip(e, v.nav)}
-                            onMouseLeave={hideTip}
+                            onMouseLeave={() => hideTip()}
                             onFocus={(e) => showTip(e, v.nav)}
-                            onBlur={hideTip}
+                            onBlur={() => hideTip()}
                             onClick={() => {
-                              hideTip();
+                              hideTip(true);
                               navigate(v.path);
                               onNavigate();
                             }}
-                            className={`group relative my-0.5 flex w-full items-center gap-3 overflow-hidden rounded-xl px-2 py-1.5 text-left text-[13px] outline-none transition-colors duration-200 hover:bg-sidebar-hover hover:text-sidebar-text-active focus-visible:ring-2 focus-visible:ring-brand/40 active:scale-[0.98] ${
+                            className={`sb-item group relative my-0.5 flex w-full items-center gap-3 overflow-hidden rounded-xl px-2 py-1.5 text-left text-[13px] font-medium outline-none transition-[background-color,color,box-shadow,scale] duration-200 ease-smooth hover:bg-sidebar-hover hover:text-sidebar-text-active focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.98] ${
                               collapsed
                                 ? "min-[851px]:justify-center min-[851px]:gap-0 min-[851px]:px-0"
                                 : ""
                             } ${
                               active
-                                ? "bg-sidebar-active font-semibold text-sidebar-text-active"
+                                ? "bg-sidebar-active font-semibold text-sidebar-text-active ring-1 ring-inset ring-sidebar-active-border"
                                 : ""
                             }`}
                           >
-                            {/* Active accent bar */}
+                            {/* Active accent bar, vertically centred on the row */}
                             <span
                               aria-hidden="true"
-                              className={`absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand transition-all duration-300 ${
+                              className={`absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand transition-[scale,opacity] duration-300 ease-smooth ${
                                 active
                                   ? "scale-y-100 opacity-100"
                                   : "scale-y-0 opacity-0"
                               }`}
                             />
 
-                            {/* Icon tile */}
+                            {/* Icon tile: 32px square, same column in every row */}
                             <span
                               aria-hidden="true"
-                              className={`relative grid size-8 shrink-0 place-items-center rounded-lg transition-colors duration-200 ${
+                              className={`relative grid size-8 shrink-0 place-items-center rounded-lg transition-all duration-200 ease-smooth ${
                                 active
-                                  ? "bg-brand text-white shadow-sm"
-                                  : "bg-emerald-900/5 text-sidebar-icon group-hover:bg-white group-hover:text-brand"
+                                  ? "bg-brand text-white shadow-sm shadow-brand/30"
+                                  : "bg-sidebar-hover text-sidebar-icon group-hover:bg-card group-hover:text-brand group-hover:shadow-soft"
                               }`}
                             >
-                              <Icon className="size-[17px]" />
+                              <Icon className="size-[17px] transition-transform duration-200 group-hover:scale-110" />
                             </span>
 
                             <span
                               data-label
-                              className={`relative truncate transition-all duration-300 ${
+                              className={`relative truncate transition-[max-width,opacity] ease-smooth ${
                                 collapsed
-                                  ? "min-[851px]:max-w-0 min-[851px]:opacity-0"
-                                  : "max-w-[194px] opacity-100"
+                                  ? "duration-150 min-[851px]:max-w-0 min-[851px]:opacity-0"
+                                  : "max-w-[194px] opacity-100 duration-300 delay-100"
                               }`}
                             >
                               {v.nav}
@@ -395,7 +443,7 @@ export default function Sidebar({
                   {gi < visibleGroups.length - 1 && (
                     <div
                       aria-hidden="true"
-                      className={`mx-3 mb-1 mt-2 h-px bg-gradient-to-r from-transparent via-sidebar-divider to-transparent ${
+                      className={`mx-2 mb-0 mt-3 h-px bg-gradient-to-r from-transparent via-sidebar-divider to-transparent ${
                         collapsed ? "min-[851px]:hidden" : ""
                       }`}
                     />
@@ -421,29 +469,35 @@ export default function Sidebar({
         {/* Footer: collapse toggle (desktop only) */}
         <div className="relative hidden shrink-0 pt-3 min-[851px]:block">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sidebar-divider to-transparent" />
+          {/* 1px border + 7px padding = the same 8px inset as the menu items,
+              so the chevron sits in the same 32px column as every icon tile */}
           <button
             type="button"
             onClick={() => {
-              hideTip();
+              hideTip(true);
               onToggle();
             }}
             onMouseEnter={(e) => showTip(e, `Expand sidebar (${shortcut})`)}
-            onMouseLeave={hideTip}
+            onMouseLeave={() => hideTip()}
             title={collapsed ? undefined : `Collapse sidebar (${shortcut})`}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={`group flex w-full items-center rounded-xl border border-sidebar-border bg-white py-2 text-sidebar-text outline-none transition-all duration-300 hover:border-emerald-200 hover:text-sidebar-text-active hover:shadow-sm focus-visible:ring-2 focus-visible:ring-brand/40 active:scale-95 ${
-              collapsed ? "justify-center px-0" : "justify-between px-3"
+            className={`group flex w-full items-center rounded-xl border border-sidebar-border bg-card py-1 text-sidebar-text outline-none transition-all duration-300 ease-smooth hover:border-brand-200 hover:bg-brandsoft hover:text-sidebar-text-active hover:shadow-soft focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.98] ${
+              collapsed ? "justify-center px-0" : "justify-between px-[7px]"
             }`}
           >
-            <span className="flex items-center gap-2">
-              <ChevronLeft
-                className={`size-5 transition-transform duration-300 group-hover:-translate-x-0.5 ${
-                  collapsed ? "rotate-180 group-hover:translate-x-0.5" : ""
-                }`}
-              />
+            <span className="flex items-center gap-3">
+              <span className="grid size-8 shrink-0 place-items-center">
+                <ChevronLeft
+                  className={`size-[18px] transition-transform duration-300 ease-smooth group-hover:-translate-x-0.5 ${
+                    collapsed ? "rotate-180 group-hover:translate-x-0.5" : ""
+                  }`}
+                />
+              </span>
               <span
-                className={`overflow-hidden whitespace-nowrap text-xs font-semibold transition-all duration-300 ${
-                  collapsed ? "max-w-0 opacity-0" : "max-w-[100px] opacity-100"
+                className={`overflow-hidden whitespace-nowrap text-xs font-semibold transition-[max-width,opacity] ease-smooth ${
+                  collapsed
+                    ? "max-w-0 opacity-0 duration-150"
+                    : "max-w-[100px] opacity-100 duration-300 delay-100"
                 }`}
               >
                 Collapse
@@ -466,9 +520,13 @@ export default function Sidebar({
           <div
             role="tooltip"
             style={{ top: tip.top, left: tip.left }}
-            className="sb-tip pointer-events-none fixed z-[60] hidden -translate-y-1/2 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-lg ring-1 ring-black/10 min-[851px]:block"
+            className="sb-tip pointer-events-none fixed z-[60] hidden -translate-y-1/2 whitespace-nowrap rounded-lg bg-tooltip px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-pop min-[851px]:block"
           >
-            {tip.label}
+            <span
+              aria-hidden="true"
+              className="absolute -left-1 top-1/2 size-2 -translate-y-1/2 rotate-45 rounded-[2px] bg-tooltip"
+            />
+            <span className="relative">{tip.label}</span>
           </div>,
           document.body,
         )}
