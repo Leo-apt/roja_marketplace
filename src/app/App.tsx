@@ -10,6 +10,9 @@ import ReconciliationPage from "@/pages/ReconciliationPage";
 import ProductCategoriesList from "@/pages/productCategories/List";
 import ProductCategoriesDetail from "@/pages/productCategories/Detail";
 import ProductCategoriesManage from "@/pages/productCategories/Manage";
+import ProvidersList from "@/pages/providers/List";
+import ProvidersDetail from "@/pages/providers/Detail";
+import ProvidersManage from "@/pages/providers/Manage";
 import BundlesList from "@/pages/bundles/List";
 import BundlesDetail from "@/pages/bundles/Detail";
 import BundlesManage from "@/pages/bundles/Manage";
@@ -46,6 +49,11 @@ export default function App() {
                     <Route path="/margin" element={<MarginPage />} />
                     <Route path="/settlements" element={<SettlementsPage />} />
                     <Route path="/reconciliation" element={<ReconciliationPage />} />
+
+                    <Route path="/catalog/providers" element={<ProvidersList />} />
+                    <Route path="/catalog/providers/new" element={<ProvidersManage />} />
+                    <Route path="/catalog/providers/:id" element={<ProvidersDetail />} />
+                    <Route path="/catalog/providers/:id/edit" element={<ProvidersManage />} />
 
                     <Route path="/catalog/product-categories" element={<ProductCategoriesList />} />
                     <Route path="/catalog/product-categories/new" element={<ProductCategoriesManage />} />

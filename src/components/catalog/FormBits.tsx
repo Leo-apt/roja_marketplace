@@ -44,19 +44,35 @@ export function TextArea({ rows = 3, ...props }: TextareaHTMLAttributes<HTMLText
     return <textarea rows={rows} {...props} className={`${inputCls} resize-y ${props.className ?? ""}`} />;
 }
 
-export function MoneyInput({ prefix = "$", value, onChange, placeholder = "0.00", readOnly }: {
-    prefix?: string; value: string; onChange?: (v: string) => void; placeholder?: string; readOnly?: boolean;
+/** Keeps digits and one dot with at most 2 decimals; returns null when the number is over `max`. */
+export const money2 = (v: string, max = 99999.99) => {
+    const m = v.replace(/[^0-9.]/g, "").match(/^\d*\.?\d{0,2}/);
+    const s = m ? m[0] : "";
+    return Number(s) > max ? null : s;
+};
+/** "12" -> "12.00", ".5" -> "0.50", "" -> "". */
+export const fixed2 = (v: string) => (v.trim() === "" || v === "." ? "" : Number(v).toFixed(2));
+
+export function MoneyInput({ prefix = "$", value, onChange, placeholder = "0.00", readOnly, max = 99999.99 }: {
+    prefix?: string; value: string; onChange?: (v: string) => void; placeholder?: string; readOnly?: boolean; max?: number;
 }) {
+    const [focused, setFocused] = useState(false);
     return (
         <div className="flex">
             <span className="grid min-w-10 place-items-center rounded-l-md border border-r-0 border-line bg-surfacealt px-3 text-sm text-ink">{prefix}</span>
             <input
                 className={`${inputBase} rounded-r-md`}
                 inputMode="decimal"
-                value={value}
+                value={readOnly || focused ? value : fixed2(value)}
                 readOnly={readOnly}
                 placeholder={placeholder}
-                onChange={(e) => onChange?.(e.target.value.replace(/[^0-9.]/g, ""))}
+                onFocus={() => setFocused(true)}
+                onChange={(e) => { const s = money2(e.target.value, max); if (s !== null) onChange?.(s); }}
+                onBlur={() => {
+                    setFocused(false);
+                    const f = fixed2(value);
+                    if (!readOnly && f !== value) onChange?.(f);
+                }}
             />
         </div>
     );
@@ -163,15 +179,16 @@ export function FileInput({ accept, file, onChange }: { accept?: string; file: F
     );
 }
 
-export function Section({ n, title, subtitle, children }: { n: number; title: string; subtitle?: string; children: ReactNode }) {
+export function Section({ n, title, subtitle, action, children }: { n: number; title: string; subtitle?: string; action?: ReactNode; children: ReactNode }) {
     return (
         <section className="rounded-xl border border-line bg-white p-6 shadow-sm">
-            <div className="flex items-start gap-3 border-b border-gray-300 pb-3">
+            <div className="flex flex-wrap items-start gap-3 border-b border-gray-300 pb-3">
                 <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-sm font-bold text-white">{n}</span>
-                <div>
+                <div className="min-w-0">
                     <h2 className="text-base font-bold text-ink">{title}</h2>
                     {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
                 </div>
+                {action && <div className="ml-auto">{action}</div>}
             </div>
             <div className="pt-5">{children}</div>
         </section>
@@ -180,18 +197,18 @@ export function Section({ n, title, subtitle, children }: { n: number; title: st
 
 export function Stepper({ steps, current, onGo }: { steps: string[]; current: number; onGo: (i: number) => void }) {
     return (
-        <ol className="flex w-full items-start overflow-x-auto rounded-xl border border-line bg-white px-6 py-5">
+        <ol className="flex w-full items-start overflow-x-auto px-6 py-5">
             {steps.map((s, i) => {
                 const done = i < current;
                 const active = i === current;
                 return (
                     <li key={s} className="relative flex min-w-[96px] flex-1 flex-col items-center">
                         {i > 0 && (
-                            <span className={`absolute left-[-50%] right-[50%] top-[15px] h-0.5 ${i <= current ? "bg-brand" : "bg-gray-200"}`} />
+                            <span className={`absolute left-[-50%] right-[50%] top-[15px] h-0.5 ${i <= current ? "bg-brand" : "bg-gray-300"}`} />
                         )}
-                        <button type="button" disabled={i > current} onClick={() => onGo(i)}
-                            className="relative z-10 flex flex-col items-center gap-2 disabled:cursor-not-allowed">
-                            <span className={`grid size-8 place-items-center rounded-full border-2 text-xs font-bold ${active ? "border-brand bg-brand text-white ring-4 ring-brandsoft"
+                        <button type="button" onClick={() => onGo(i)}
+                            className="relative z-10 flex flex-col items-center gap-2">
+                            <span className={`grid size-8 place-items-center rounded-full border-2 text-xs font-bold ${active ? "border-brand bg-brand text-white"
                                 : done ? "border-brand bg-brand text-white" : "border-gray-300 bg-white text-muted"}`}>
                                 {done ? <CheckIcon className="size-4" /> : i + 1}
                             </span>

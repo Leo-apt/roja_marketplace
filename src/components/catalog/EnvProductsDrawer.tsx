@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Drawer from "@/components/shared/Drawer";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
@@ -18,9 +19,11 @@ export default function EnvProductsDrawer({ envName, products, initial, onSave }
     const [sel, setSel] = useState<Set<string>>(() => new Set(initial));
     const [q, setQ] = useState("");
     const [confirm, setConfirm] = useState(false);
+    const [goTo, setGoTo] = useState<string | null>(null);
+    const nav = useNavigate();
 
     const dirty = sel.size !== initial.length || initial.some((id) => !sel.has(id));
-    useBackGuard(dirty, () => { if (dirty) setConfirm(true); else closeLayers(); });
+    const releaseGuard = useBackGuard(dirty, () => { if (dirty) setConfirm(true); else closeLayers(); });
 
     useEffect(() => {
         if (!dirty) return;
@@ -34,6 +37,12 @@ export default function EnvProductsDrawer({ envName, products, initial, onSave }
         return t ? products.filter((p) => p.name.toLowerCase().includes(t) || p.categoryName.toLowerCase().includes(t)) : products;
     }, [q, products]);
     const allShown = shown.length > 0 && shown.every((p) => sel.has(p.id));
+
+    const openProduct = (id: string) => {
+        const path = `/catalog/products/${id}`;
+        if (dirty) { setGoTo(path); setConfirm(true); }
+        else { releaseGuard(); closeLayers(); nav(path, { replace: true }); }
+    };
 
     const toggle = (id: string) => setSel((s) => {
         const n = new Set(s);
@@ -93,15 +102,21 @@ export default function EnvProductsDrawer({ envName, products, initial, onSave }
                                                 <span className="text-muted">{i + 1}</span>
                                             </span>
                                         </td>
-                                        <td className="px-3 py-3 font-semibold text-ink">{p.name}</td>
+                                        <td className="px-3 py-3">
+                                            <button type="button" title="Open product details"
+                                                onClick={(e) => { e.stopPropagation(); openProduct(p.id); }}
+                                                className="text-left font-semibold text-link hover:underline">
+                                                {p.name}
+                                            </button>
+                                        </td>
                                         <td className="px-3 py-3 text-ink">{p.categoryName}</td>
                                         <td className="min-w-[200px] px-3 py-3">
                                             {p.bundles.length ? (
-                                                <div className="overflow-hidden rounded-lg border border-line bg-white">
+                                                <div className="flex flex-wrap gap-1.5">
                                                     {p.bundles.map((b) => (
-                                                        <div key={b.id} className="border-b border-line px-3 py-1.5 text-xs text-ink last:border-b-0">
-                                                            {b.name}
-                                                        </div>
+                                                        <span key={b.id} className="inline-flex items-center rounded-md border border-line bg-white px-2 py-1 text-xs text-ink">
+                                                            {b.name || b.shortCode}
+                                                        </span>
                                                     ))}
                                                 </div>
                                             ) : "-"}
@@ -121,8 +136,12 @@ export default function EnvProductsDrawer({ envName, products, initial, onSave }
             <ConfirmDialog isOpen={confirm} type="warning" title="Discard changes?"
                 message="You have unsaved changes. If you leave now, they will be lost."
                 confirmText="Discard" cancelText="Keep editing"
-                onClose={() => setConfirm(false)}
-                onConfirm={() => { setConfirm(false); closeLayers(); }} />
+                onClose={() => { setConfirm(false); setGoTo(null); }}
+                onConfirm={() => {
+                    setConfirm(false);
+                    if (goTo) { releaseGuard(); closeLayers(); nav(goTo, { replace: true }); }
+                    else closeLayers();
+                }} />
         </Drawer>
     );
 }

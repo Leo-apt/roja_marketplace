@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { useApp } from "@/hooks/useApp";
 import OrderDrawer from "@/components/drawers/OrderDrawer";
-import ProductDrawer from "@/components/drawers/ProductDrawer";
 import SubscriptionDrawer from "@/components/drawers/SubscriptionDrawer";
 import BatchDrawer from "@/components/drawers/BatchDrawer";
 
@@ -15,9 +15,14 @@ export function OrderLink({ id }: { id: string }) {
 }
 
 export function ProductLink({ id, children }: { id: string; children: ReactNode }) {
-    const { openDrawer } = useApp();
+    const nav = useNavigate();
     return (
-        <button className="border-0 bg-transparent p-0 text-left font-semibold text-brand" onClick={() => openDrawer(<ProductDrawer id={id} />)}>
+        <button
+            type="button"
+            title="Open product details"
+            className="border-0 bg-transparent p-0 text-left font-semibold text-link hover:underline"
+            onClick={(e) => { e.stopPropagation(); nav(`/catalog/products/${id}`); }}
+        >
             {children}
         </button>
     );

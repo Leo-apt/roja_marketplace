@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { DetailHeader, DetailShell, DSection, DTile, DTiles } from "@/components/catalog/DetailBits";
+import { DetailHeader, DetailShell, DRow, DRows, DSection } from "@/components/catalog/DetailBits";
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import { marginsService, type MarginRec } from "@/services/margins.service";
 import { usd } from "@/utils/catalog";
@@ -32,14 +32,16 @@ export default function MarginsDetail() {
                 status={r.status || undefined}
                 highlight={{ label: "Margin Vs. Retail", value: usd(r.marginVsRetail) }}
                 editTo={`${BASE}/${r.id}/edit`}
-            >
-                <DTiles four>
-                    <DTile label="Wholesale Price">{usd(r.wholesale)}</DTile>
-                    <DTile label="Retail Price">{usd(r.retail)}</DTile>
-                    <DTile label="Roja Markup">{usd(r.markupAmount)}</DTile>
-                    <DTile label="Roja Buy Rate">{usd(r.buyRate)}</DTile>
-                </DTiles>
-            </DetailHeader>
+            />
+
+            <DSection title="Overview">
+                <DRows>
+                    <DRow label="Wholesale Price">{usd(r.wholesale)}</DRow>
+                    <DRow label="Retail Price">{usd(r.retail)}</DRow>
+                    <DRow label="Roja Markup">{usd(r.markupAmount)}</DRow>
+                    <DRow label="Roja Buy Rate">{usd(r.buyRate)}</DRow>
+                </DRows>
+            </DSection>
 
             <DSection title="Features">
                 {r.features.length ? (
@@ -52,12 +54,12 @@ export default function MarginsDetail() {
             </DSection>
 
             <DSection title="Audit">
-                <DTiles four>
-                    <DTile label="Created By">{r.createdBy}</DTile>
-                    <DTile label="Created On">{r.createdOn}</DTile>
-                    <DTile label="Last Updated By">{r.updatedBy}</DTile>
-                    <DTile label="Last Updated On">{r.updatedOn}</DTile>
-                </DTiles>
+                <DRows>
+                    <DRow label="Created By">{r.createdBy}</DRow>
+                    <DRow label="Created On">{r.createdOn}</DRow>
+                    <DRow label="Last Updated By">{r.updatedBy}</DRow>
+                    <DRow label="Last Updated On">{r.updatedOn}</DRow>
+                </DRows>
             </DSection>
         </DetailShell>
     );

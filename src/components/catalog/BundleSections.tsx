@@ -7,23 +7,23 @@ import { StatusBadge } from "./DetailBits";
 import { btn } from "./FormBits";
 
 const Section = ({ title, children }: { title: string; children: ReactNode }) => (
-    <section className="rounded-xl border border-line bg-white">
-        <h3 className="border-b border-line px-6 py-4 text-xs font-bold uppercase tracking-wide text-ink">{title}</h3>
+    <section className="rounded-xl border border-line bg-white shadow-sm">
+        <h3 className="border-b border-line px-6 py-4 text-base font-bold text-muted">{title}</h3>
         <div className="p-6">{children}</div>
     </section>
 );
 
 const Tile = ({ label, children }: { label: string; children: ReactNode }) => (
-    <div className="min-w-0 rounded-lg border border-line bg-surfacealt px-4 py-3">
-        <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">{label}</dt>
-        <dd className="mt-1 break-words text-sm font-semibold text-ink">{children}</dd>
+    <div className="min-w-0">
+        <dt className="text-xs font-semibold uppercase tracking-wide text-muted after:content-['_:']">{label}</dt>
+        <dd className="mt-1.5 break-words text-sm font-medium text-ink">{children}</dd>
     </div>
 );
 
-const Row = ({ label, children }: { label: string; children: ReactNode }) => (
-    <div className="grid gap-1 border-b border-line py-3 first:pt-0 last:border-b-0 last:pb-0 md:grid-cols-[190px_1fr] md:gap-4">
-        <dt className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</dt>
-        <dd className="min-w-0 break-words text-sm text-cell-text">{children}</dd>
+const Row = ({ label, children, wide }: { label: string; children: ReactNode; wide?: boolean }) => (
+    <div className={`min-w-0 ${wide ? "col-span-full" : ""}`}>
+        <dt className="text-xs font-semibold uppercase tracking-wide text-muted after:content-['_:']">{label}</dt>
+        <dd className="mt-1.5 break-words text-sm font-medium text-ink">{children}</dd>
     </div>
 );
 
@@ -55,7 +55,10 @@ export default function BundleSections({ b, variant = "bundle", editTo }: {
                         )}
                     </div>
                 </div>
-                <dl className="grid gap-3 p-6 sm:grid-cols-2 lg:grid-cols-3">
+            </section>
+
+            <Section title="Overview">
+                <dl className="grid gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
                     <Tile label="Pricing Type">{b.pricingType}</Tile>
                     <Tile label="Discount">
                         {b.discountOn && b.discountValue ? discountShort(b.discountType, b.discountValue) : "No discount"}
@@ -72,19 +75,19 @@ export default function BundleSections({ b, variant = "bundle", editTo }: {
                         ) : "N/A"}
                     </Tile>
                 </dl>
-            </section>
+            </Section>
 
             <Section title="Content">
-                <dl>
-                    <Row label="Short Description">{b.shortDescription || "-"}</Row>
+                <dl className="grid gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+                    <Row label="Short Description" wide>{b.shortDescription || "-"}</Row>
                     <Row label="Long Description">
                         <div className="[&_p]:mb-2 [&_strong]:font-semibold [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5"
                             dangerouslySetInnerHTML={{ __html: b.longDescription || "-" }} />
                     </Row>
-                    <Row label="Credential Note">{b.disclosure || "-"}</Row>
-                    <Row label="Disclaimer">{b.disclaimer || "-"}</Row>
-                    <Row label="Additional Information">{b.additionalInfo || "-"}</Row>
-                    <Row label="Benefits List">
+                    <Row label="Credential Note" wide>{b.disclosure || "-"}</Row>
+                    <Row label="Disclaimer" wide>{b.disclaimer || "-"}</Row>
+                    <Row label="Additional Information" wide>{b.additionalInfo || "-"}</Row>
+                    <Row label="Benefits List" wide>
                         {b.benefits.length ? (
                             <ul className="grid gap-2 sm:grid-cols-2">
                                 {b.benefits.map((x) => (
@@ -103,12 +106,12 @@ export default function BundleSections({ b, variant = "bundle", editTo }: {
                 <p className="mb-4 rounded-md border border-warn-border bg-warnbg px-3 py-2 text-xs text-warn">
                     These fields are never rendered pre-purchase — visible to the customer only after purchase is complete.
                 </p>
-                <dl>
-                    <Row label="Access Instructions">{b.insuranceInstructions || "-"}</Row>
+                <dl className="grid gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+                    <Row label="Access Instructions" wide>{b.insuranceInstructions || "-"}</Row>
                     <Row label="Phone Number">{b.phone || "-"}</Row>
                     <Row label="Member Portal URL">{b.portalUrl || "-"}</Row>
                     <Row label="Group Code">{b.promoCode || "-"}</Row>
-                    <Row label="Activation Details">{b.promoNote || "-"}</Row>
+                    <Row label="Activation Details" wide>{b.promoNote || "-"}</Row>
                 </dl>
             </Section>
         </>

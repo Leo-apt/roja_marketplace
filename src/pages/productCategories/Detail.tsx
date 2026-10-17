@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { DetailHeader, DetailShell, DSection, DTile, DTiles } from "@/components/catalog/DetailBits";
+import { DetailHeader, DetailShell, DSection, DRow, DRows } from "@/components/catalog/DetailBits";
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import { categoriesService, type CategoryRec } from "@/services/categories.service";
 
@@ -32,29 +32,27 @@ export default function ProductCategoriesDetail() {
                 editTo={`${BASE}/${rec.id}/edit`}
             />
 
-            <DSection title="Details">
-                <p className="break-words text-sm text-cell-text mb-6">
-                    <span className="font-semibold text-ink">Description :</span> {rec.description || "No description"}
-                </p>
-                <DTiles>
-                    <DTile label="Background Color">
+            <DSection title="Overview">
+                <DRows>
+                    <DRow label="Description" wide>{rec.description || "No description"}</DRow>
+                    <DRow label="Background Color">
                         {rec.bgColor ? (
                             <span className="inline-flex items-center gap-2">
                                 <span className="size-5 rounded-sm border border-line" style={{ background: rec.bgColor }} />
                                 <span className="font-mono">{rec.bgColor}</span>
                             </span>
                         ) : "-"}
-                    </DTile>
-                </DTiles>
+                    </DRow>
+                </DRows>
             </DSection>
 
             <DSection title="Audit">
-                <DTiles four>
-                    <DTile label="Created By">{rec.createdBy}</DTile>
-                    <DTile label="Created On">{rec.createdOn}</DTile>
-                    <DTile label="Last Updated By">{rec.updatedBy}</DTile>
-                    <DTile label="Last Updated On">{rec.updatedOn}</DTile>
-                </DTiles>
+                <DRows>
+                    <DRow label="Created By">{rec.createdBy}</DRow>
+                    <DRow label="Created On">{rec.createdOn}</DRow>
+                    <DRow label="Last Updated By">{rec.updatedBy}</DRow>
+                    <DRow label="Last Updated On">{rec.updatedOn}</DRow>
+                </DRows>
             </DSection>
         </DetailShell>
     );

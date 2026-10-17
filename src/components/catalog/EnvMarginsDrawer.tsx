@@ -10,7 +10,7 @@ import { useBackGuard } from "@/hooks/useBackGuard";
 
 interface RowErr { wholesale?: string; retail?: string; markup?: string }
 interface Row { wholesale: string; retail: string; markupType: "flat" | "percent"; markup: string }
-const COLS = ["Product", "Wholesale Price", "Retail Price", "Roja Markup Type", "Roja Markup", "Roja Buy Rate", "Margin Vs. Retail"];
+const COLS = ["S.No", "Product", "Bundles", "Wholesale Price", "Retail Price", "Roja Markup Type", "Roja Markup", "Roja Buy Rate", "Margin Vs. Retail"];
 
 const initRow = (p: ProductRec, m?: MarginRec): Row => m
     ? { wholesale: String(m.wholesale), retail: String(m.retail), markupType: m.markupType, markup: String(m.markupValue) }
@@ -109,25 +109,37 @@ export default function EnvMarginsDrawer({ envName, products, margins, onSaved }
         >
             <p className="text-xs text-muted">Margins belong to the product, so a change here applies to that product everywhere.</p>
             <div className="thin-scrollbar overflow-x-auto rounded-xl border border-line">
-                <table className="w-full min-w-[980px] border-collapse text-sm">
+                <table className="w-full min-w-[1240px] border-collapse text-sm">
                     <thead>
                         <tr className="bg-surfacealt">
                             {COLS.map((c, i) => (
-                                <th key={c} className={`px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-muted ${i === 0 ? "sticky left-0 z-10 min-w-[200px] bg-surfacealt" : ""}`}>{c}</th>
+                                <th key={c} className={`px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-muted ${i === 0 ? "sticky left-0 z-10 w-16 min-w-[64px] bg-surfacealt" : i === 1 ? "sticky left-16 z-10 min-w-[200px] bg-surfacealt" : ""}`}>{c}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
-                        {products.map((p) => {
+                        {products.map((p, i) => {
                             const r = rows[p.id];
                             const ex = byProduct.get(p.id);
                             const c = calcMargin(num(r.wholesale), num(r.retail), num(r.markup), r.markupType);
                             const filled = r.wholesale.trim() !== "";
                             return (
                                 <tr key={p.id} className="border-t border-line align-top">
-                                    <td className="sticky left-0 z-10 bg-white px-3 py-3">
+                                    <td className="sticky left-0 z-10 w-16 min-w-[64px] bg-white px-3 py-3 pt-5 text-muted">{i + 1}</td>
+                                    <td className="sticky left-16 z-10 min-w-[200px] bg-white px-3 py-3">
                                         <div className="font-semibold text-ink">{p.name}</div>
                                         <div className="text-xs text-muted">{ex ? "Margin set" : "No margin yet"}</div>
+                                    </td>
+                                    <td className="min-w-[200px] px-3 py-3">
+                                        {p.bundles.length ? (
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {p.bundles.map((b) => (
+                                                    <span key={b.id} className="inline-flex items-center rounded-md border border-line bg-white px-2 py-1 text-xs text-ink">
+                                                        {b.name || b.shortCode}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        ) : "-"}
                                     </td>
                                     <td className="min-w-[150px] px-3 py-3">
                                         <MoneyInput value={r.wholesale} onChange={(v) => patch(p.id, { wholesale: v })} />

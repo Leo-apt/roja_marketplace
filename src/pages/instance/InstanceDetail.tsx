@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { Calendar, Check as CheckIcon, ChevronRight, Clock, Copy, Globe, KeyRound, Layers, MousePointerClick, Package, Pencil, Percent, Plus, RefreshCw, Settings, Trash2 } from "lucide-react";
 import { useApp } from "@/hooks/useApp";
 import Drawer from "@/components/shared/Drawer";
@@ -353,12 +353,12 @@ function EnvSummaryCards({ name, total, picked, margined, recs, onProducts, onMa
             </p>
             <div className="grid gap-4 md:grid-cols-3">
                 <button type="button" onClick={onProducts} className={clickable}>
-                    <span className="flex items-center gap-3"><span className={tile}><Package className="size-5" /></span><span className={label}>Total Products</span></span>
+                    <span className="flex items-center gap-3"><span className={tile}><Package className="size-5" /></span><span className={label}>Manage Products</span></span>
                     <span className="text-3xl font-bold text-ink">{picked}<span className="ml-2 text-sm font-medium text-muted">of {total} available</span></span>
                     {hint}
                 </button>
                 <button type="button" onClick={onMargins} className={clickable}>
-                    <span className="flex items-center gap-3"><span className={tile}><Percent className="size-5" /></span><span className={label}>Margined Products</span></span>
+                    <span className="flex items-center gap-3"><span className={tile}><Percent className="size-5" /></span><span className={label}>Margin Settings</span></span>
                     <span className="text-3xl font-bold text-ink">{margined}<span className="ml-2 text-sm font-medium text-muted">of {picked} selected</span></span>
                     {hint}
                 </button>
@@ -378,6 +378,27 @@ function EnvSummaryCards({ name, total, picked, margined, recs, onProducts, onMa
                         })}
                     </div>
                 </section>
+            </div>
+        </div>
+    );
+}
+
+/* ---------------- Summary cards skeleton ---------------- */
+function EnvSummarySkeleton() {
+    return (
+        <div className="flex flex-col gap-2">
+            <div className="skeleton h-4 w-72 max-w-full" />
+            <div className="grid gap-4 md:grid-cols-3">
+                {[0, 1, 2].map((i) => (
+                    <div key={i} className="flex flex-col gap-3 rounded-xl border border-line bg-white p-5">
+                        <div className="flex items-center gap-3">
+                            <div className="skeleton size-10 shrink-0" />
+                            <div className="skeleton h-4 w-32" />
+                        </div>
+                        <div className="skeleton h-9 w-40" />
+                        <div className="skeleton h-4 w-28" />
+                    </div>
+                ))}
             </div>
         </div>
     );
@@ -439,11 +460,25 @@ export default function InstanceDetail() {
         finally { setLoading(false); }
     }, []);
     useEffect(() => { if (id) void load(id); }, [id, load]);
-    const [tab, setTab] = useState("entity");
+    const [sp] = useSearchParams();
+    const [tab, setTab] = useState(sp.get("tab") === "token" ? "token" : "entity");
     const [subs, setSubs] = useState<SubEntity[]>([]);
     const [subId, setSubId] = useState("");
     const [subsLoading, setSubsLoading] = useState(true);
     const [subsErr, setSubsErr] = useState("");
+
+
+    const [switching, setSwitching] = useState(false);
+    useEffect(() => {
+        if (!switching) return;
+        const t = window.setTimeout(() => setSwitching(false), 500);
+        return () => window.clearTimeout(t);
+    }, [switching]);
+    const pickSub = (sid: string) => {
+        if (sid === subId) return; // same tab: nothing to reload
+        setSubId(sid);
+        setSwitching(true);
+    };
     const loadSubs = useCallback(async (eid: string) => {
         setSubsLoading(true);
         setSubsErr("");
@@ -619,9 +654,9 @@ export default function InstanceDetail() {
                             const active = s.id === subId;
                             return (
                                 <div key={s.id} className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-lg border text-xs font-semibold ${active ? "border-action bg-action text-white" : "border-line bg-surfacealt text-muted"}`}>
-                                    <button type="button" className="px-3 py-2" onClick={() => setSubId(s.id)}>{s.name}</button>
+                                    <button type="button" className="px-3 py-2" onClick={() => pickSub(s.id)}>{s.name}</button>
                                     <button type="button" aria-label={`Edit ${s.name}`} title="Edit" className="py-2 pr-2.5"
-                                        onClick={() => { setSubId(s.id); openDrawer(<SubEntityDrawer initial={s} onSave={(n, d) => editSub(s.id, n, d)} />); }}>
+                                        onClick={() => { pickSub(s.id); openDrawer(<SubEntityDrawer initial={s} onSave={(n, d) => editSub(s.id, n, d)} />); }}>
                                         <Settings className="size-3.5" />
                                     </button>
                                 </div>
@@ -648,8 +683,10 @@ export default function InstanceDetail() {
                     </div>
                 ) : (
                     <>
-                        <EnvSummaryCards name={envName} total={allProducts.length} picked={pickedIds.length} margined={marginedCount}
-                            recs={tokens[subId]} onProducts={openProducts} onMargins={openMargins} />
+                        {switching ? <EnvSummarySkeleton /> : (
+                            <EnvSummaryCards name={envName} total={allProducts.length} picked={pickedIds.length} margined={marginedCount}
+                                recs={tokens[subId]} onProducts={openProducts} onMargins={openMargins} />
+                        )}
                         <section className="rounded-xl border border-line bg-white p-5">
                             <ProductsTab subId={subId} enabled={enabled}
                                 onToggle={(pid, env, on) => setEnabled((m) => ({ ...m, [`${subId}:${env}:${pid}`]: on }))}

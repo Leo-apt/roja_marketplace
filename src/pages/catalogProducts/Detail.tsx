@@ -38,17 +38,27 @@ export default function CatalogProductsDetail() {
                 status={r.status}
                 highlight={{ label: "Selling Price", value: r.sellingPrice == null ? "-" : usd(r.sellingPrice) }}
                 editTo={`${BASE}/${r.id}/edit`}
-            >
+            />
+
+            <DSection title="Overview">
                 <DTiles>
                     <DTile label="Category">{r.categoryName}</DTile>
                     <DTile label="Provider ID">{dash(r.providerId)}</DTile>
                     <DTile label="Retail Price">{r.retail == null ? "-" : usd(r.retail)}</DTile>
                     <DTile label="Discount">{discount}</DTile>
-                    <DTile label="Bundles">{r.bundles.length ? r.bundles.map((b) => <div key={b.id}>{b.name || b.shortCode}</div>) : "-"}</DTile>
+                    <DTile label="Bundles">
+                        {r.bundles.length ? (
+                            <div className="flex flex-wrap gap-1.5">
+                                {r.bundles.map((b) => (
+                                    <span key={b.id} className="inline-flex items-center rounded-md border border-line bg-white px-2 py-1 text-xs text-ink">{b.name || b.shortCode}</span>
+                                ))}
+                            </div>
+                        ) : "-"}
+                    </DTile>
                     <DTile label="Audience">{r.audience === "provider" ? "Provider rules" : "Everyone"}</DTile>
                     <DTile label="Configuration">{dash(r.configurationName)}</DTile>
                 </DTiles>
-            </DetailHeader>
+            </DSection>
 
             <DSection title="Pricing & Margin">
                 <DTiles>
@@ -75,14 +85,14 @@ export default function CatalogProductsDetail() {
 
             <DSection title="Marketplace">
                 <DRows>
-                    <DRow label="Short Description">{dash(r.shortDescription)}</DRow>
-                    <DRow label="Long Description">
+                    <DRow label="Short Description" wide>{dash(r.shortDescription)}</DRow>
+                    <DRow label="Long Description" wide>
                         {r.longDescription
                             ? <div className="[&_p]:mb-2 [&_strong]:font-semibold [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5" dangerouslySetInnerHTML={{ __html: r.longDescription }} />
                             : "-"}
                     </DRow>
-                    <DRow label="Pricing Content">{dash(r.pricingContent)}</DRow>
-                    <DRow label="Terms URL">{dash(r.termsUrl)}</DRow>
+                    <DRow label="Pricing Content" wide>{dash(r.pricingContent)}</DRow>
+                    <DRow label="Terms URL" wide>{dash(r.termsUrl)}</DRow>
                 </DRows>
             </DSection>
 
@@ -92,7 +102,7 @@ export default function CatalogProductsDetail() {
                     <DRow label="Title">{dash(r.dashTitle)}</DRow>
                     <DRow label="Call To Action">{dash(r.cta)}</DRow>
                     <DRow label="Feature Title">{dash(r.featureTitle)}</DRow>
-                    <DRow label="Short Description">{dash(r.dashShort)}</DRow>
+                    <DRow label="Short Description" wide>{dash(r.dashShort)}</DRow>
                 </DRows>
             </DSection>
 

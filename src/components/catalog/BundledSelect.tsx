@@ -36,6 +36,7 @@ export default function BundledSelect({ options, value, onChange, onAdd }: {
                             {selected.map((o) => (
                                 <span key={o.id} className="inline-flex items-center gap-1 rounded bg-gray-200 px-2 py-0.5 text-xs text-ink">
                                     {o.label}
+                                    <span className="text-[10px] text-muted">({o.type})</span>
                                     <button type="button" aria-label={`Remove ${o.label}`}
                                         onClick={(e) => { e.stopPropagation(); toggle(o.id); }}><X className="size-3" /></button>
                                 </span>

@@ -10,6 +10,7 @@ import type { Status } from "@/data/catalog";
 import type { Instance } from "@/data/instances";
 import { entityService } from "@/services/entity.service";
 import { statusFilterOptions } from "@/utils/catalog";
+import { KeyRound, Layers } from "lucide-react";
 
 const BASE = "/instances";
 const fields: FilterField[] = [{ key: "status", label: "Status", options: statusFilterOptions }];
@@ -64,18 +65,40 @@ export default function InstancesList() {
         toast("Client created");
     };
 
+    // TODO: replace with the real count when the API returns it
+    const envNames = (_r: Instance): string[] => ["Environment 1", "Environment 2", "Environment 3", "Environment 4"];
+
     const cols: Col<Instance>[] = [
-        { key: "name", label: "Client Name", link: true, render: (r) => r.name },
         {
-            key: "status", label: "Status", render: (r) => (
-                <StatusToggle label={`Toggle ${r.name}`} on={r.status === "Active"} onChange={(v) => void setStatus(r.id, v)} />
+            key: "name", label: "Client Name", link: true, render: (r) => (
+                <span className="inline-flex items-center gap-3">
+                    {r.imageUrl
+                        ? <img src={r.imageUrl} alt={r.name} className="size-9 shrink-0 rounded-lg object-cover" />
+                        : <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brandsoft text-sm font-bold text-brand">{r.name[0]}</span>}
+                    <span>{r.name}</span>
+                </span>
             ),
         },
         {
-            key: "products", label: "Associated Products", render: (r) => (
-                <button type="button" onClick={() => nav(`${BASE}/${r.id}`)} className="font-semibold text-brand hover:underline">
-                    {r.products.length} products
-                </button>
+            key: "description", label: "Description", render: (r) => (
+                <span className="block max-w-[280px] truncate" title={r.description || ""}>{r.description || "-"}</span>
+            ),
+        },
+        {
+            key: "environments", label: "Associated Environments", render: (r) => {
+                const names = envNames(r);
+                return names.length ? (
+                    <div className="flex max-w-[320px] flex-wrap gap-1.5">
+                        {names.map((n) => (
+                            <span key={n} className="inline-flex items-center rounded-md border border-line bg-white px-2 py-1 text-xs text-ink">{n}</span>
+                        ))}
+                    </div>
+                ) : "-";
+            },
+        },
+        {
+            key: "status", label: "Status", render: (r) => (
+                <StatusToggle label={`Toggle ${r.name}`} on={r.status === "Active"} onChange={(v) => void setStatus(r.id, v)} />
             ),
         },
     ];
@@ -98,6 +121,10 @@ export default function InstancesList() {
                 match={(r, q, f) => (f.status === "all" || r.status === f.status) && (!q || r.name.toLowerCase().includes(q))}
                 onCreate={() => openDrawer(<InstanceDrawer onSubmit={(d) => save(d)} />)}
                 onEdit={(id) => { const r = rows.find((x) => x.id === id); if (r) openDrawer(<InstanceDrawer initial={r} onSubmit={(d) => save(d, r)} />); }}
+                extraActions={[
+                    { label: "Environment", icon: <Layers className="size-4" />, onClick: (id) => nav(`${BASE}/${id}?tab=entity`) },
+                    { label: "Token Generation", icon: <KeyRound className="size-4" />, onClick: (id) => nav(`${BASE}/${id}?tab=token`) },
+                ]}
             />
         </>
     );

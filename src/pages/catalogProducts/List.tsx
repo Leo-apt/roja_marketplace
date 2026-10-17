@@ -13,7 +13,17 @@ const cols: Col<ProductRec>[] = [
     { key: "categoryName", label: "Category", render: (r) => r.categoryName },
     { key: "retail", label: "Retail Price ($)", align: "right", render: (r) => (r.retail == null ? "-" : usd(r.retail)) },
     { key: "sellingPrice", label: "Selling Price ($)", align: "right", render: (r) => (r.sellingPrice == null ? "-" : usd(r.sellingPrice)) },
-    { key: "bundles", label: "Bundles", render: (r) => (r.bundles.length ? r.bundles.map((b) => b.name || b.shortCode).join(", ") : "-") },
+    {
+        key: "bundles", label: "Bundles", render: (r) => r.bundles.length ? (
+            <div className="flex max-w-[320px] flex-wrap gap-1.5">
+                {r.bundles.map((b) => (
+                    <span key={b.id} className="inline-flex whitespace-nowrap rounded-md border border-line bg-white px-2 py-1 text-xs text-ink">
+                        {b.name || b.shortCode}
+                    </span>
+                ))}
+            </div>
+        ) : "-",
+    },
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
 ];
 
@@ -42,6 +52,8 @@ export default function CatalogProductsList() {
     const [stats, setStats] = useState<{ all: number; active: number; draft: number; scheduled: number } | null>(null);
     const [del, setDel] = useState<ProductRec | null>(null);
     const [deleting, setDeleting] = useState(false);
+    const [pub, setPub] = useState<ProductRec | null>(null);
+    const [publishing, setPublishing] = useState(false);
 
     useEffect(() => {
         if (!isAdmin) return;
@@ -85,6 +97,21 @@ export default function CatalogProductsList() {
         }
     };
 
+    const confirmPublish = async () => {
+        if (!pub) return;
+        setPublishing(true);
+        try {
+            await productsService.publish(pub.id);
+            toast("Product published");
+            setPub(null);
+            setTick((t) => t + 1); // reload rows and cards
+        } catch (e) {
+            toastError(msg(e));
+        } finally {
+            setPublishing(false);
+        }
+    };
+
     return (
         <>
             <ListShell
@@ -112,15 +139,18 @@ export default function CatalogProductsList() {
                     },
                 }}
                 onDelete={(id) => setDel(rows.find((x) => x.id === id) ?? null)}
+                onPublish={(id) => setPub(rows.find((x) => x.id === id) ?? null)}
+                canPublish={(id) => rows.find((x) => x.id === id)?.status !== "Active"}
             />
             <ConfirmDialog
-                isOpen={!!del}
-                type="delete"
-                itemType="product"
-                itemName={del?.name}
-                loading={deleting}
-                onClose={() => setDel(null)}
-                onConfirm={confirmDelete}
+                isOpen={!!pub}
+                type="info"
+                title="Publish product"
+                message={`Are you sure you want to publish "${pub?.name ?? ""}"?`}
+                confirmText="Yes, Publish"
+                loading={publishing}
+                onClose={() => setPub(null)}
+                onConfirm={confirmPublish}
             />
         </>
     );

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, Eye, Pencil, Plus, Settings, SlidersHorizontal } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, Eye, Pencil, Plus, Settings, SlidersHorizontal, Send, } from "lucide-react";
 import { useApp } from "@/hooks/useApp";
 import { useDebounce } from "@/hooks/useDebounce";
 import Pagination from "@/components/shared/Pagination";
@@ -29,6 +29,9 @@ interface Props<T extends { id: string }> {
     match: (r: T, q: string, f: Record<string, string>) => boolean;
     cards?: (rows: T[]) => Stat[];
     onDelete?: (id: string) => void;
+    extraActions?: { label: string; icon: ReactNode; onClick: (id: string) => void }[];
+    onPublish?: (id: string) => void;
+    canPublish?: (id: string) => boolean;
     onCreate?: () => void;
     onEdit?: (id: string) => void;
     /** Server mode: rows is the current page only; paging and search go through onChange. */
@@ -40,7 +43,7 @@ const th = "whitespace-nowrap border-b border-linesoft bg-surfacealt px-3 py-3 t
 const td = "whitespace-nowrap border-b border-linesoft px-3 py-3 align-middle text-xs text-td-text";
 
 export default function ListShell<T extends { id: string }>({
-    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, onCreate, onEdit, server,
+    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, extraActions, onPublish, canPublish, onCreate, onEdit, server,
 }: Props<T>) {
     const nav = useNavigate();
     const { openDrawer } = useApp();
@@ -90,9 +93,10 @@ export default function ListShell<T extends { id: string }>({
     const openMenu = (e: ReactMouseEvent<HTMLButtonElement>, id: string) => {
         if (menu?.id === id) { setMenu(null); return; }
         const r = e.currentTarget.getBoundingClientRect();
-        const h = onDelete ? 124 : 88; // dropdown height
+        const items = 2 + (onDelete ? 1 : 0) + (onPublish && (!canPublish || canPublish(id)) ? 1 : 0) + (extraActions?.length ?? 0);
+        const h = 16 + 36 * items; // dropdown height
         const top = r.bottom + h > window.innerHeight ? r.top - h - 4 : r.bottom + 4; // opens upward near screen bottom
-        setMenu({ id, top, left: Math.max(8, r.right - 144) });
+        setMenu({ id, top, left: Math.max(8, r.right - 176) });
     };
 
     const base = server ? rows : rows.filter((r) => match(r, q.trim().toLowerCase(), f));
@@ -207,7 +211,7 @@ export default function ListShell<T extends { id: string }>({
             </section>
             {menu && (
                 <div data-action-menu style={{ top: menu.top, left: menu.left }}
-                    className="fixed z-50 w-36 rounded-lg border border-line bg-white py-1 shadow-lg">
+                    className="fixed z-50 w-44 rounded-lg border border-line bg-white py-1 shadow-lg">
                     <button onClick={() => { nav(`${basePath}/${menu.id}`); setMenu(null); }}
                         className="flex w-full items-center gap-2 px-3 py-2 text-xs text-brand hover:bg-brandsoft">
                         <Eye className="size-4" /> View
@@ -216,6 +220,18 @@ export default function ListShell<T extends { id: string }>({
                         className="flex w-full items-center gap-2 px-3 py-2 text-xs text-cell-text hover:bg-gray-50">
                         <Pencil className="size-4" /> Edit
                     </button>
+                    {extraActions?.map((a) => (
+                        <button key={a.label} onClick={() => { a.onClick(menu.id); setMenu(null); }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-xs text-cell-text hover:bg-gray-50">
+                            {a.icon} {a.label}
+                        </button>
+                    ))}
+                    {onPublish && (!canPublish || canPublish(menu.id)) && (
+                        <button onClick={() => { onPublish(menu.id); setMenu(null); }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-xs text-good hover:bg-goodbg">
+                            <Send className="size-4" /> Publish
+                        </button>
+                    )}
                     {/* {onDelete && (
                         <button onClick={() => { onDelete(menu.id); setMenu(null); }}
                             className="flex w-full items-center gap-2 px-3 py-2 text-xs text-bad hover:bg-badbg">

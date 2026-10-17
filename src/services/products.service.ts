@@ -130,7 +130,7 @@ function toPayload(i: ProductInput, isEdit: boolean) {
         },
         retailPrice: i.retail.trim() ? num(i.retail) : clear,
         discountType: hasDisc ? (i.discountType === "percent" ? API_PERCENT : API_FIXED) : clear,
-        discountValue: hasDisc ? dv : clear,
+        discountValue: hasDisc ? dv : 0,
         wholesalePrice: i.wholesale.trim() ? num(i.wholesale) : clear,
         markupType: i.markupType,
         markupValue: i.markupValue.trim() ? num(i.markupValue) : clear,

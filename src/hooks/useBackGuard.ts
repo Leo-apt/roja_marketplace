@@ -10,9 +10,11 @@ export function useBackGuard(dirty: boolean, onBack: () => void) {
     dirtyRef.current = dirty;
     const backRef = useRef(onBack);
     backRef.current = onBack;
+    const releaseRef = useRef<() => void>(() => { });
 
     useEffect(() => {
         let holding = false;
+        releaseRef.current = () => { holding = false; };
         const t = window.setTimeout(() => {
             window.history.pushState(window.history.state, "", window.location.href);
             holding = true;
@@ -34,4 +36,7 @@ export function useBackGuard(dirty: boolean, onBack: () => void) {
             if (holding) window.history.back(); // drawer closed normally: remove our extra entry
         };
     }, []);
+
+    /** Call before navigating away, so the cleanup doesn't undo the navigation with history.back(). */
+    return () => releaseRef.current();
 }

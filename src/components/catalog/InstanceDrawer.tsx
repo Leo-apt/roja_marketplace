@@ -24,7 +24,7 @@ export default function InstanceDrawer({ onSubmit, initial }: {
 
     const submit = async (close: () => void) => {
         const e = {
-            name: name.trim() ? "" : "Entity name is required",
+            name: name.trim() ? "" : "Client Name is required",
             image: file && file.size > 2 * 1024 * 1024 ? "Image must be less than 2 MB" : "",
         };
         setErr(e);
@@ -55,7 +55,7 @@ export default function InstanceDrawer({ onSubmit, initial }: {
                 </>
             )}
         >
-            <Field label="Entity Name" required error={err.name}>
+            <Field label="Client Name" required error={err.name}>
                 <TextInput value={name} placeholder="e.g. Roja Main" onChange={(e) => setName(e.target.value)} />
             </Field>
             <Field label="Description">

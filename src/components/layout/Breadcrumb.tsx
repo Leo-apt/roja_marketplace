@@ -16,7 +16,7 @@ import {
   BadgePercent,
   UserStar,
   SlidersHorizontal,
-  Settings,
+  Settings, Building2,
 } from "lucide-react";
 import { viewInfo, type ViewKey } from "@/utils/views";
 import { displayGroups } from "@/utils/navGroups";
@@ -29,6 +29,7 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
   margin: TrendingUp,
   settlements: ArrowLeftRight,
   reconciliation: Scale,
+  providers: Building2,
   productCategories: FolderTree,
   bundles: Layers,
   catalogProducts: Package,

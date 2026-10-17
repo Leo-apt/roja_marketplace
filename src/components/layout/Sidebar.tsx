@@ -17,7 +17,7 @@ import {
   UserStar,
   SlidersHorizontal,
   TrendingUp,
-  Settings,
+  Settings, Building2
 } from "lucide-react";
 import { viewInfo, type ViewKey } from "@/utils/views";
 import { displayGroups } from "@/utils/navGroups";
@@ -32,6 +32,7 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
   margin: TrendingUp,
   settlements: ArrowLeftRight,
   reconciliation: Scale,
+  providers: Building2,
   productCategories: FolderTree,
   bundles: Layers,
   catalogProducts: Package,
@@ -105,7 +106,7 @@ export default function Sidebar({
   const shortcut = useMemo(
     () =>
       typeof navigator !== "undefined" &&
-      /Mac|iPhone|iPad/i.test(navigator.platform)
+        /Mac|iPhone|iPad/i.test(navigator.platform)
         ? "⌘B"
         : "Ctrl B",
     [],
@@ -257,9 +258,8 @@ export default function Sidebar({
 
       <aside
         aria-label="Marketplace navigation"
-        className={`sb-root fixed inset-y-0 left-0 z-[15] flex w-[250px] flex-col overflow-x-hidden border-r border-sidebar-border bg-sidebar-bg px-3 pb-4 pt-0 text-sidebar-text shadow-[2px_0_12px_rgba(15,23,42,0.04)] transition-[width,transform] duration-[380ms] ease-smooth max-[850px]:-translate-x-full print:hidden ${
-          collapsed ? "min-[851px]:w-20" : "max-[1180px]:w-[220px]"
-        } ${open ? "max-[850px]:translate-x-0" : ""}`}
+        className={`sb-root fixed inset-y-0 left-0 z-[15] flex w-[250px] flex-col overflow-x-hidden border-r border-sidebar-border bg-sidebar-bg px-3 pb-4 pt-0 text-sidebar-text shadow-[2px_0_12px_rgba(15,23,42,0.04)] transition-[width,transform] duration-[380ms] ease-smooth max-[850px]:-translate-x-full print:hidden ${collapsed ? "min-[851px]:w-20" : "max-[1180px]:w-[220px]"
+          } ${open ? "max-[850px]:translate-x-0" : ""}`}
       >
         {/* ───────── Logo header with underline ───────── */}
         <header className="relative h-[var(--topbar-h,76px)] shrink-0">
@@ -268,19 +268,17 @@ export default function Sidebar({
             <img
               src={logo}
               alt="Roja Marketplace"
-              className={`absolute inset-0 m-auto h-14 w-auto max-w-[85%] object-contain transition-opacity duration-300 ease-smooth ${
-                collapsed
-                  ? "min-[851px]:pointer-events-none min-[851px]:opacity-0"
-                  : "opacity-100"
-              }`}
+              className={`absolute inset-0 m-auto h-14 w-auto max-w-[85%] object-contain transition-opacity duration-300 ease-smooth ${collapsed
+                ? "min-[851px]:pointer-events-none min-[851px]:opacity-0"
+                : "opacity-100"
+                }`}
             />
             {/* icon logo (collapsed) */}
             <img
               src={logoIcon}
               alt="Roja"
-              className={`absolute inset-0 m-auto size-10 object-contain opacity-0 transition-opacity duration-300 ease-smooth ${
-                collapsed ? "min-[851px]:opacity-100" : ""
-              }`}
+              className={`absolute inset-0 m-auto size-10 object-contain opacity-0 transition-opacity duration-300 ease-smooth ${collapsed ? "min-[851px]:opacity-100" : ""
+                }`}
             />
           </div>
 
@@ -293,9 +291,8 @@ export default function Sidebar({
           {/* brand accent, centred on that line */}
           <div
             aria-hidden="true"
-            className={`sb-underline pointer-events-none absolute bottom-[-1px] left-1/2 h-[3px] -translate-x-1/2 origin-center rounded-full bg-brand transition-[width] duration-[380ms] ease-smooth ${
-              collapsed ? "w-6" : "w-14"
-            }`}
+            className={`sb-underline pointer-events-none absolute bottom-[-1px] left-1/2 h-[3px] -translate-x-1/2 origin-center rounded-full bg-brand transition-[width] duration-[380ms] ease-smooth ${collapsed ? "w-6" : "w-14"
+              }`}
           />
         </header>
 
@@ -328,11 +325,10 @@ export default function Sidebar({
                     aria-expanded={groupOpen}
                     aria-controls={contentId}
                     onClick={() => toggleGroup(g.label)}
-                    className={`group/head flex w-full items-center justify-between overflow-hidden whitespace-nowrap rounded-lg px-2 pb-1.5 pt-3 text-left text-[11px] font-semibold uppercase tracking-wider text-sidebar-group outline-none transition-[max-height,opacity,padding,color] duration-[380ms] ease-smooth hover:text-sidebar-text-active focus-visible:ring-2 focus-visible:ring-brand/30 ${
-                      collapsed
-                        ? "pointer-events-none min-[851px]:max-h-0 min-[851px]:py-0 min-[851px]:opacity-0"
-                        : "max-h-10 opacity-100"
-                    }`}
+                    className={`group/head flex w-full items-center justify-between overflow-hidden whitespace-nowrap rounded-lg px-2 pb-1.5 pt-3 text-left text-[11px] font-semibold uppercase tracking-wider text-sidebar-group outline-none transition-[max-height,opacity,padding,color] duration-[380ms] ease-smooth hover:text-sidebar-text-active focus-visible:ring-2 focus-visible:ring-brand/30 ${collapsed
+                      ? "pointer-events-none min-[851px]:max-h-0 min-[851px]:py-0 min-[851px]:opacity-0"
+                      : "max-h-10 opacity-100"
+                      }`}
                   >
                     <span>{g.label}</span>
                     <span className="flex items-center gap-1.5">
@@ -348,9 +344,8 @@ export default function Sidebar({
                         </span>
                       )}
                       <ChevronDown
-                        className={`size-3.5 transition-transform duration-[380ms] ease-smooth ${
-                          groupOpen ? "" : "-rotate-90"
-                        }`}
+                        className={`size-3.5 transition-transform duration-[380ms] ease-smooth ${groupOpen ? "" : "-rotate-90"
+                          }`}
                       />
                     </span>
                   </button>
@@ -363,11 +358,10 @@ export default function Sidebar({
                   {/* Items: height animates via grid rows (0fr to 1fr) */}
                   <div
                     id={contentId}
-                    className={`grid transition-[grid-template-rows,opacity,visibility] duration-[380ms] ease-smooth ${
-                      groupOpen
-                        ? "visible grid-rows-[1fr] opacity-100"
-                        : "invisible grid-rows-[0fr] opacity-0"
-                    }`}
+                    className={`grid transition-[grid-template-rows,opacity,visibility] duration-[380ms] ease-smooth ${groupOpen
+                      ? "visible grid-rows-[1fr] opacity-100"
+                      : "invisible grid-rows-[0fr] opacity-0"
+                      }`}
                   >
                     <div className="min-h-0 overflow-hidden">
                       {g.items.map((k) => {
@@ -393,45 +387,40 @@ export default function Sidebar({
                               navigate(v.path);
                               onNavigate();
                             }}
-                            className={`sb-item group relative my-0.5 flex w-full items-center gap-3 overflow-hidden rounded-xl px-2 py-1.5 text-left text-[13px] font-medium outline-none transition-[background-color,color,box-shadow,scale] duration-200 ease-smooth hover:bg-sidebar-hover hover:text-sidebar-text-active focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.98] ${
-                              collapsed
-                                ? "min-[851px]:justify-center min-[851px]:gap-0 min-[851px]:px-0"
-                                : ""
-                            } ${
-                              active
+                            className={`sb-item group relative my-0.5 flex w-full items-center gap-3 overflow-hidden rounded-xl px-2 py-1.5 text-left text-[13px] font-medium outline-none transition-[background-color,color,box-shadow,scale] duration-200 ease-smooth hover:bg-sidebar-hover hover:text-sidebar-text-active focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.98] ${collapsed
+                              ? "min-[851px]:justify-center min-[851px]:gap-0 min-[851px]:px-0"
+                              : ""
+                              } ${active
                                 ? "bg-sidebar-active font-semibold text-sidebar-text-active ring-1 ring-inset ring-sidebar-active-border"
                                 : ""
-                            }`}
+                              }`}
                           >
                             {/* Active accent bar, vertically centred on the row */}
                             <span
                               aria-hidden="true"
-                              className={`absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand transition-[scale,opacity] duration-300 ease-smooth ${
-                                active
-                                  ? "scale-y-100 opacity-100"
-                                  : "scale-y-0 opacity-0"
-                              }`}
+                              className={`absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand transition-[scale,opacity] duration-300 ease-smooth ${active
+                                ? "scale-y-100 opacity-100"
+                                : "scale-y-0 opacity-0"
+                                }`}
                             />
 
                             {/* Icon tile: 32px square, same column in every row */}
                             <span
                               aria-hidden="true"
-                              className={`relative grid size-8 shrink-0 place-items-center rounded-lg transition-all duration-200 ease-smooth ${
-                                active
-                                  ? "bg-brand text-white shadow-sm shadow-brand/30"
-                                  : "bg-sidebar-hover text-sidebar-icon group-hover:bg-card group-hover:text-brand group-hover:shadow-soft"
-                              }`}
+                              className={`relative grid size-8 shrink-0 place-items-center rounded-lg transition-all duration-200 ease-smooth ${active
+                                ? "bg-brand text-white shadow-sm shadow-brand/30"
+                                : "bg-sidebar-hover text-sidebar-icon group-hover:bg-card group-hover:text-brand group-hover:shadow-soft"
+                                }`}
                             >
                               <Icon className="size-[17px] transition-transform duration-200 group-hover:scale-110" />
                             </span>
 
                             <span
                               data-label
-                              className={`relative truncate transition-[max-width,opacity] ease-smooth ${
-                                collapsed
-                                  ? "duration-150 min-[851px]:max-w-0 min-[851px]:opacity-0"
-                                  : "max-w-[194px] opacity-100 duration-300 delay-100"
-                              }`}
+                              className={`relative truncate transition-[max-width,opacity] ease-smooth ${collapsed
+                                ? "duration-150 min-[851px]:max-w-0 min-[851px]:opacity-0"
+                                : "max-w-[194px] opacity-100 duration-300 delay-100"
+                                }`}
                             >
                               {v.nav}
                             </span>
@@ -445,9 +434,8 @@ export default function Sidebar({
                   {gi < visibleGroups.length - 1 && (
                     <div
                       aria-hidden="true"
-                      className={`mx-2 mb-0 mt-3 h-px bg-gradient-to-r from-transparent via-sidebar-divider to-transparent ${
-                        collapsed ? "min-[851px]:hidden" : ""
-                      }`}
+                      className={`mx-2 mb-0 mt-3 h-px bg-gradient-to-r from-transparent via-sidebar-divider to-transparent ${collapsed ? "min-[851px]:hidden" : ""
+                        }`}
                     />
                   )}
                 </div>
@@ -457,14 +445,12 @@ export default function Sidebar({
 
           {/* Scroll fades */}
           <div
-            className={`pointer-events-none absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-sidebar-bg to-transparent transition-opacity duration-300 ${
-              edges.top ? "opacity-100" : "opacity-0"
-            }`}
+            className={`pointer-events-none absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-sidebar-bg to-transparent transition-opacity duration-300 ${edges.top ? "opacity-100" : "opacity-0"
+              }`}
           />
           <div
-            className={`pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-sidebar-bg to-transparent transition-opacity duration-300 ${
-              edges.bottom ? "opacity-100" : "opacity-0"
-            }`}
+            className={`pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-sidebar-bg to-transparent transition-opacity duration-300 ${edges.bottom ? "opacity-100" : "opacity-0"
+              }`}
           />
         </div>
 
@@ -483,32 +469,28 @@ export default function Sidebar({
             onMouseLeave={() => hideTip()}
             title={collapsed ? undefined : `Collapse sidebar (${shortcut})`}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={`group flex w-full items-center rounded-xl border border-sidebar-border bg-card py-1 text-sidebar-text outline-none transition-all duration-300 ease-smooth hover:border-brand-200 hover:bg-brandsoft hover:text-sidebar-text-active hover:shadow-soft focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.98] ${
-              collapsed ? "justify-center px-0" : "justify-between px-[7px]"
-            }`}
+            className={`group flex w-full items-center rounded-xl border border-sidebar-border bg-card py-1 text-sidebar-text outline-none transition-all duration-300 ease-smooth hover:border-brand-200 hover:bg-brandsoft hover:text-sidebar-text-active hover:shadow-soft focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.98] ${collapsed ? "justify-center px-0" : "justify-between px-[7px]"
+              }`}
           >
             <span className="flex items-center gap-3">
               <span className="grid size-8 shrink-0 place-items-center">
                 <ChevronLeft
-                  className={`size-[18px] transition-transform duration-300 ease-smooth group-hover:-translate-x-0.5 ${
-                    collapsed ? "rotate-180 group-hover:translate-x-0.5" : ""
-                  }`}
+                  className={`size-[18px] transition-transform duration-300 ease-smooth group-hover:-translate-x-0.5 ${collapsed ? "rotate-180 group-hover:translate-x-0.5" : ""
+                    }`}
                 />
               </span>
               <span
-                className={`overflow-hidden whitespace-nowrap text-xs font-semibold transition-[max-width,opacity] ease-smooth ${
-                  collapsed
-                    ? "max-w-0 opacity-0 duration-150"
-                    : "max-w-[100px] opacity-100 duration-300 delay-100"
-                }`}
+                className={`overflow-hidden whitespace-nowrap text-xs font-semibold transition-[max-width,opacity] ease-smooth ${collapsed
+                  ? "max-w-0 opacity-0 duration-150"
+                  : "max-w-[100px] opacity-100 duration-300 delay-100"
+                  }`}
               >
                 Collapse
               </span>
             </span>
             <kbd
-              className={`overflow-hidden whitespace-nowrap rounded-md border border-sidebar-border bg-sidebar-bg px-1.5 py-0.5 font-sans text-[10px] font-semibold text-sidebar-icon transition-all duration-300 ${
-                collapsed ? "hidden" : ""
-              }`}
+              className={`overflow-hidden whitespace-nowrap rounded-md border border-sidebar-border bg-sidebar-bg px-1.5 py-0.5 font-sans text-[10px] font-semibold text-sidebar-icon transition-all duration-300 ${collapsed ? "hidden" : ""
+                }`}
             >
               {shortcut}
             </kbd>

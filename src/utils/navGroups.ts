@@ -4,13 +4,13 @@ export type DisplayGroup = { label: string; items: ViewKey[] };
 
 // Rename groups here (keys are lowercase versions of the original labels)
 const RENAMES: Record<string, string> = {
-    catalog: "Master Data",
+    catalog: "Marketplace",
     entity: "Business",
     entities: "Business",
 };
 
 // Display order. Any group not listed goes after these, in its original order.
-const ORDER = ["General", "Business", "Master Data"];
+const ORDER = ["General", "Business", "Marketplace"];
 
 const rank = (label: string) => {
     const i = ORDER.indexOf(label);
