@@ -6,7 +6,7 @@ import App from "./app/App";
 import { AppProvider } from "./app/AppProvider";
 import { AuthProvider } from "./app/AuthProvider";
 import { ToastProvider } from "@/components/shared/ToastProvider";
-
+import { ThemeProvider } from "./theme/ThemeProvider";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -14,7 +14,9 @@ createRoot(document.getElementById("root")!).render(
       <AuthProvider>
         <ToastProvider>
           <AppProvider>
-            <App />
+            <ThemeProvider>
+              <App />
+            </ThemeProvider>
           </AppProvider>
         </ToastProvider>
       </AuthProvider>

@@ -14,9 +14,10 @@ import {
   Receipt,
   Repeat,
   Scale,
-  Server,
+  UserStar,
   SlidersHorizontal,
   TrendingUp,
+  Settings,
 } from "lucide-react";
 import { viewInfo, type ViewKey } from "@/utils/views";
 import { displayGroups } from "@/utils/navGroups";
@@ -35,8 +36,9 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
   bundles: Layers,
   catalogProducts: Package,
   margins: BadgePercent,
-  instances: Server,
+  instances: UserStar,
   engineConfig: SlidersHorizontal,
+  settings: Settings
 };
 
 type Tip = { label: string; top: number; left: number };
@@ -266,7 +268,7 @@ export default function Sidebar({
             <img
               src={logo}
               alt="Roja Marketplace"
-              className={`absolute inset-0 m-auto h-12 w-auto max-w-[85%] object-contain transition-opacity duration-300 ease-smooth ${
+              className={`absolute inset-0 m-auto h-14 w-auto max-w-[85%] object-contain transition-opacity duration-300 ease-smooth ${
                 collapsed
                   ? "min-[851px]:pointer-events-none min-[851px]:opacity-0"
                   : "opacity-100"

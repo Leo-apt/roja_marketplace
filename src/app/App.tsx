@@ -27,6 +27,7 @@ import InstanceDetail from "@/pages/instance/InstanceDetail";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 import { PublicOnly, RequireAuth } from "@/components/auth/RouteGuards";
+import SettingsPage from "@/pages/settings/SettingsPage";
 
 export default function App() {
     return (
@@ -74,6 +75,7 @@ export default function App() {
                     <Route path="/instances" element={<InstancesList />} />
                     <Route path="/instances/:id" element={<InstanceDetail />} />
                     <Route path="/instances/:id/edit" element={<InstanceDetail />} />
+                    <Route path="/settings" element={<SettingsPage />} />
                 </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

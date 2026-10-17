@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -22,7 +23,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 
@@ -30,7 +31,7 @@ type QuickAction = {
   label: string;
   hint: string;
   icon: LucideIcon;
-  tone: string; // tailwind classes for the icon tile
+  tone: string;
   path: string;
 };
 
@@ -39,52 +40,57 @@ const QUICK_ACTIONS: QuickAction[] = [
     label: "Categories",
     hint: "Create and manage product categories",
     icon: FolderTree,
-    tone: "bg-blue-50 text-blue-600 ring-1 ring-inset ring-blue-100 group-hover/item:bg-blue-100",
+    tone: "bg-blue-50 text-blue-600 ring-1 ring-inset ring-blue-100",
     path: "/catalog/product-categories",
   },
   {
     label: "Add Bundles",
     hint: "Create and manage product bundles",
     icon: PackagePlus,
-    tone: "bg-violet-50 text-violet-600 ring-1 ring-inset ring-violet-100 group-hover/item:bg-violet-100",
+    tone: "bg-violet-50 text-violet-600 ring-1 ring-inset ring-violet-100",
     path: "/catalog/bundles",
   },
   {
     label: "Create Product",
     hint: "Add new products and manage details",
     icon: Package,
-    tone: "bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-100 group-hover/item:bg-emerald-100",
+    tone: "bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-100",
     path: "/catalog/products",
   },
   {
     label: "Margins",
     hint: "Configure product profit margins",
     icon: Percent,
-    tone: "bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-100 group-hover/item:bg-amber-100",
+    tone: "bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-100",
     path: "/catalog/margins",
   },
   {
     label: "Engine Configuration",
     hint: "Configure engines and business rules",
     icon: SlidersHorizontal,
-    tone: "bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-100 group-hover/item:bg-rose-100",
+    tone: "bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-100",
     path: "/catalog/engine-configuration",
   },
 ];
 
-/** Closes a popover on outside click or Escape. */
+/** Closes a popover on outside click or Escape. Listeners stay stable across renders. */
 function useDismiss(
   ref: React.RefObject<HTMLElement | null>,
   open: boolean,
   onClose: () => void,
 ) {
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+
   useEffect(() => {
     if (!open) return;
     const onPointer = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        closeRef.current();
+      }
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") closeRef.current();
     };
     document.addEventListener("mousedown", onPointer);
     document.addEventListener("keydown", onKey);
@@ -92,21 +98,21 @@ function useDismiss(
       document.removeEventListener("mousedown", onPointer);
       document.removeEventListener("keydown", onKey);
     };
-  }, [ref, open, onClose]);
+  }, [ref, open]);
 }
 
-/** Shared card-like surface used by buttons in the bar. */
+/**
+ * Static look only. All motion (hover, press, icon turns) is plain CSS in
+ * TOPBAR_STYLES under .tb-btn, so it works the same in Tailwind v3 and v4.
+ */
 const cardBase =
-  "border border-gray-200/80 bg-white shadow-sm outline-none transition-all duration-300 tb-ease " +
-  "hover:-translate-y-px hover:border-gray-300 hover:shadow-[0_6px_14px_-6px_rgba(16,24,40,0.12)] active:translate-y-0 active:scale-[0.97] " +
+  "tb-btn border border-gray-200/80 bg-white shadow-sm outline-none " +
   "focus-visible:ring-2 focus-visible:ring-brand/30";
 
-/** Popover panel. Open/close motion lives in the <style> block (tb-pop). */
 function popoverClass(open: boolean) {
   return (
     "tb-pop absolute right-0 top-[calc(100%+12px)] z-50 origin-top-right overflow-hidden rounded-2xl " +
-    "border border-gray-200/80 bg-white/95 backdrop-blur-xl " +
-    "shadow-[0_20px_40px_-16px_rgba(16,24,40,0.12),0_2px_8px_-4px_rgba(16,24,40,0.05)] ring-1 ring-black/5 " +
+    "border border-gray-200/80 bg-white ring-1 ring-black/5 " +
     (open ? "tb-pop-open" : "")
   );
 }
@@ -114,11 +120,13 @@ function popoverClass(open: boolean) {
 function IconButton({
   label,
   onClick,
+  active = false,
   children,
   className = "",
 }: {
   label: string;
   onClick?: () => void;
+  active?: boolean;
   children: React.ReactNode;
   className?: string;
 }) {
@@ -126,9 +134,12 @@ function IconButton({
     <button
       type="button"
       aria-label={label}
+      aria-current={active ? "page" : undefined}
       title={label}
       onClick={onClick}
-      className={`group relative grid size-11 place-items-center rounded-xl text-ink ${cardBase} ${className}`}
+      className={`relative grid size-11 place-items-center rounded-xl ${cardBase} ${
+        active ? "bg-gray-50 text-brand" : "text-ink"
+      } ${className}`}
     >
       {children}
     </button>
@@ -141,7 +152,8 @@ function QuickActions() {
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  useDismiss(ref, open, () => setOpen(false));
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(ref, open, close);
 
   const focusItem = (i: number) => {
     const n = QUICK_ACTIONS.length;
@@ -184,24 +196,19 @@ function QuickActions() {
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
+        data-open={open}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onTriggerKey}
-        className={`group/trigger inline-flex h-12 items-center gap-3 rounded-2xl pl-1.5 pr-3 ${cardBase}`}
+        className={`inline-flex h-12 items-center gap-3 rounded-2xl pl-1.5 pr-3 ${cardBase}`}
       >
-        <span
-          className={`grid size-9 place-items-center rounded-xl bg-topbar-avatar-bg text-topbar-avatar-text transition-transform duration-500 tb-spring group-hover/trigger:rotate-6 ${open ? "rotate-12 scale-110" : ""
-            }`}
-        >
+        <span className="tb-zap grid size-9 place-items-center rounded-xl bg-topbar-avatar-bg text-topbar-avatar-text">
           <Zap className="size-[18px]" />
         </span>
         <span className="flex flex-col items-start leading-tight max-[850px]:hidden">
           <span className="text-xs font-bold text-ink">Quick Actions</span>
           <span className="text-[11px] text-muted">Shortcuts &amp; Tools</span>
         </span>
-        <ChevronDown
-          className={`size-4 text-muted transition-transform duration-500 tb-ease max-[850px]:hidden ${open ? "rotate-180" : ""
-            }`}
-        />
+        <ChevronDown className="tb-chev size-4 text-muted max-[850px]:hidden" />
       </button>
 
       <div
@@ -210,8 +217,7 @@ function QuickActions() {
         onKeyDown={onMenuKey}
         className={`${popoverClass(open)} w-[22rem]`}
       >
-        {/* Header */}
-        <div className="flex items-center gap-3 border-b border-gray-100 bg-gradient-to-b from-gray-50/90 to-white/60 px-4 py-3.5">
+        <div className="flex items-center gap-3 border-b border-gray-100 bg-gradient-to-b from-gray-50/90 to-white px-4 py-3.5">
           <span className="grid size-8 place-items-center rounded-xl bg-topbar-avatar-bg text-topbar-avatar-text shadow-sm">
             <Zap className="size-4" />
           </span>
@@ -226,7 +232,6 @@ function QuickActions() {
           </span>
         </div>
 
-        {/* Items */}
         <div className="p-1.5">
           {QUICK_ACTIONS.map((a, i) => {
             const Icon = a.icon;
@@ -245,12 +250,11 @@ function QuickActions() {
                   navigate(a.path);
                 }}
                 style={{ "--i": i } as React.CSSProperties}
-                className={`group/item relative flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left outline-none transition-[background-color,transform] duration-200 tb-ease hover:bg-gray-50 focus-visible:bg-gray-50 focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.985]`}
+                className="tb-item relative flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left outline-none hover:bg-gray-50 focus-visible:bg-gray-50 focus-visible:ring-2 focus-visible:ring-brand/30"
               >
-                {/* Accent bar grows in on hover / focus */}
-                <span className="pointer-events-none absolute left-0 top-1/2 h-0 w-[3px] -translate-y-1/2 rounded-full bg-brand transition-[height] duration-300 tb-ease group-hover/item:h-5 group-focus-visible/item:h-5" />
+                <span className="tb-bar pointer-events-none absolute left-0 top-1/2 w-[3px] rounded-full bg-brand" />
                 <span
-                  className={`grid size-9 shrink-0 place-items-center rounded-lg transition-[transform,background-color] duration-300 tb-spring group-hover/item:-rotate-3 group-hover/item:scale-110 group-focus-visible/item:scale-110 ${a.tone}`}
+                  className={`tb-tile grid size-9 shrink-0 place-items-center rounded-lg ${a.tone}`}
                 >
                   <Icon className="size-[18px]" />
                 </span>
@@ -262,32 +266,25 @@ function QuickActions() {
                     {a.hint}
                   </span>
                 </span>
-                <ArrowUpRight className="size-4 shrink-0 -translate-x-2 translate-y-1 text-muted opacity-0 transition-[transform,opacity,color] duration-300 tb-ease group-hover/item:translate-x-0 group-hover/item:translate-y-0 group-hover/item:text-ink group-hover/item:opacity-100 group-focus-visible/item:translate-x-0 group-focus-visible/item:translate-y-0 group-focus-visible/item:opacity-100" />
+                <ArrowUpRight className="tb-arrow size-4 shrink-0 text-muted" />
               </button>
             );
           })}
         </div>
 
-        {/* Footer */}
         <div className="flex items-center gap-4 border-t border-gray-100 bg-gray-50/70 px-4 py-2.5 text-[10px] text-muted max-[850px]:hidden">
-          <span className="inline-flex items-center gap-1.5">
-            <kbd className="rounded border border-gray-200 bg-white px-1 font-sans font-semibold">
-              ↑↓
-            </kbd>
-            Navigate
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <kbd className="rounded border border-gray-200 bg-white px-1 font-sans font-semibold">
-              Enter
-            </kbd>
-            Open
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <kbd className="rounded border border-gray-200 bg-white px-1 font-sans font-semibold">
-              Esc
-            </kbd>
-            Close
-          </span>
+          {[
+            ["↑↓", "Navigate"],
+            ["Enter", "Open"],
+            ["Esc", "Close"],
+          ].map(([key, text]) => (
+            <span key={key} className="inline-flex items-center gap-1.5">
+              <kbd className="rounded border border-gray-200 bg-white px-1 font-sans font-semibold">
+                {key}
+              </kbd>
+              {text}
+            </span>
+          ))}
         </div>
       </div>
     </div>
@@ -298,23 +295,48 @@ function ProfileMenu({
   email,
   displayName,
   initials,
+  onSettings,
   onLogout,
 }: {
   email?: string;
   displayName: string;
   initials: string;
+  onSettings: () => void;
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  useDismiss(ref, open, () => setOpen(false));
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(ref, open, close);
+
+  const onMenuKey = (e: ReactKeyboardEvent) => {
+    const items = itemRefs.current.filter(Boolean) as HTMLButtonElement[];
+    const current = items.findIndex((el) => el === document.activeElement);
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      items[(current + 1) % items.length]?.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      items[(current <= 0 ? items.length : current) - 1]?.focus();
+    } else if (e.key === "Escape") {
+      triggerRef.current?.focus();
+    }
+  };
+
+  const itemBase =
+    "tb-item flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-semibold outline-none " +
+    "focus-visible:ring-2 focus-visible:ring-brand/30";
 
   return (
     <div ref={ref} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
+        data-open={open}
         onClick={() => setOpen((o) => !o)}
         className={`inline-flex h-12 items-center gap-3 rounded-2xl pl-1.5 pr-3 ${cardBase}`}
       >
@@ -327,18 +349,16 @@ function ProfileMenu({
         <span className="max-w-[140px] truncate text-xs font-semibold text-ink max-[850px]:hidden">
           {displayName}
         </span>
-        <ChevronDown
-          className={`size-4 text-muted transition-transform duration-300 ease-out max-[850px]:hidden ${open ? "rotate-180" : ""
-            }`}
-        />
+        <ChevronDown className="tb-chev size-4 text-muted max-[850px]:hidden" />
       </button>
 
       <div
         role="menu"
         aria-hidden={!open}
+        onKeyDown={onMenuKey}
         className={`${popoverClass(open)} w-64`}
       >
-        <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50/70 px-3.5 py-3">
+        <div className="flex items-center gap-3 border-b border-gray-100 bg-gradient-to-b from-gray-50/90 to-white px-3.5 py-3">
           <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-topbar-avatar-bg text-[11px] font-bold text-topbar-avatar-text">
             {initials}
           </div>
@@ -351,16 +371,41 @@ function ProfileMenu({
             </p>
           </div>
         </div>
+
         <div className="p-1.5">
           <button
+            ref={(el) => {
+              itemRefs.current[0] = el;
+            }}
             type="button"
             role="menuitem"
+            data-qa-item
+            style={{ "--i": 0 } as React.CSSProperties}
+            tabIndex={open ? 0 : -1}
+            onClick={() => {
+              setOpen(false);
+              onSettings();
+            }}
+            className={`${itemBase} text-ink hover:bg-gray-50 focus-visible:bg-gray-50`}
+          >
+            <Settings className="size-4 text-muted" />
+            Settings
+          </button>
+          <div className="my-1 h-px bg-gray-100" />
+          <button
+            ref={(el) => {
+              itemRefs.current[1] = el;
+            }}
+            type="button"
+            role="menuitem"
+            data-qa-item
+            style={{ "--i": 1 } as React.CSSProperties}
             tabIndex={open ? 0 : -1}
             onClick={() => {
               setOpen(false);
               onLogout();
             }}
-            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-semibold text-red-600 transition-colors duration-150 hover:bg-red-50"
+            className={`${itemBase} text-red-600 hover:bg-red-50 focus-visible:bg-red-50`}
           >
             <LogOut className="size-4" />
             Log out
@@ -371,8 +416,162 @@ function ProfileMenu({
   );
 }
 
+/**
+ * All topbar motion lives here as plain CSS. Tailwind v4 animates scale, rotate
+ * and translate as separate properties, which `transition-[transform]` ignores,
+ * so doing it here keeps behaviour identical on v3 and v4.
+ */
+const TOPBAR_STYLES = `
+  :root {
+    --tb-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes topbar-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: none; }
+  }
+  @keyframes qa-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+  @keyframes tb-ping {
+    0%        { transform: scale(1);   opacity: 0.5; }
+    75%, 100% { transform: scale(2.4); opacity: 0; }
+  }
+  @keyframes tb-ring {
+    0%   { transform: rotate(0deg); }
+    20%  { transform: rotate(12deg); }
+    40%  { transform: rotate(-9deg); }
+    60%  { transform: rotate(5deg); }
+    80%  { transform: rotate(-2deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+  .tb-header { animation: topbar-in 400ms ease-out backwards; }
+
+  /* Buttons: hover = border + shadow, press = quick scale, release = relaxed */
+  .tb-btn {
+    transition:
+      transform 220ms var(--tb-ease),
+      box-shadow 220ms var(--tb-ease),
+      border-color 220ms var(--tb-ease),
+      background-color 220ms var(--tb-ease),
+      color 220ms var(--tb-ease);
+  }
+  .tb-btn:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 6px 16px -8px rgba(16, 24, 40, 0.2);
+  }
+  .tb-btn:active {
+    transform: scale(0.96);
+    transition-duration: 90ms;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+  }
+
+  /* Danger variant (Log out): red tint on hover */
+  .tb-btn.tb-danger:hover,
+  .tb-btn.tb-danger:focus-visible {
+    border-color: #fecaca;
+    background-color: #fef2f2;
+    color: #dc2626;
+  }
+
+  /* Icon motion */
+  .tb-bell { transform-origin: 50% 10%; }
+  .tb-btn:hover .tb-bell { animation: tb-ring 700ms var(--tb-ease); }
+  .tb-spin { transition: transform 500ms var(--tb-ease); }
+  .tb-btn:hover .tb-spin { transform: rotate(60deg); }
+  .tb-nudge { transition: transform 300ms var(--tb-ease); }
+  .tb-btn:hover .tb-nudge { transform: translateX(2px); }
+
+  .tb-chev { transition: transform 350ms var(--tb-ease); }
+  [data-open="true"] .tb-chev { transform: rotate(180deg); }
+
+  .tb-zap { transition: transform 350ms var(--tb-ease); }
+  .tb-btn:hover .tb-zap { transform: rotate(8deg); }
+  [data-open="true"] .tb-zap { transform: rotate(8deg) scale(1.06); }
+
+  .tb-ping { animation: tb-ping 1.8s cubic-bezier(0, 0, 0.2, 1) 3; }
+
+  /* Popover */
+  .tb-pop {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-6px) scale(0.97);
+    box-shadow: 0 24px 48px -16px rgba(16, 24, 40, 0.18), 0 2px 8px -4px rgba(16, 24, 40, 0.06);
+    transition:
+      opacity 220ms var(--tb-ease),
+      transform 220ms var(--tb-ease),
+      visibility 0s linear 220ms;
+  }
+  .tb-pop.tb-pop-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+    transition:
+      opacity 220ms var(--tb-ease),
+      transform 220ms var(--tb-ease),
+      visibility 0s;
+  }
+  .tb-pop-open [data-qa-item] {
+    animation: qa-in 320ms var(--tb-ease) backwards;
+    animation-delay: calc(40ms + var(--i, 0) * 35ms);
+  }
+
+  /* Menu items */
+  .tb-item {
+    transition: background-color 160ms var(--tb-ease), transform 160ms var(--tb-ease);
+  }
+  .tb-item:active { transform: scale(0.985); transition-duration: 80ms; }
+
+  .tb-bar {
+    height: 0;
+    transform: translateY(-50%);
+    transition: height 260ms var(--tb-ease);
+  }
+  .tb-item:hover .tb-bar, .tb-item:focus-visible .tb-bar { height: 20px; }
+
+  .tb-tile { transition: transform 260ms var(--tb-ease); }
+  .tb-item:hover .tb-tile, .tb-item:focus-visible .tb-tile { transform: scale(1.06); }
+
+  .tb-arrow {
+    opacity: 0;
+    transform: translate(-8px, 4px);
+    transition: opacity 220ms var(--tb-ease), transform 260ms var(--tb-ease);
+  }
+  .tb-item:hover .tb-arrow, .tb-item:focus-visible .tb-arrow {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Search clear button */
+  .tb-clear {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.75);
+    pointer-events: none;
+    transition: opacity 180ms var(--tb-ease), transform 180ms var(--tb-ease), background-color 150ms, color 150ms;
+  }
+  .tb-clear[data-show="true"] {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+    pointer-events: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tb-header, .tb-ping, .tb-btn:hover .tb-bell, .tb-pop-open [data-qa-item] { animation: none; }
+    .tb-btn, .tb-btn:active, .tb-spin, .tb-nudge, .tb-chev, .tb-zap, .tb-item, .tb-tile, .tb-arrow, .tb-bar { transition: none; }
+    .tb-btn:active, .tb-item:active { transform: none; }
+    .tb-pop { transform: none; transition: opacity 150ms linear, visibility 0s linear 150ms; }
+    .tb-pop.tb-pop-open { transition: opacity 150ms linear, visibility 0s; }
+  }
+`;
+
 export default function Topbar({ onMenu }: { onMenu: () => void }) {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [confirmOut, setConfirmOut] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [query, setQuery] = useState("");
@@ -381,16 +580,15 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
 
   const email = user?.user_email;
   const initials = (email ?? "U").slice(0, 2).toUpperCase();
+  const onSettingsPage = pathname.startsWith("/settings");
 
-  // No display-name field is known here, so derive one from the email.
-  // Replace with user.name (or similar) if you have it.
   const displayName = email
     ? email
-      .split("@")[0]
-      .split(/[._-]+/)
-      .filter(Boolean)
-      .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-      .join(" ")
+        .split("@")[0]
+        .split(/[._-]+/)
+        .filter(Boolean)
+        .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+        .join(" ")
     : "Account";
 
   // TODO: drive this from your notifications state
@@ -399,7 +597,7 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
   const shortcut = useMemo(
     () =>
       typeof navigator !== "undefined" &&
-        /Mac|iPhone|iPad/i.test(navigator.platform)
+      /Mac|iPhone|iPad/i.test(navigator.platform)
         ? "⌘K"
         : "Ctrl K",
     [],
@@ -419,62 +617,9 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 flex h-[76px] animate-[topbar-in_400ms_ease-out_both] items-center justify-between gap-3 border-b border-topbar-border bg-white/70 px-7 backdrop-blur-xl max-[1180px]:px-5 max-[850px]:px-4 print:hidden">
-      {/* Local keyframes so no tailwind.config change is needed */}
-      <style>{`
-                :root {
-                    --tb-ease: cubic-bezier(0.22, 1, 0.36, 1);
-                    --tb-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-                }
-                .tb-ease.tb-ease { transition-timing-function: var(--tb-ease); }
-                .tb-spring.tb-spring { transition-timing-function: var(--tb-spring); }
-
-                @keyframes topbar-in {
-                    from { opacity: 0; transform: translateY(-8px); }
-                    to   { opacity: 1; transform: translateY(0); }
-                }
-                @keyframes qa-in {
-                    from { opacity: 0; transform: translateY(10px) scale(0.97); }
-                    to   { opacity: 1; transform: translateY(0) scale(1); }
-                }
-
-                /* Popover: closed state, delays 'visibility' until fade-out ends */
-                .tb-pop {
-                    opacity: 0;
-                    visibility: hidden;
-                    pointer-events: none;
-                    transform: translateY(-8px) scale(0.95);
-                    transition:
-                        opacity 320ms var(--tb-ease),
-                        transform 320ms var(--tb-ease),
-                        visibility 0s linear 320ms;
-                    will-change: opacity, transform;
-                }
-                .tb-pop.tb-pop-open {
-                    opacity: 1;
-                    visibility: visible;
-                    pointer-events: auto;
-                    transform: translateY(0) scale(1);
-                    transition:
-                        opacity 320ms var(--tb-ease),
-                        transform 320ms var(--tb-ease),
-                        visibility 0s;
-                }
-
-                /* Staggered items on open */
-                .tb-pop-open [data-qa-item] {
-                    animation: qa-in 420ms var(--tb-ease) backwards;
-                    animation-delay: calc(70ms + var(--i, 0) * 50ms);
-                }
-
-                /* Reduced motion: keep a gentle fade, drop movement */
-                @media (prefers-reduced-motion: reduce) {
-                    header { animation: none !important; }
-                    .tb-pop { transform: none; transition: opacity 150ms linear, visibility 0s linear 150ms; }
-                    .tb-pop.tb-pop-open { transition: opacity 150ms linear, visibility 0s; }
-                    .tb-pop-open [data-qa-item] { animation: none; }
-                }
-            `}</style>
+    // No backdrop-blur here on purpose: it forces a re-blur on every animated frame.
+    <header className="tb-header sticky top-0 z-30 flex h-[76px] items-center justify-between gap-3 border-b border-topbar-border bg-white/95 px-7 max-[1180px]:px-5 max-[850px]:px-4 print:hidden">
+      <style>{TOPBAR_STYLES}</style>
 
       {/* Left: menu button + search */}
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -488,14 +633,17 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
         </button>
 
         <div
-          className={`relative w-full max-w-[340px] rounded-xl transition-[max-width,box-shadow] duration-500 tb-ease ${focused
-            ? "max-w-[440px] shadow-[0_0_0_3px] shadow-brand/[0.06]"
-            : ""
-            }`}
+          className={`relative w-full rounded-xl transition-[max-width,box-shadow] duration-500 ${
+            focused
+              ? "max-w-[440px] shadow-[0_0_0_4px] shadow-brand/[0.08]"
+              : "max-w-[340px]"
+          }`}
+          style={{ transitionTimingFunction: "var(--tb-ease)" }}
         >
           <Search
-            className={`pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 transition-colors duration-200 ${focused ? "text-brand" : "text-muted"
-              }`}
+            className={`pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 transition-colors duration-300 ${
+              focused ? "text-brand" : "text-muted"
+            }`}
           />
           <input
             ref={inputRef}
@@ -512,26 +660,25 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
             }}
             placeholder="Search products, categories…"
             aria-label="Search"
-            className="h-11 w-full rounded-xl border border-gray-200/80 bg-white pl-10 pr-16 text-xs text-ink shadow-sm outline-none transition-all duration-200 placeholder:text-muted hover:border-gray-300 focus:border-brand"
+            className="h-11 w-full rounded-xl border border-gray-200/80 bg-white pl-10 pr-16 text-xs text-ink shadow-sm outline-none transition-[border-color,background-color] duration-200 placeholder:text-muted hover:border-gray-300 focus:border-brand"
           />
           <button
             type="button"
             aria-label="Clear search"
             tabIndex={query ? 0 : -1}
+            data-show={!!query}
             onClick={() => {
               setQuery("");
               inputRef.current?.focus();
             }}
-            className={`absolute right-2.5 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-muted transition-all duration-200 hover:bg-gray-100 hover:text-ink ${query
-              ? "scale-100 opacity-100"
-              : "pointer-events-none scale-75 opacity-0"
-              }`}
+            className="tb-clear absolute right-2.5 top-1/2 grid size-6 place-items-center rounded-md text-muted hover:bg-gray-100 hover:text-ink"
           >
             <X className="size-4" />
           </button>
           <kbd
-            className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-sans text-[10px] font-semibold text-muted transition-opacity duration-200 max-[850px]:hidden ${query || focused ? "opacity-0" : "opacity-100"
-              }`}
+            className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-sans text-[10px] font-semibold text-muted transition-opacity duration-200 max-[850px]:hidden ${
+              query || focused ? "opacity-0" : "opacity-100"
+            }`}
           >
             {shortcut}
           </kbd>
@@ -543,31 +690,37 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
         <QuickActions />
 
         <IconButton label="Notifications">
-          <Bell className="size-[18px] transition-transform duration-300 group-hover:rotate-[14deg]" />
+          <Bell className="tb-bell size-[18px]" />
           {hasUnread && (
-            <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-rose-500 ring-2 ring-white" />
+            <span className="absolute right-2.5 top-2.5 grid size-2 place-items-center">
+              <span className="tb-ping absolute size-2 rounded-full bg-rose-500" />
+              <span className="relative size-2 rounded-full bg-rose-500 ring-2 ring-white" />
+            </span>
           )}
         </IconButton>
 
         <IconButton
           label="Settings"
-          className="hover:!border-brand/30 hover:bg-brand/5 hover:text-brand max-[640px]:hidden"
+          active={onSettingsPage}
+          onClick={() => navigate("/settings")}
+          className="hover:bg-gray-50 hover:text-brand max-[640px]:hidden"
         >
-          <Settings className="size-[18px] transition-transform duration-500 group-hover:rotate-90" />
+          <Settings className="tb-spin size-[18px]" />
         </IconButton>
 
         <IconButton
           label="Log out"
           onClick={() => setConfirmOut(true)}
-          className="hover:!border-red-200 hover:bg-red-50 hover:text-red-600"
+          className="tb-danger"
         >
-          <LogOut className="size-[18px] transition-transform duration-200 group-hover:translate-x-0.5" />
+          <LogOut className="tb-nudge size-[18px]" />
         </IconButton>
 
         <ProfileMenu
           email={email}
           displayName={displayName}
           initials={initials}
+          onSettings={() => navigate("/settings")}
           onLogout={() => setConfirmOut(true)}
         />
       </div>

@@ -14,8 +14,9 @@ import {
   Layers,
   Package,
   BadgePercent,
-  Server,
+  UserStar,
   SlidersHorizontal,
+  Settings,
 } from "lucide-react";
 import { viewInfo, type ViewKey } from "@/utils/views";
 import { displayGroups } from "@/utils/navGroups";
@@ -32,8 +33,9 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
   bundles: Layers,
   catalogProducts: Package,
   margins: BadgePercent,
-  instances: Server,
+  instances: UserStar,
   engineConfig: SlidersHorizontal,
+  settings: Settings
 };
 
 type SubLabel = "Create" | "Edit" | "Details";

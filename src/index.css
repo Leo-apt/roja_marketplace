@@ -1,6 +1,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
+/* Enables the `dark:` variant, driven by the .dark class on <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* "static" emits every token as a CSS variable, so inline styles and
    <style> blocks (like the loader) can use var(--color-brand) etc. */
 @theme static {
@@ -371,4 +374,281 @@
 
 .animate-smooth-wave {
   animation: smooth-wave 1.2s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK THEME
+   Applied when <html class="dark">. Two parts:
+   1. Token overrides (the semantic colours above).
+   2. A compatibility layer for hardcoded Tailwind colours
+      (bg-white, gray-*, blue-50, ...) so existing screens go dark
+      without being edited.
+   ═══════════════════════════════════════════════════════════════ */
+.dark {
+  color-scheme: dark;
+
+  /* Shadows: black-based, a little stronger so depth still reads */
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.35);
+  --shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
+
+  /* Brand: lightened so it stays readable on dark surfaces */
+  --color-brand: #5b7fe6;
+  --color-brandhover: #7c99f0;
+  --color-brandsoft: #16213f;
+  --color-brandring: #2a3a6b;
+  --color-brand-50: #16213f;
+  --color-brand-100: #1c2a52;
+  --color-brand-200: #26376b;
+  --color-brand-300: #4a64a8;
+  --color-brand-500: #6a8cf0;
+  --color-brand-600: #5b7fe6;
+  --color-brand-700: #8aa6f5;
+
+  --color-accent: #38bdf8;
+  --color-accenthover: #7dd3fc;
+  --color-accentsoft: #0c2a3d;
+
+  /* Text and surfaces */
+  --color-ink: #e6ecf8;
+  --color-muted: #94a3b8;
+  --color-page: #0a101e;
+  --color-card: #111a2e;
+  --color-line: #1f2a44;
+  --color-linesoft: #172036;
+  --color-surfacealt: #172036;
+  --color-tint: #131c33;
+
+  --color-nav: #0d1424;
+  --color-navhover: #16203a;
+  --color-navactive: #0d1424;
+  --color-navmuted: #94a3b8;
+
+  /* Status */
+  --color-good: #4cc38a;
+  --color-goodbg: #0f2a1f;
+  --color-goodline: #1d4d38;
+  --color-warn: #f0b455;
+  --color-warnbg: #2a1f0a;
+  --color-warnline: #5a4413;
+  --color-bad: #f07178;
+  --color-badbg: #2d1418;
+  --color-badline: #5c262c;
+  --color-info: #4cb5ee;
+  --color-infobg: #0c2233;
+  --color-infoline: #174a6b;
+  --color-purple: #a98be8;
+  --color-purplebg: #1f1833;
+
+  /* Buttons */
+  --color-btn-primary: #3b5fd0;
+  --color-btn-primary-hover: #4b6de0;
+  --color-btn-danger: #ef4444;
+  --color-btn-danger-hover: #f05a5a;
+  --color-btn-dark: #1f2c52;
+  --color-btn-dark-hover: #2a3a6b;
+  --color-btn-secondary-hover-border: #2a3a6b;
+  --color-btn-secondary-hover-bg: #16213f;
+
+  /* Form fields */
+  --color-field-bg: #0f1829;
+  --color-field-border: #2a3650;
+  --color-field-border-hover: #3b4968;
+  --color-field-focus: #5b8def;
+  --color-field-placeholder: #5f6f8c;
+  --color-disabled-bg: #141d31;
+  --color-disabled-text: #5f6f8c;
+
+  --color-action: #5b7fe6;
+  --color-action-hover: #7c99f0;
+  --color-link: #8aa6f5;
+
+  /* Sidebar */
+  --color-sidebar-bg: #0d1424;
+  --color-sidebar-border: #1f2a44;
+  --color-sidebar-text: #a9b6cf;
+  --color-sidebar-text-active: #9db4f5;
+  --color-sidebar-group: #5f6f8c;
+  --color-sidebar-icon: #7b8aa6;
+  --color-sidebar-hover: #16203a;
+  --color-sidebar-active: #1a2748;
+  --color-sidebar-active-border: #26376b;
+  --color-sidebar-divider: #1f2a44;
+  --color-sidebar-logo-bg: #1a2748;
+  --color-sidebar-logo-text: #9db4f5;
+  --color-sidebar-logo-line: #1f2a44;
+  --color-sidebar-logo-line-accent: #5b7fe6;
+
+  /* Topbar */
+  --color-topbar-bg: #0d1424;
+  --color-topbar-border: #1f2a44;
+  --color-topbar-avatar-bg: #3b5fd0;
+  --color-topbar-avatar-text: #ffffff;
+
+  /* Breadcrumb */
+  --color-crumb-bg: #0d1424;
+  --color-crumb-border: #1f2a44;
+  --color-crumb-title: #e6ecf8;
+  --color-crumb-text: #94a3b8;
+  --color-crumb-current: #cbd5e6;
+  --color-crumb-sep: #3b4968;
+  --color-crumb-hover: #16203a;
+
+  /* Dialog states */
+  --color-danger-soft: #2d1418;
+  --color-danger-ring: #4a1d23;
+  --color-caution-soft: #2a1f0a;
+  --color-caution-ring: #4a3810;
+
+  /* Table */
+  --color-row-hover: #121c33;
+  --color-th-text: #94a3b8;
+
+  /* Surfaces, overlay, tooltip, neutral tag */
+  --color-surfacesoft: #172036;
+  --color-overlay: #020617;
+  --color-tooltip: #334155;
+  --color-tag-neutral-bg: #1b263f;
+  --color-tag-neutral-text: #b6c2d8;
+
+  /* Chips, note boxes */
+  --color-chip-bg: #1a2748;
+  --color-chip-text: #9db4f5;
+  --color-sample-text: #b6c2d8;
+  --color-note-info-bg: #14203d;
+  --color-note-info-border: #26376b;
+  --color-note-info-text: #9db4f5;
+  --color-note-warn-bg: #241b0b;
+  --color-note-warn-border: #4a3810;
+  --color-note-warn-text: #e5b567;
+  --color-timeline-dot: #6a8cf0;
+
+  /* Text shades */
+  --color-label: #cbd5e6;
+  --color-cell-text: #cbd5e6;
+  --color-td-text: #a9b6cf;
+  --color-sort-icon: #5f6f8c;
+  --color-warn-border: #4a3810;
+
+  /* Skeleton */
+  --color-skeleton: #1a2540;
+  --color-skeleton-shine: #243252;
+
+  /* Charts */
+  --color-chart-sales: #7c99f0;
+  --color-chart-gain: #4cc38a;
+  --color-chart-loss: #f0808d;
+  --color-chart-grid: #1f2a44;
+
+  /* ── Compatibility: neutral scales (inverted for dark) ── */
+  --color-gray-50: #162037;
+  --color-gray-100: #1b263f;
+  --color-gray-200: #26334f;
+  --color-gray-300: #34425f;
+  --color-gray-400: #5b6b88;
+  --color-gray-500: #7b8aa6;
+  --color-gray-600: #9aa8c2;
+  --color-gray-700: #b6c2d8;
+  --color-gray-800: #d3dbea;
+  --color-gray-900: #e6ecf8;
+  --color-gray-950: #f1f5fb;
+
+  --color-slate-50: #162037;
+  --color-slate-100: #1b263f;
+  --color-slate-200: #26334f;
+  --color-slate-300: #34425f;
+  --color-slate-400: #5b6b88;
+  --color-slate-500: #7b8aa6;
+  --color-slate-600: #9aa8c2;
+  --color-slate-700: #b6c2d8;
+  --color-slate-800: #d3dbea;
+  --color-slate-900: #e6ecf8;
+  --color-slate-950: #f1f5fb;
+
+  /* ── Compatibility: tinted tiles and badges ── */
+  --color-blue-50: rgb(59 130 246 / 0.14);
+  --color-blue-100: rgb(59 130 246 / 0.24);
+  --color-blue-600: #60a5fa;
+  --color-violet-50: rgb(139 92 246 / 0.14);
+  --color-violet-100: rgb(139 92 246 / 0.24);
+  --color-violet-600: #a78bfa;
+  --color-emerald-50: rgb(16 185 129 / 0.14);
+  --color-emerald-100: rgb(16 185 129 / 0.24);
+  --color-emerald-600: #34d399;
+  --color-amber-50: rgb(245 158 11 / 0.14);
+  --color-amber-100: rgb(245 158 11 / 0.24);
+  --color-amber-600: #fbbf24;
+  --color-rose-50: rgb(244 63 94 / 0.14);
+  --color-rose-100: rgb(244 63 94 / 0.24);
+  --color-rose-600: #fb7185;
+  --color-red-50: rgb(239 68 68 / 0.14);
+  --color-red-100: rgb(239 68 68 / 0.22);
+  --color-red-200: rgb(239 68 68 / 0.32);
+  --color-red-600: #f87171;
+}
+
+/* White surfaces. `text-white` is deliberately left alone (white on brand buttons). */
+.dark .bg-white,
+.dark [class*="bg-white/"] {
+  background-color: var(--color-card);
+}
+
+.dark .ring-white {
+  --tw-ring-color: var(--color-card);
+}
+
+.dark [class*="ring-black/"] {
+  --tw-ring-color: rgb(255 255 255 / 0.08);
+}
+
+.dark [class*="to-white"] {
+  --tw-gradient-to: var(--color-card);
+}
+
+.dark [class*="from-white"] {
+  --tw-gradient-from: var(--color-card);
+}
+
+/* Hardcoded colours in the Topbar's inline <style> block */
+.dark .tb-btn:hover {
+  border-color: var(--color-gray-300);
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.6);
+}
+
+.dark .tb-btn.tb-danger:hover,
+.dark .tb-btn.tb-danger:focus-visible {
+  border-color: rgb(239 68 68 / 0.4);
+  background-color: rgb(239 68 68 / 0.14);
+  color: #f87171;
+}
+
+/* Base-layer pieces that hardcode light colours */
+.dark ::selection {
+  background: #2a4a9a;
+  color: #ffffff;
+}
+
+.dark button:focus-visible,
+.dark a:focus-visible,
+.dark input:focus-visible,
+.dark select:focus-visible,
+.dark textarea:focus-visible {
+  outline-color: #3b5fd0;
+}
+
+.dark .thin-scrollbar::-webkit-scrollbar-thumb {
+  background: #34425f;
+}
+
+.dark .thin-scrollbar {
+  scrollbar-color: #34425f transparent;
+}
+
+/* Short cross-fade while the theme flips (class added by ThemeProvider for ~350ms) */
+.theme-fade,
+.theme-fade *,
+.theme-fade *::before,
+.theme-fade *::after {
+  transition: background-color 250ms ease, border-color 250ms ease, color 250ms ease,
+    fill 250ms ease, stroke 250ms ease, box-shadow 250ms ease !important;
 }

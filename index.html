@@ -6,6 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Marketplace</title>
   </head>
+  <script>
+  (function () {
+    try {
+      var m = localStorage.getItem("app:theme");
+      var dark =
+        m === "dark" ||
+        (m === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.classList.toggle("dark", dark);
+      document.documentElement.style.colorScheme = dark ? "dark" : "light";
+    } catch (e) {}
+  })();
+</script>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
