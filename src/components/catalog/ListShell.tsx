@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, Eye, Pencil, Plus, Settings, SlidersHorizontal, Send, } from "lucide-react";
 import { useApp } from "@/hooks/useApp";
@@ -71,6 +71,20 @@ export default function ListShell<T extends { id: string }>({
         }
         server.onChange(page, dq, f);
     }, [page, dq, f]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const secRef = useRef<HTMLElement>(null);
+    const [minH, setMinH] = useState(0);
+    useLayoutEffect(() => {
+        const calc = () => {
+            const el = secRef.current;
+            if (!el) return;
+            const top = el.getBoundingClientRect().top + window.scrollY;
+            setMinH(Math.max(240, window.innerHeight - top - 32)); // 32 = pb-8 bottom gap
+        };
+        calc();
+        window.addEventListener("resize", calc);
+        return () => window.removeEventListener("resize", calc);
+    }, [!!cards, rows.length]);
 
     const [menu, setMenu] = useState<{ id: string; top: number; left: number } | null>(null);
 
@@ -145,8 +159,8 @@ export default function ListShell<T extends { id: string }>({
                 </div>
             </div>
 
-            <section className="min-w-0 overflow-hidden rounded-xl border border-line bg-white">
-                <div className={`w-full overflow-auto transition-opacity ${server?.loading ? "opacity-50" : ""}`}>
+            <section ref={secRef} style={{ minHeight: minH }} className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-white">
+                <div className={`w-full flex-1 overflow-auto transition-opacity ${server?.loading ? "opacity-50" : ""}`}>
                     <table className="w-full border-collapse text-left text-xs">
                         <thead>
                             <tr>

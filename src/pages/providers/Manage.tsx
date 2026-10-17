@@ -67,9 +67,9 @@ function ProviderForm({ initial }: { initial?: ProviderRec }) {
                     </Field>
                 </div>
             </DCard>
-            <div className="flex gap-2">
-                <button className={btn.primary} onClick={submit} disabled={saving}>{saving ? "Saving…" : "Submit"}</button>
+            <div className="flex justify-end gap-2">
                 <button className={btn.cancel} onClick={() => nav(BASE)} disabled={saving}>Cancel</button>
+                <button className={btn.primary} onClick={submit} disabled={saving}>{saving ? "Saving…" : "Submit"}</button>
             </div>
         </div>
     );

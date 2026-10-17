@@ -44,7 +44,10 @@ const addDays = (base: string, n: number) => {
 };
 
 // providers to choose from: add { value: "<provider id>", label: "<name>" } here, or load them from the API later
-const PROVIDER_OPTIONS: { value: string; label: string }[] = [];
+const PROVIDER_OPTIONS: { value: string; label: string }[] = [
+    { value: "000000000000000000000001", label: "PROV_ID0000001 - Alternative Revenue Solutions" },
+];
+const DEFAULT_PROVIDER = PROVIDER_OPTIONS[0].value;
 
 interface Form {
     name: string; categoryId: string; providerId: string; status: Status;
@@ -58,7 +61,7 @@ interface Form {
 type Errors = Record<string, string>;
 
 const empty: Form = {
-    name: "", categoryId: "", providerId: "", status: "Active",
+    name: "", categoryId: "", providerId: DEFAULT_PROVIDER, status: "Active",
     termsFile: null, imageFile: null, imageBg: "", shortDescription: "", longDescription: "", pricingContent: "",
     template: "", dashTitle: "", cta: "", featureTitle: "", dashShort: "",
     retail: "", discountType: "fixed", discountValue: "", bundleIds: [],
@@ -148,7 +151,7 @@ interface FormProps {
 
 const fromRec = (r: ProductRec): Form => ({
     ...empty,
-    name: r.name, categoryId: r.categoryId, providerId: r.providerId,
+    name: r.name, categoryId: r.categoryId, providerId: r.providerId || DEFAULT_PROVIDER,
     status: r.status === "Inactive" ? "Inactive" : "Active", // UI only: the API sets status itself
     imageBg: r.imageBg, shortDescription: r.shortDescription, longDescription: r.longDescription, pricingContent: r.pricingContent,
     template: r.template, dashTitle: r.dashTitle, cta: r.cta, featureTitle: r.featureTitle, dashShort: r.dashShort,

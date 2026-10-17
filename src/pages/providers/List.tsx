@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { KeyRound } from "lucide-react";
 import ListShell, { type Col } from "@/components/catalog/ListShell";
 import type { FilterField } from "@/components/catalog/ListDrawers";
 import { StatusBadge } from "@/components/catalog/DetailBits";
@@ -9,14 +11,13 @@ const cols: Col<ProviderRec>[] = [
     { key: "providerId", label: "Provider ID", link: true, render: (r) => r.providerId },
     { key: "email", label: "Email", render: (r) => r.email },
     { key: "phone", label: "Cell Phone Number", render: (r) => r.phone },
-    { key: "createdBy", label: "Created By", render: (r) => r.createdBy },
     { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
-    { key: "createdOn", label: "Created On", render: (r) => r.createdOn },
 ];
 const PAGE_SIZE = 10;
 const fields: FilterField[] = [];
 
 export default function ProvidersList() {
+    const nav = useNavigate();
     const [data, setData] = useState<{ rows: ProviderRec[]; total: number } | null>(null);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -46,6 +47,9 @@ export default function ProvidersList() {
             searchPlaceholder="Search providers…"
             filterFields={fields}
             match={() => true}
+            extraActions={[
+                { label: "Credentials", icon: <KeyRound className="size-4" />, onClick: (id) => nav(`/catalog/providers/${id}?tab=creds`) },
+            ]}
             server={{ total: data.total, pageSize: PAGE_SIZE, loading, onChange: (p, s) => { setPage(p); setQ(s); } }}
         />
     );

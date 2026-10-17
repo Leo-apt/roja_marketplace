@@ -6,110 +6,24 @@ import { useApp } from "@/hooks/useApp";
 import Drawer from "@/components/shared/Drawer";
 import Dropdownbox from "@/components/shared/Dropdownbox";
 import DatePicker from "@/components/shared/DatePicker";
-import { DCard, Grid, KV, NotFound, StatusBadge } from "@/components/catalog/DetailBits";
-import { btn, Field, Radio, TextArea, TextInput, Toggle } from "@/components/catalog/FormBits";
+import { DCard, NotFound } from "@/components/catalog/DetailBits";
+import { btn, Field, Radio, TextArea, TextInput } from "@/components/catalog/FormBits";
 import type { Instance } from "@/data/instances";
 import { productsService, type ProductRec } from "@/services/products.service";
 import { entityService } from "@/services/entity.service";
 import { subEntityService } from "@/services/sub-entity.service";
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import type { Status } from "@/data/catalog";
-import { statusFormOptions, usd } from "@/utils/catalog";
-import EmptyState from "@/components/shared/EmptyState";
+import { statusFormOptions } from "@/utils/catalog";
 import { apiKeyService, type Env, type TokenRec } from "@/services/api-key.service";
 import { marginsService, type MarginRec } from "@/services/margins.service";
 import EnvProductsDrawer from "@/components/catalog/EnvProductsDrawer";
 import EnvMarginsDrawer from "@/components/catalog/EnvMarginsDrawer";
+import credsIllustration from "@/assets/Empty-pana.svg";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 
 const BASE = "/instances";
 const ENVS: { value: Env; label: string }[] = [{ value: "sandbox", label: "Sandbox" }, { value: "live", label: "Live" }];
-
-/* ---------------- Products tab ---------------- */
-function ProductsTab({ subId, enabled, onToggle, onToggleAll }: {
-    subId: string; enabled: Record<string, boolean>; onToggle: (productId: string, env: Env, on: boolean) => void;
-    onToggleAll: (productIds: string[], env: Env, on: boolean) => void;
-}) {
-    const [items, setItems] = useState<ProductRec[]>([]);
-    const [selId, setSelId] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [err, setErr] = useState("");
-    const load = useCallback(async () => {
-        setLoading(true);
-        setErr("");
-        try {
-            const list = await productsService.list();
-            setItems(list);
-            setSelId((cur) => (list.some((p) => p.id === cur) ? cur : list[0]?.id ?? ""));
-        } catch (e) { setErr(e instanceof Error ? e.message : "Failed to load products"); }
-        finally { setLoading(false); }
-    }, []);
-    useEffect(() => { void load(); }, [load]);
-    const sel = items.find((p) => p.id === selId);
-    const discount = !sel || !sel.discountType || !sel.discountValue ? "No discount"
-        : sel.discountType === "percent" ? `${sel.discountValue}%` : usd(sel.discountValue);
-
-    if (loading) return <LoadingBox />;
-    if (err) return <ErrorBox message={err} onRetry={() => void load()} />;
-    if (!items.length) {
-        return <EmptyState title="No products yet" message="No products are available." />;
-    }
-
-    return (
-        <div className="grid gap-4 md:grid-cols-[240px_1fr]">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surfacealt px-4 py-3 md:col-span-2">
-                <span className="text-xs font-bold uppercase tracking-wide text-ink">Select all products ({items.length})</span>
-                <div className="flex flex-wrap items-center gap-4">
-                    {ENVS.map((en) => (
-                        <div key={en.value} className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-ink">{en.label}</span>
-                            <Toggle label={`All products active in ${en.label}`}
-                                on={items.every((p) => enabled[`${subId}:${en.value}:${p.id}`] ?? true)}
-                                onChange={(v) => onToggleAll(items.map((p) => p.id), en.value, v)} />
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <div className="md:border-r md:border-line md:pr-3">
-                <h3 className="mb-3 border-b border-line px-1 pb-3 text-xs font-bold uppercase tracking-wide text-ink">Products</h3>
-                <div role="tablist" aria-orientation="vertical" className="thin-scrollbar flex max-h-[420px] flex-col gap-1 overflow-y-auto">
-                    {items.map((p) => (
-                        <button key={p.id} role="tab" aria-selected={p.id === selId} onClick={() => setSelId(p.id)}
-                            className={`rounded-md px-3 py-2.5 text-left text-xs ${p.id === selId ? "bg-brandsoft font-semibold text-brand" : "text-[#3c4d66] hover:bg-gray-50"}`}>
-                            {p.name}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {sel && (
-                <div className="min-w-0">
-                    <h3 className="mb-3 border-b border-line px-1 pb-3 text-xs font-bold uppercase tracking-wide text-ink">Product Details</h3>
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                        <h3 className="truncate text-sm font-bold text-ink">{sel.name}</h3>
-                        <div className="flex flex-wrap items-center gap-4">
-                            {ENVS.map((en) => (
-                                <div key={en.value} className="flex items-center gap-2">
-                                    <span className="text-xs font-semibold text-ink">{en.label}</span>
-                                    <Toggle label={`Product active in ${en.label}`} on={enabled[`${subId}:${en.value}:${sel.id}`] ?? true}
-                                        onChange={(v) => onToggle(sel.id, en.value, v)} />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <Grid one>
-                        <KV k="Product Name :">{sel.name}</KV>
-                        <KV k="Category :">{sel.categoryName}</KV>
-                        <KV k="Retail Price :">{sel.retail != null ? usd(sel.retail) : "-"}</KV>
-                        <KV k="Discount :">{discount}</KV>
-                        <KV k="Status :"><StatusBadge status={sel.status} /></KV>
-                        <KV k="Short Description :">{sel.shortDescription || "-"}</KV>
-                    </Grid>
-                </div>
-            )}
-        </div>
-    );
-}
 
 /* ---------------- One-time token modal ---------------- */
 function TokenModal({ token, expires, onDone }: { token: string; expires: string; onDone: () => void }) {
@@ -227,7 +141,7 @@ function TokenDrawer({ entityName, envLabel, regenerate, defaultNote, onSave }: 
             </Field>
             <Field label="Expiration" required error={errors.custom}>
                 <div className="flex flex-wrap gap-x-6 gap-y-3 pt-1">
-                    {EXP_OPTIONS.map((o) => (
+                    {EXP_OPTIONS.filter((o) => !regenerate || o.value !== "never").map((o) => (
                         <Radio key={o.value} name="exp" label={o.label} checked={exp === o.value} onChange={() => setExp(o.value)} />
                     ))}
                 </div>
@@ -249,19 +163,25 @@ function TokenTab({ subs, tokens, loading, error, onRetry, onIssue, onRevoke, on
 }) {
     const { openDrawer, toast } = useApp();
     const [issued, setIssued] = useState<{ token: string; expires: string } | null>(null);
+    const [delTarget, setDelTarget] = useState<{ s: SubEntity; env: Env } | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     if (loading) return <LoadingBox />;
     if (error) return <ErrorBox message={error} onRetry={onRetry} />;
 
     const open = (s: SubEntity, env: Env, regenerate: boolean) =>
         openDrawer(<TokenDrawer entityName={s.name} envLabel={ENVS.find((x) => x.value === env)?.label ?? ""} regenerate={regenerate}
-            defaultNote={tokens[s.id]?.[env]?.notes}
+            defaultNote={undefined}
             onSave={async (n, e, c) => { setIssued(await onIssue(s.id, env, n, e, c)); }} />);
-    const revoke = async (s: SubEntity, env: Env) => {
+    const revoke = async () => {
+        if (!delTarget) return;
+        const { s, env } = delTarget;
         const token = tokens[s.id]?.[env];
-        if (!token) return;
-        try { await onRevoke(s.id, env, token.id); toast("Token deleted"); }
+        if (!token) { setDelTarget(null); return; }
+        setDeleting(true);
+        try { await onRevoke(s.id, env, token.id); toast("Token deleted"); setDelTarget(null); }
         catch (e) { toast(e instanceof Error ? e.message : "Delete failed"); }
+        finally { setDeleting(false); }
     };
 
     return (
@@ -311,7 +231,7 @@ function TokenTab({ subs, tokens, loading, error, onRetry, onIssue, onRevoke, on
                                                 <span className="inline-flex items-center gap-2"><Clock className="size-3.5 shrink-0" /> {left == null ? "Never expires" : expired ? "Expired" : `${left} days left`}</span>
                                                 <div className="flex flex-wrap gap-2 pt-3">
                                                     <button className={btn.info} onClick={() => open(s, en.value, true)}><RefreshCw className="size-4" /> Regenerate</button>
-                                                    <button className={btn.danger} onClick={() => void revoke(s, en.value)}><Trash2 className="size-4" /> Delete</button>
+                                                    <button className={btn.danger} onClick={() => setDelTarget({ s, env: en.value })}><Trash2 className="size-4" /> Delete</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -329,6 +249,16 @@ function TokenTab({ subs, tokens, loading, error, onRetry, onIssue, onRevoke, on
             ))}
 
             {issued && <TokenModal token={issued.token} expires={issued.expires} onDone={() => setIssued(null)} />}
+            <ConfirmDialog
+                isOpen={!!delTarget}
+                onClose={() => !deleting && setDelTarget(null)}
+                onConfirm={() => void revoke()}
+                loading={deleting}
+                type="delete"
+                title="Delete token"
+                message={delTarget ? `Delete the ${delTarget.env === "live" ? "Live" : "Sandbox"} token for ${delTarget.s.name}? Apps using it will stop working.` : ""}
+                confirmText="Delete"
+            />
         </div>
     );
 }
@@ -493,7 +423,6 @@ export default function InstanceDetail() {
         }
     }, []);
     useEffect(() => { if (id) void loadSubs(id); }, [id, loadSubs]);
-    const [enabled, setEnabled] = useState<Record<string, boolean>>({});
     const [allProducts, setAllProducts] = useState<ProductRec[]>([]);
     const [margins, setMargins] = useState<MarginRec[]>([]);
     const [picked, setPicked] = useState<Record<string, string[]>>({}); // mock: subId -> product ids
@@ -687,10 +616,12 @@ export default function InstanceDetail() {
                             <EnvSummaryCards name={envName} total={allProducts.length} picked={pickedIds.length} margined={marginedCount}
                                 recs={tokens[subId]} onProducts={openProducts} onMargins={openMargins} />
                         )}
-                        <section className="rounded-xl border border-line bg-white p-5">
-                            <ProductsTab subId={subId} enabled={enabled}
-                                onToggle={(pid, env, on) => setEnabled((m) => ({ ...m, [`${subId}:${env}:${pid}`]: on }))}
-                                onToggleAll={(ids, env, on) => setEnabled((m) => ({ ...m, ...Object.fromEntries(ids.map((pid) => [`${subId}:${env}:${pid}`, on])) }))} />
+                        <section className="flex flex-col items-center gap-4 rounded-xl border border-line bg-white px-6 py-10 text-center">
+                            <img src={credsIllustration} alt="Environment credentials" className="h-48 w-auto max-w-full" />
+                            <div>
+                                <h3 className="text-sm font-bold text-ink">Environment credentials will appear here</h3>
+                                <p className="mt-1 text-xs text-muted">Credentials for {envName} will be available in this section soon.</p>
+                            </div>
                         </section>
                     </>
                 )}

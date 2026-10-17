@@ -36,6 +36,7 @@ async function toError(res: Response) {
         const b = await res.json();
         msg = Array.isArray(b.message) ? b.message.join(", ") : (b.message ?? msg);
         if (Array.isArray(b.missing)) msg += ": " + b.missing.join(", ");
+        if (Array.isArray(b.errors)) msg += ": " + b.errors.join(", ");
     } catch { /* keep default */ }
     return new ApiError(res.status, msg);
 }

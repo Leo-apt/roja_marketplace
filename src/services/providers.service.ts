@@ -7,6 +7,12 @@ export interface ProviderRec {
 }
 export interface ProviderInput { name: string; email: string; phone: string; logoFile: File | null }
 
+export interface ProviderCreds {
+    mode: "live" | "sandbox"; apiUrl: string; tokenUrl: string; clientId: string;
+    clientSecret: string; refreshToken: string; instanceUrl: string;
+}
+const credsDb: Record<string, ProviderCreds> = {};
+
 // MOCK DATA: replace the body of each method with apiCall(...) when the API exists
 const wait = <T,>(v: T) => new Promise<T>((r) => setTimeout(() => r(v), 300));
 let db: ProviderRec[] = [{
@@ -43,4 +49,6 @@ export const providersService = {
         });
         return wait(db.find((p) => p.id === id)!);
     },
+    getCreds: (id: string) => wait(credsDb[id] ?? null),
+    saveCreds: (id: string, c: ProviderCreds) => { credsDb[id] = c; return wait(c); },
 };
