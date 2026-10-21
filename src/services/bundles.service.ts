@@ -1,6 +1,6 @@
 import { apiCall } from "./auth.service";
 import { fmt, who } from "./categories.service";
-import type { Bundle, Status } from "@/data/catalog";
+import type { Bundle } from "@/data/catalog";
 import { num, type DiscountType } from "@/utils/catalog";
 
 
@@ -49,7 +49,7 @@ interface ApiBundle {
 export interface BundleInput {
     bgImageBase64: any;
     name: string; shortCode: string; iconFamily: string; appIcon: string; webIcon: string; bgColor: string;
-    pricingType: "addon" | "bundle"; status: Status; price: string;
+    pricingType: "addon" | "bundle"; price: string;
     discountOn: boolean; discountType: DiscountType; discountValue: string;
     longDescription: string; benefits: string[]; phone: string; portalUrl: string; promoCode: string; promoNote: string;
     disclosure: string; disclaimer: string; additionalInfo: string; insuranceInstructions: string;
@@ -91,7 +91,6 @@ function toPayload(i: BundleInput, isEdit: boolean) {
         webIcon: opt(i.webIcon),
         backgroundColor: opt(i.bgColor),
         pricingType: addOn ? "addOn" : "bundle",
-        status: i.status === "Active",
         price: addOn ? num(i.price) : isEdit ? null : undefined,
         hasDiscount,
         discountType: hasDiscount ? (i.discountType === "percent" ? "percentage" : "fixed") : undefined,

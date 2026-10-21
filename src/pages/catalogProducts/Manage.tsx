@@ -19,8 +19,8 @@ import {
     btn, Check, ColorField, Field, FileInput, HexNote, MoneyInput, Radio, RadioCard, Section, Stepper, TextArea, TextInput,
 } from "@/components/catalog/FormBits";
 import { imageError, noLead, plainText, priceError, textError } from "@/utils/validate";
-import { productTemplates, type Bundle, type Status } from "@/data/catalog";
-import { calcMargin, discountTypeFormOptions, isHex, num, sellingPrice, statusFormOptions, usd, type DiscountType } from "@/utils/catalog";
+import { productTemplates, type Bundle } from "@/data/catalog";
+import { calcMargin, discountTypeFormOptions, isHex, num, sellingPrice, usd, type DiscountType } from "@/utils/catalog";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const BASE = "/catalog/products";
@@ -45,7 +45,7 @@ const addDays = (base: string, n: number) => {
 };
 
 interface Form {
-    name: string; categoryId: string; providerId: string; status: Status;
+    name: string; categoryId: string; providerId: string;
     termsFile: File | null; imageFile: File | null; imageBg: string; shortDescription: string; longDescription: string; pricingContent: string;
     template: string; dashTitle: string; cta: string; featureTitle: string; dashShort: string;
     retail: string; discountType: DiscountType; discountValue: string; bundleIds: string[];
@@ -56,7 +56,7 @@ interface Form {
 type Errors = Record<string, string>;
 
 const empty: Form = {
-    name: "", categoryId: "", providerId: "", status: "Active",
+    name: "", categoryId: "", providerId: "",
     termsFile: null, imageFile: null, imageBg: "", shortDescription: "", longDescription: "", pricingContent: "",
     template: "", dashTitle: "", cta: "", featureTitle: "", dashShort: "",
     retail: "", discountType: "fixed", discountValue: "", bundleIds: [],
@@ -149,7 +149,6 @@ interface FormProps {
 const fromRec = (r: ProductRec): Form => ({
     ...empty,
     name: r.name, categoryId: r.categoryId, providerId: r.providerId,
-    status: r.status === "Inactive" ? "Inactive" : "Active", // UI only: the API sets status itself
     imageBg: r.imageBg, shortDescription: r.shortDescription, longDescription: r.longDescription, pricingContent: r.pricingContent,
     template: r.template, dashTitle: r.dashTitle, cta: r.cta, featureTitle: r.featureTitle, dashShort: r.dashShort,
     retail: r.retail == null ? "" : String(r.retail), discountType: r.discountType || "fixed",
@@ -394,9 +393,6 @@ function ProductForm({ initial, categories, bundleOpts, providerOpts }: FormProp
                                         : providerOpts,
                                     (v) => set("providerId", v), "Select provider ID")}
                             </Field>
-                            <Field label="Status" required>
-                                {dd("status", f.status, statusFormOptions, (v) => set("status", v as Status))}
-                            </Field>
                         </div>
                     </Section>
                 )}
@@ -599,7 +595,7 @@ function ProductForm({ initial, categories, bundleOpts, providerOpts }: FormProp
                             <DCard title="Overview">
                                 <Grid>
                                     <KV k="Product Name">{f.name || "-"}</KV><KV k="Category">{catName}</KV>
-                                    <KV k="Provider ID">{f.providerId || "-"}</KV><KV k="Status">{f.status}</KV>
+                                    <KV k="Provider ID">{f.providerId || "-"}</KV>
                                 </Grid>
                             </DCard>
                             <DCard title="Marketplace Content">

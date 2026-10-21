@@ -18,7 +18,7 @@ export interface CategoryRec {
     id: string; name: string; slug: string; description: string; bgColor: string; status: Status;
     createdBy: string; createdOn: string; updatedBy: string; updatedOn: string;
 }
-export interface CategoryInput { name: string; slug: string; description: string; bgColor: string; status: Status }
+export interface CategoryInput { name: string; slug: string; description: string; bgColor: string }
 
 // createdBy/updatedBy arrive as raw ids today; if the backend populates them, the name is used.
 export const who = (v: unknown): string => {
@@ -52,7 +52,6 @@ const payload = (i: CategoryInput, isEdit: boolean) => {
         slug: i.slug.trim(),
         description: i.description.trim(),
         backgroundColor: bg ? bg : isEdit ? null : undefined,
-        status: i.status === "Active",
     });
 };
 

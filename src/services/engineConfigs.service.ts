@@ -62,7 +62,7 @@ const toSignalPayload = (s: Signal) => ({
 });
 
 const toConfigPayload = (i: EngineConfigInput) => ({
-    providerId: i.providerId, offerType: i.offerType, name: i.name.trim(), category: i.category.trim(),
+    providerId: i.providerId, offerType: i.offerType || undefined, name: i.name.trim(), category: i.category.trim(),
     baseScore: num(i.baseScore),
     thresholds: { show: num(i.show), review: num(i.review), hide: num(i.hide) },
     status: i.status === "Active",

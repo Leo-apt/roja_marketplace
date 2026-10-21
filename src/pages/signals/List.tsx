@@ -2,29 +2,38 @@ import { useEffect, useState } from "react";
 import ListShell, { type Col } from "@/components/catalog/ListShell";
 import type { FilterField } from "@/components/catalog/ListDrawers";
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
-import { signalsService, WEIGHT_FIELDS, WEIGHT_TYPES, type SignalRec } from "@/services/signals.service";
+import { signalsService, WEIGHT_TYPES, type SignalRec } from "@/services/signals.service";
 
 export const BASE = "/catalog/engine-signals";
 
 // long lists are cut with "..." and the full text shows on hover
-const joined = (v: string[]) => {
-    const t = v.join(", ");
-    return t ? <span title={t} className="block max-w-[180px] truncate">{t}</span> : "N/A";
+// shows the first 2 keywords as chips, the rest as "+N"; the full list shows on hover
+const MAX_CHIPS = 2;
+const chips = (v: string[]) => {
+    if (!v.length) return "N/A";
+    const shown = v.slice(0, MAX_CHIPS);
+    const extra = v.length - shown.length;
+    return (
+        <div title={v.join(", ")} className="flex max-w-[280px] flex-nowrap items-center gap-1.5">
+            {shown.map((k) => (
+                <span key={k} className="max-w-[110px] truncate border border-line px-2.5 py-0.5 text-xs text-ink">
+                    {k}
+                </span>
+            ))}
+            {extra > 0 && (
+                <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-xs text-ink">
+                    +{extra}
+                </span>
+            )}
+        </div>
+    );
 };
 
 const cols: Col<SignalRec>[] = [
     { key: "signalId", label: "Signal ID", link: true, render: (r) => r.signalId },
     { key: "label", label: "Label", render: (r) => r.label },
-    { key: "minCount", label: "Minimum Count", render: (r) => r.minCount ?? "N/A" },
-    { key: "topCategory", label: "Top Category", render: (r) => joined(r.topCategory) },
-    { key: "code", label: "Code", render: (r) => joined(r.code) },
-    { key: "mcc", label: "MCC", render: (r) => joined(r.mcc) },
-    { key: "keywords", label: "Keywords", render: (r) => joined(r.keywords) },
+    { key: "keywords", label: "Keywords", render: (r) => chips(r.keywords) },
     { key: "weightType", label: "Weight Type", render: (r) => WEIGHT_TYPES.find((w) => w.value === r.weightType)?.label ?? r.weightType },
-    {
-        key: "weight", label: "Weight",
-        render: (r) => (WEIGHT_FIELDS[r.weightType] ?? []).map((w) => `${w.label}: ${r[w.key] ?? "N/A"}`).join(", ") || "N/A",
-    },
 ];
 const PAGE_SIZE = 10;
 const fields: FilterField[] = [];

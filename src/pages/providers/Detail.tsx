@@ -38,10 +38,10 @@ function CredsSkeleton() {
     );
 }
 
-function CredsView({ c, has }: { c: ProviderCreds; has: { secret: boolean; refresh: boolean } }) {
+function CredsView({ c }: { c: ProviderCreds; has: { secret: boolean; refresh: boolean } }) {
     const rows: [string, string][] = [
         ["API URL", c.apiUrl], ["Token URL", c.tokenUrl], ["Client ID", c.clientId],
-        ["Client Secret", has.secret ? "••••••••" : ""], ["Refresh Token", has.refresh ? "••••••••" : ""], ["Instance URL", c.instanceUrl],
+        ["Client Secret", c.clientSecret], ["Refresh Token", c.refreshToken], ["Instance URL", c.instanceUrl],
     ];
     return (
         <div className="grid gap-4 rounded-xl border border-line bg-surfacealt p-4 md:grid-cols-2">
@@ -101,8 +101,7 @@ function Credentials({ id }: { id: string }) {
         try {
             await providersService.saveCreds(id, c, has.exists);
             setHas({ exists: true, secret: has.secret || !!c.clientSecret.trim(), refresh: has.refresh || !!c.refreshToken.trim() });
-            const next = { ...c, clientSecret: "", refreshToken: "" }; // secrets are never shown again
-            setSaved(next); setC(next);
+            setSaved(c); setC(c); // keep the saved values in the fields
             toast(has.exists ? "Credentials updated" : "Credentials saved");
             setEditing(false);
         } catch (e) { toastError(e instanceof Error ? e.message : "Save failed"); }
@@ -211,9 +210,7 @@ export default function ProvidersDetail() {
                     </DTiles>
                 </DSection>
             </div>
-            <div className={tab === "creds" ? "" : "hidden"}>
-                <Credentials id={rec.id} />
-            </div>
+            {tab === "creds" && <Credentials id={rec.id} />}
         </div>
     );
 }

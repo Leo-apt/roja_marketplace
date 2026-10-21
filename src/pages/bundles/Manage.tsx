@@ -10,14 +10,14 @@ import RichTextEditor from "@/components/catalog/RichTextEditor";
 import {
     btn, ColorField, Field, FileInput, HexNote, MoneyInput, PhoneField, Radio, Section, TextArea, TextInput, Toggle,
 } from "@/components/catalog/FormBits";
-import type { Bundle, Status } from "@/data/catalog";
-import { discountTypeFormOptions, isHex, num, sellingPrice, statusFormOptions, usd, type DiscountType } from "@/utils/catalog";
+import type { Bundle } from "@/data/catalog";
+import { discountTypeFormOptions, isHex, num, sellingPrice, usd, type DiscountType } from "@/utils/catalog";
 
 const BASE = "/catalog/bundles";
 
 interface Form {
     name: string; shortCode: string; iconFamily: string; appIcon: string; webIcon: string; bgColor: string;
-    pricingType: "addon" | "bundle"; status: Status; price: string;
+    pricingType: "addon" | "bundle"; price: string;
     discountOn: boolean; discountWhen: "" | "forever" | "first"; discountType: DiscountType; discountValue: string;
     longDescription: string; benefits: string[]; phone: string; portalUrl: string; promoCode: string; promoNote: string;
     disclosure: string; disclaimer: string; additionalInfo: string; insuranceInstructions: string;
@@ -28,7 +28,7 @@ type Errors = Record<string, string>;
 
 const empty: Form = {
     name: "", shortCode: "", iconFamily: "", appIcon: "", webIcon: "", bgColor: "",
-    pricingType: "bundle", status: "Active", price: "", discountOn: false, discountWhen: "", discountType: "fixed", discountValue: "",
+    pricingType: "bundle", price: "", discountOn: false, discountWhen: "", discountType: "fixed", discountValue: "",
     longDescription: "", benefits: [""], phone: "", portalUrl: "", promoCode: "", promoNote: "",
     disclosure: "", disclaimer: "", additionalInfo: "", insuranceInstructions: "",
     title: "", shortDescription: "", bgImage: null, tIconFamily: "", tAppIcon: "", tWebIcon: "", cardBg: "", iconBg: "",
@@ -36,7 +36,7 @@ const empty: Form = {
 
 const fromBundle = (b: Bundle): Form => ({
     name: b.name, shortCode: b.shortCode, iconFamily: b.iconFamily, appIcon: b.appIcon, webIcon: b.webIcon, bgColor: b.bgColor,
-    pricingType: b.pricingType === "Bundle" ? "bundle" : "addon", status: b.status,
+    pricingType: b.pricingType === "Bundle" ? "bundle" : "addon",
     price: b.price == null ? "" : String(b.price), discountOn: b.discountOn, discountWhen: b.discountOn ? "forever" : "", // UI-only: no backend fields for this
     discountType: b.discountType, discountValue: b.discountValue == null ? "" : String(b.discountValue),
     longDescription: b.longDescription, benefits: b.benefits.length ? b.benefits : [""],
@@ -45,6 +45,16 @@ const fromBundle = (b: Bundle): Form => ({
     title: b.title, shortDescription: b.shortDescription, bgImage: null,
     tIconFamily: b.tIconFamily, tAppIcon: b.tAppIcon, tWebIcon: b.tWebIcon, cardBg: b.cardBg, iconBg: b.iconBg,
 });
+
+// scrolls to the first field that shows an error and focuses its input
+const focusFirstError = () => {
+    setTimeout(() => {
+        const box = document.querySelector<HTMLElement>('[data-error="true"]');
+        if (!box) return;
+        box.scrollIntoView({ behavior: "smooth", block: "center" });
+        box.querySelector<HTMLElement>("input, textarea, [contenteditable='true']")?.focus({ preventScroll: true });
+    }, 0);
+};
 
 function BundleForm({ initial }: { initial?: Bundle }) {
     const nav = useNavigate();
@@ -101,7 +111,7 @@ function BundleForm({ initial }: { initial?: Bundle }) {
         const e = { ...validate(0), ...validate(1), ...validate(2) };
         setErrors(e);
         setApiError("");
-        if (Object.keys(e).length) return;
+        if (Object.keys(e).length) { focusFirstError(); return; }
         setSaving(true);
         try {
             const bgImageBase64 = f.bgImage ? await compressImage(f.bgImage) : undefined;
@@ -148,7 +158,7 @@ function BundleForm({ initial }: { initial?: Bundle }) {
                         </Field>
                     </div>
 
-                    <div className="grid gap-5 md:grid-cols-3">
+                    <div className="grid gap-5 md:grid-cols-2">
                         <Field label="Background Color" note={HexNote} error={errors.bgColor}>
                             <ColorField value={f.bgColor} onChange={(v) => set("bgColor", v)} />
                         </Field>
@@ -157,9 +167,6 @@ function BundleForm({ initial }: { initial?: Bundle }) {
                                 <Radio name="pt" label="Add On" checked={f.pricingType === "addon"} onChange={() => set("pricingType", "addon")} />
                                 <Radio name="pt" label="Bundle" checked={f.pricingType === "bundle"} onChange={() => set("pricingType", "bundle")} />
                             </div>
-                        </Field>
-                        <Field label="Status" required>
-                            {dropdown("status", f.status, statusFormOptions, (v) => set("status", v as Status))}
                         </Field>
                     </div>
 

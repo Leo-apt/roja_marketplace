@@ -8,11 +8,13 @@ import type { Status } from "@/data/catalog";
 import { Alert } from "@/components/auth/AuthShell";
 import { AdminNotice, ErrorBox, LoadingBox, useIsAdmin } from "@/components/catalog/PageState";
 import { engineConfigsService } from "@/services/engineConfigs.service";
+import { signalsService, type SignalRec } from "@/services/signals.service";
+import { providersService, type ProviderRec } from "@/services/providers.service";
 import {
-    blankSignal, offerTypes, providers, signalPresets, weightFields, weightTypes,
+    blankSignal, weightFields, weightTypes,
     type EngineConfig, type Signal, type WeightType,
 } from "@/data/engine";
-import { num, statusFormOptions } from "@/utils/catalog";
+import { num } from "@/utils/catalog";
 
 const BASE = "/catalog/engine-configuration";
 type Errors = Record<string, string>;
@@ -46,6 +48,32 @@ function EngineConfigForm({ initial }: { initial?: EngineConfig }) {
     const [errors, setErrors] = useState<Errors>({});
     const [apiError, setApiError] = useState("");
     const [saving, setSaving] = useState(false);
+    const [providerList, setProviderList] = useState<ProviderRec[]>([]);
+    const [providersLoading, setProvidersLoading] = useState(true);
+    const [signalList, setSignalList] = useState<SignalRec[]>([]);
+    const [signalsLoading, setSignalsLoading] = useState(true);
+
+    useEffect(() => {
+        let live = true;
+        providersService.listPage(1, 1000)
+            .then((r) => { if (live) setProviderList(r.rows); })
+            .catch(() => { /* dropdown stays empty */ })
+            .finally(() => { if (live) setProvidersLoading(false); });
+        return () => { live = false; };
+    }, []);
+    const providerOptions = providerList
+        .filter((p) => p.providerId)
+        .map((p) => ({ value: p.providerId, label: p.name, sublabel: p.providerId }));
+
+    useEffect(() => {
+        let live = true;
+        signalsService.options()
+            .then((r) => { if (live) setSignalList(r); })
+            .catch(() => { /* dropdown stays empty */ })
+            .finally(() => { if (live) setSignalsLoading(false); });
+        return () => { live = false; };
+    }, []);
+    const presetOptions = signalList.map((r) => ({ value: r.signalId, label: r.signalId, sublabel: r.label }));
 
     const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((p) => ({ ...p, [k]: v }));
     const setSig = (uid: string, patch: Partial<Signal>) =>
@@ -56,9 +84,17 @@ function EngineConfigForm({ initial }: { initial?: EngineConfig }) {
             rounded="rounded-md" compact onChange={(e) => on(e.target.value)} />
     );
 
+    // picking a created signal fills this signal block from it
     const onPreset = (s: Signal, v: string) => {
-        const p = signalPresets.find((x) => x.value === v);
-        setSig(s.uid, { preset: v, ...(v ? { signalId: v, label: s.label || (p?.label ?? "") } : {}) });
+        const r = signalList.find((x) => x.signalId === v);
+        if (!r) { setSig(s.uid, { preset: "" }); return; }
+        const n = (x: number | null) => (x == null ? "" : String(x));
+        setSig(s.uid, {
+            preset: v, signalId: r.signalId, label: r.label, minCount: n(r.minCount),
+            topCategory: r.topCategory.join(", "), code: r.code.join(", "), mcc: r.mcc.join(", "), keywords: r.keywords.join(", "),
+            sameAs: r.sameAs, weightType: r.weightType as WeightType,
+            value: n(r.weightValue), cap: n(r.cap), divisor: n(r.divisor), multiplier: n(r.multiplier), reference: n(r.reference), trigger: n(r.trigger),
+        });
     };
     const onWeightType = (s: Signal, v: WeightType) =>
         setSig(s.uid, { weightType: v, value: "", cap: "", divisor: "", multiplier: "", reference: "", trigger: "" });
@@ -66,7 +102,6 @@ function EngineConfigForm({ initial }: { initial?: EngineConfig }) {
     const submit = async () => {
         const e: Errors = {};
         if (!f.providerId) e.providerId = "Provider ID is required";
-        if (!f.offerType) e.offerType = "Offer type is required";
         if (!f.name.trim()) e.name = "Config name is required";
         const sh = num(f.show), rv = num(f.review), hd = num(f.hide);
         if (!(sh >= rv && rv >= hd)) e.show = "Must satisfy Show ≥ Review ≥ Hide";
@@ -107,13 +142,10 @@ function EngineConfigForm({ initial }: { initial?: EngineConfig }) {
                 <div className="flex flex-col gap-5">
                     <div className="grid gap-5 md:grid-cols-2">
                         <Field label="Provider ID" required error={errors.providerId}>
-                            {dd("provider", f.providerId, providers, (v) => set("providerId", v), "Select provider")}
+                            <Dropdownbox name="provider" value={f.providerId} options={providerOptions} placeholder="Select provider"
+                                searchable loading={providersLoading} rounded="rounded-md" compact
+                                onChange={(e) => set("providerId", e.target.value)} />
                         </Field>
-                        <Field label="Offer Type" required error={errors.offerType}>
-                            {dd("offerType", f.offerType, offerTypes, (v) => set("offerType", v), "Select offer type")}
-                        </Field>
-                    </div>
-                    <div className="grid gap-5 md:grid-cols-3">
                         <Field label="Config Name" required error={errors.name}>
                             <TextInput value={f.name} onChange={(e) => set("name", e.target.value)} />
                         </Field>
@@ -121,11 +153,6 @@ function EngineConfigForm({ initial }: { initial?: EngineConfig }) {
                             <TextInput value={f.category} onChange={(e) => set("category", e.target.value)} />
                         </Field>
                         <Field label="Base Score"><NumInput value={f.baseScore} onChange={(v) => set("baseScore", v)} /></Field>
-                    </div>
-                    <div className="grid gap-5 md:grid-cols-3">
-                        <Field label="Status" required>
-                            {dd("status", f.status, statusFormOptions, (v) => set("status", v as Status))}
-                        </Field>
                     </div>
                 </div>
             </DCard>
@@ -151,7 +178,9 @@ function EngineConfigForm({ initial }: { initial?: EngineConfig }) {
                         </div>
                         <div className="flex flex-col gap-5">
                             <Field label="Select Signal" className="md:max-w-[33%]">
-                                {dd(`preset-${s.uid}`, s.preset, signalPresets, (v) => onPreset(s, v), "Select signal", true)}
+                                <Dropdownbox name={`preset-${s.uid}`} value={s.preset} options={presetOptions} placeholder="Select signal"
+                                    searchable loading={signalsLoading} rounded="rounded-md" compact
+                                    onChange={(e) => onPreset(s, e.target.value)} />
                             </Field>
                             <div className="grid gap-5 md:grid-cols-3">
                                 <Field label="Signal ID" required error={errors[`${s.uid}.signalId`]}>

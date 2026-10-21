@@ -1,4 +1,5 @@
 import { apiCall, ApiError } from "@/services/auth.service";
+import { fmt, who } from "@/services/categories.service";
 import type { Status } from "@/data/catalog";
 
 const API = ((import.meta.env.VITE_API_URL as string | undefined) ?? "").replace(/\/$/, "");
@@ -15,16 +16,19 @@ export interface ProviderCreds {
 }
 export interface CredsView { creds: ProviderCreds; hasSecret: boolean; hasRefresh: boolean }
 
-interface ApiProvider { id: string; providerId?: string; name: string; phone?: string; email?: string; logo?: string; isActive: boolean }
+interface ApiProvider {
+    id: string; providerId?: string; name: string; phone?: string; email?: string; logo?: string; isActive: boolean;
+    createdAt?: string; updatedAt?: string; createdBy?: unknown; updatedBy?: unknown;
+}
 interface ApiCred {
     mode: "live" | "sandbox"; apiUrl?: string; tokenUrl?: string; clientId?: string;
-    hasClientSecret: boolean; hasRefreshToken: boolean; instanceUrl?: string;
+    clientSecret?: string; refreshToken?: string; instanceUrl?: string;
 }
 
 const toUi = (a: ApiProvider): ProviderRec => ({
     id: a.id, providerId: a.providerId ?? "", name: a.name, email: a.email ?? "", phone: a.phone ?? "",
     logoUrl: a.logo ? `${API}${a.logo}` : "", status: a.isActive ? "Active" : "Inactive",
-    createdBy: "N/A", createdOn: "N/A", updatedBy: "N/A", updatedOn: "N/A",
+    createdBy: who(a.createdBy), createdOn: fmt(a.createdAt), updatedBy: who(a.updatedBy), updatedOn: fmt(a.updatedAt),
 });
 
 const toForm = (i: ProviderInput) => {
@@ -59,9 +63,9 @@ export const providersService = {
             return {
                 creds: {
                     mode, apiUrl: r.apiUrl ?? "", tokenUrl: r.tokenUrl ?? "", clientId: r.clientId ?? "",
-                    clientSecret: "", refreshToken: "", instanceUrl: r.instanceUrl ?? "",
+                    clientSecret: r.clientSecret ?? "", refreshToken: r.refreshToken ?? "", instanceUrl: r.instanceUrl ?? "",
                 },
-                hasSecret: r.hasClientSecret, hasRefresh: r.hasRefreshToken,
+                hasSecret: !!r.clientSecret, hasRefresh: !!r.refreshToken,
             };
         } catch (e) {
             if (e instanceof ApiError && e.status === 404) return null;

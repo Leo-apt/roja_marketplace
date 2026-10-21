@@ -8,9 +8,9 @@ import { useApp } from "@/hooks/useApp";
 import { bundlesService } from "@/services/bundles.service";
 import { discountShort, sellingPrice, usd } from "@/utils/catalog";
 
-const discountOf = (b: Bundle) => (b.discountOn && b.discountValue ? discountShort(b.discountType, b.discountValue) : "No discount");
+const discountOf = (b: Bundle) => (b.discountValue ? discountShort(b.discountType, b.discountValue) : "No discount");
 const sellOf = (b: Bundle) =>
-    b.price == null ? null : sellingPrice(b.price, b.discountOn ? b.discountType : "", b.discountValue ?? 0);
+    b.price == null ? null : sellingPrice(b.price, b.discountValue ? b.discountType : "", b.discountValue ?? 0);
 
 const cols: Col<Bundle>[] = [
     { key: "name", label: "Name", link: true, render: (r) => r.name },

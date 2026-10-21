@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/hooks/useApp";
-import Dropdownbox from "@/components/shared/Dropdownbox";
 import { btn, ColorField, Field, HexNote, TextArea, TextInput } from "@/components/catalog/FormBits";
 import { DCard } from "@/components/catalog/DetailBits";
 import { Alert } from "@/components/auth/AuthShell";
 import { AdminNotice, ErrorBox, LoadingBox, useIsAdmin } from "@/components/catalog/PageState";
-import type { Status } from "@/data/catalog";
 import { categoriesService, type CategoryRec } from "@/services/categories.service";
-import { isHex, statusFormOptions } from "@/utils/catalog";
+import { isHex } from "@/utils/catalog";
 
 const BASE = "/catalog/product-categories";
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -23,7 +21,6 @@ function CategoryForm({ initial }: { initial?: CategoryRec }) {
     const [slugTouched, setSlugTouched] = useState(isEdit);
     const [description, setDescription] = useState(initial?.description ?? "");
     const [bg, setBg] = useState(initial?.bgColor ?? "");
-    const [status, setStatus] = useState<Status>(initial?.status ?? "Active");
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [apiError, setApiError] = useState("");
     const [saving, setSaving] = useState(false);
@@ -44,7 +41,7 @@ function CategoryForm({ initial }: { initial?: CategoryRec }) {
         if (Object.keys(e).length) return;
         setSaving(true);
         try {
-            const input = { name, slug, description, bgColor: bg, status };
+            const input = { name, slug, description, bgColor: bg };
             if (initial) await categoriesService.update(initial.id, input);
             else await categoriesService.create(input);
             toast(isEdit ? "Category updated" : "Category created");
@@ -69,10 +66,6 @@ function CategoryForm({ initial }: { initial?: CategoryRec }) {
                     </Field>
                     <Field label="Background Color" note={HexNote} error={errors.bg}>
                         <ColorField value={bg} onChange={setBg} />
-                    </Field>
-                    <Field label="Status" required>
-                        <Dropdownbox name="status" value={status} options={statusFormOptions} rounded="rounded-md" compact
-                            onChange={(e) => setStatus(e.target.value as Status)} />
                     </Field>
                     <Field label="Description" className="md:col-span-2">
                         <TextArea rows={3} value={description} placeholder="Optional" onChange={(e) => setDescription(e.target.value)} />

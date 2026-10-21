@@ -126,6 +126,8 @@ export const signalsService = {
             .then((r) => { const p = unpack(r); return { rows: p.items.map(toUi), total: p.total }; });
     },
     get: (id: string) => apiCall<ApiSignal>(`/signals/${id}/get-signal`).then((r) => toUi(r.data)),
+    /** Active signals for the Engine Config "Select Signal" dropdown. */
+    options: () => apiCall<ApiSignal[]>("/signals/get-signal-options").then((r) => r.data.map(toUi)),
     create: (i: SignalInput) =>
         apiCall<ApiSignal>("/signals/create-signal", { method: "POST", body: payload(i, false) })
             .then((r) => toUi(r.data)).catch(mapError),
