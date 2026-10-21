@@ -65,8 +65,7 @@ export default function InstancesList() {
         toast("Client created");
     };
 
-    // TODO: replace with the real count when the API returns it
-    const envNames = (_r: Instance): string[] => ["Environment 1", "Environment 2", "Environment 3", "Environment 4"];
+    const envNames = (r: Instance): string[] => r.environments ?? [];
 
     const cols: Col<Instance>[] = [
         {

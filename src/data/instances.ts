@@ -5,6 +5,7 @@ export interface InstanceProduct {
 }
 export interface Instance {
     id: string; name: string; description: string; imageUrl: string; status: Status; products: InstanceProduct[];
+    environments?: string[];
 }
 
 const prod = (id: string, name: string, category: string, retail: number, discount: string, shortDescription: string, status: Status = "Active"): InstanceProduct =>

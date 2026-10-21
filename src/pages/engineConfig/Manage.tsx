@@ -28,17 +28,17 @@ function NumInput({ value, onChange, placeholder }: { value: string; onChange: (
 }
 
 interface Form {
-    providerId: string; offerType: string; name: string; category: string; baseScore: string;
+    providerId: string; name: string; category: string; baseScore: string;
     show: string; review: string; hide: string; status: Status; signals: Signal[];
 }
 
 const toForm = (c?: EngineConfig): Form =>
     c
         ? {
-            providerId: c.providerId, offerType: c.offerType, name: c.name, category: c.category, baseScore: c.baseScore,
+            providerId: c.providerId, name: c.name, category: c.category, baseScore: c.baseScore,
             show: c.show, review: c.review, hide: c.hide, status: c.status, signals: c.signals.map((s) => ({ ...s }))
         }
-        : { providerId: "", offerType: "", name: "", category: "", baseScore: "", show: "", review: "", hide: "", status: "Active", signals: [blankSignal()] };
+        : { providerId: "", name: "", category: "", baseScore: "", show: "", review: "", hide: "", status: "Active", signals: [blankSignal()] };
 
 function EngineConfigForm({ initial }: { initial?: EngineConfig }) {
     const nav = useNavigate();

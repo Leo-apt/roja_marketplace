@@ -18,9 +18,14 @@ import {
   Sun,
   User,
   Users,
+  CreditCard,
+  FlaskConical,
+  Pencil,
+  Rocket,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useApp } from "@/hooks/useApp";
 import { useTheme, type ThemeMode } from "@/theme/ThemeProvider";
 import {
   DEFAULT_COLUMNS,
@@ -46,7 +51,7 @@ type SettingsState = {
   columns: ColumnsState;
 };
 
-type TabId = "profile" | "preferences" | "columns";
+type TabId = "profile" | "preferences" | "columns" | "gateway";
 
 /** Factory so every call returns fresh state (no shared columns reference). */
 function makeDefaults(displayName = ""): SettingsState {
@@ -163,6 +168,12 @@ const TABS: { id: TabId; label: string; hint: string; icon: LucideIcon }[] = [
     hint: "Choose table columns",
     icon: Columns3,
   },
+  {
+    id: "gateway",
+    label: "Payment Gateway",
+    hint: "Sandbox and live keys",
+    icon: CreditCard,
+  },
 ];
 
 const THEME_CHOICES: {
@@ -171,25 +182,25 @@ const THEME_CHOICES: {
   description: string;
   icon: LucideIcon;
 }[] = [
-  {
-    mode: "light",
-    title: "Light",
-    description: "Bright and clean.",
-    icon: Sun,
-  },
-  {
-    mode: "dark",
-    title: "Dark",
-    description: "Easy on the eyes at night.",
-    icon: Moon,
-  },
-  {
-    mode: "system",
-    title: "System",
-    description: "Match your device setting.",
-    icon: Monitor,
-  },
-];
+    {
+      mode: "light",
+      title: "Light",
+      description: "Bright and clean.",
+      icon: Sun,
+    },
+    {
+      mode: "dark",
+      title: "Dark",
+      description: "Easy on the eyes at night.",
+      icon: Moon,
+    },
+    {
+      mode: "system",
+      title: "System",
+      description: "Match your device setting.",
+      icon: Monitor,
+    },
+  ];
 
 const TABLE_ICONS: Record<TableId, LucideIcon> = {
   products: Package,
@@ -240,15 +251,13 @@ function Toggle({
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className={`relative h-6 w-11 shrink-0 rounded-full outline-none transition-colors duration-300 st-ease focus-visible:ring-2 focus-visible:ring-brand/30 ${
-        checked ? "bg-brand" : "bg-gray-200"
-      }`}
+      className={`relative h-6 w-11 shrink-0 rounded-full outline-none transition-colors duration-300 st-ease focus-visible:ring-2 focus-visible:ring-brand/30 ${checked ? "bg-brand" : "bg-gray-200"
+        }`}
     >
       {/* bg-[#fff] (not bg-white) so the knob stays white in dark mode */}
       <span
-        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-[#fff] shadow-sm transition-transform duration-300 st-spring ${
-          checked ? "translate-x-5" : "translate-x-0"
-        }`}
+        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-[#fff] shadow-sm transition-transform duration-300 st-spring ${checked ? "translate-x-5" : "translate-x-0"
+          }`}
       />
     </button>
   );
@@ -257,10 +266,12 @@ function Toggle({
 function Field({
   label,
   hint,
+  error,
   children,
 }: {
   label: string;
   hint?: string;
+  error?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -269,8 +280,14 @@ function Field({
         {label}
       </span>
       {children}
-      {hint && (
-        <span className="mt-1.5 block text-[11px] text-muted">{hint}</span>
+      {error ? (
+        <span role="alert" className="mt-1.5 block text-[11px] text-red-600">
+          {error}
+        </span>
+      ) : (
+        hint && (
+          <span className="mt-1.5 block text-[11px] text-muted">{hint}</span>
+        )
       )}
     </label>
   );
@@ -332,24 +349,21 @@ function ChoiceCard({
       type="button"
       aria-pressed={selected}
       onClick={onClick}
-      className={`relative rounded-2xl border p-4 text-left outline-none transition-[border-color,background-color,box-shadow,transform] duration-300 st-ease focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.985] ${
-        selected
-          ? "border-brand bg-brand/5 shadow-[0_0_0_3px] shadow-brand/[0.08]"
-          : "border-gray-200/80 bg-white hover:border-gray-300 hover:shadow-sm"
-      }`}
+      className={`relative rounded-2xl border p-4 text-left outline-none transition-[border-color,background-color,box-shadow,transform] duration-300 st-ease focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.985] ${selected
+        ? "border-brand bg-brand/5 shadow-[0_0_0_3px] shadow-brand/[0.08]"
+        : "border-gray-200/80 bg-white hover:border-gray-300 hover:shadow-sm"
+        }`}
     >
       <span
-        className={`absolute right-3 top-3 grid size-5 place-items-center rounded-full bg-brand text-white transition-[transform,opacity] duration-300 st-spring ${
-          selected ? "scale-100 opacity-100" : "scale-50 opacity-0"
-        }`}
+        className={`absolute right-3 top-3 grid size-5 place-items-center rounded-full bg-brand text-white transition-[transform,opacity] duration-300 st-spring ${selected ? "scale-100 opacity-100" : "scale-50 opacity-0"
+          }`}
       >
         <Check className="size-3" strokeWidth={3} />
       </span>
       {Icon && (
         <span
-          className={`mb-3 grid size-9 place-items-center rounded-lg transition-colors duration-300 ${
-            selected ? "bg-brand/10 text-brand" : "bg-gray-100 text-muted"
-          }`}
+          className={`mb-3 grid size-9 place-items-center rounded-lg transition-colors duration-300 ${selected ? "bg-brand/10 text-brand" : "bg-gray-100 text-muted"
+            }`}
         >
           <Icon className="size-[18px]" />
         </span>
@@ -652,18 +666,16 @@ function ColumnsPanel({
             return (
               <li
                 key={c.key}
-                className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-[border-color,background-color,opacity] duration-200 st-ease ${
-                  c.visible
-                    ? "border-gray-200/80 bg-white"
-                    : "border-dashed border-gray-200 bg-gray-50/70"
-                }`}
+                className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-[border-color,background-color,opacity] duration-200 st-ease ${c.visible
+                  ? "border-gray-200/80 bg-white"
+                  : "border-dashed border-gray-200 bg-gray-50/70"
+                  }`}
               >
                 <span
-                  className={`grid size-8 shrink-0 place-items-center rounded-lg transition-colors duration-200 ${
-                    c.visible
-                      ? "bg-brand/10 text-brand"
-                      : "bg-gray-100 text-muted"
-                  }`}
+                  className={`grid size-8 shrink-0 place-items-center rounded-lg transition-colors duration-200 ${c.visible
+                    ? "bg-brand/10 text-brand"
+                    : "bg-gray-100 text-muted"
+                    }`}
                 >
                   {c.locked ? (
                     <Lock className="size-4" />
@@ -675,9 +687,8 @@ function ColumnsPanel({
                 </span>
                 <div className="min-w-0 flex-1 leading-tight">
                   <p
-                    className={`truncate text-xs font-semibold ${
-                      c.visible ? "text-ink" : "text-muted"
-                    }`}
+                    className={`truncate text-xs font-semibold ${c.visible ? "text-ink" : "text-muted"
+                      }`}
                   >
                     {c.label}
                   </p>
@@ -722,6 +733,222 @@ function ColumnsPanel({
         </ul>
       </Card>
     </div>
+  );
+}
+
+/* Payment gateway (design only, no backend yet) */
+type GatewayEnv = "sandbox" | "live";
+type GatewayCreds = { publishableKey: string; secretKey: string };
+type GatewayState = Record<GatewayEnv, GatewayCreds>;
+
+const BLANK_GATEWAY: GatewayState = {
+  sandbox: { publishableKey: "", secretKey: "" },
+  live: { publishableKey: "", secretKey: "" },
+};
+
+const GATEWAY_TABS: {
+  value: GatewayEnv;
+  label: string;
+  icon: LucideIcon;
+  on: string;
+}[] = [
+    { value: "sandbox", label: "Sandbox", icon: FlaskConical, on: "border-amber-600 bg-amber-50 text-amber-700" },
+    { value: "live", label: "Live", icon: Rocket, on: "border-emerald-600 bg-emerald-50 text-emerald-700" },
+  ];
+
+function SecretField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <input
+        className={`${inputClass} pr-10`}
+        type={show ? "text" : "password"}
+        value={value}
+        autoComplete="off"
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <button
+        type="button"
+        aria-label={show ? "Hide" : "Show"}
+        onClick={() => setShow((s) => !s)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink"
+      >
+        {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+      </button>
+    </div>
+  );
+}
+
+function PaymentGatewayPanel({
+  saved,
+  onSave,
+}: {
+  saved: GatewayState;
+  onSave: (env: GatewayEnv, c: GatewayCreds) => void;
+}) {
+  const { toast } = useApp();
+  const [env, setEnv] = useState<GatewayEnv>("sandbox");
+  const [loading, setLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [creds, setCreds] = useState<GatewayState>(saved);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  const hasSaved = !!(saved[env].publishableKey && saved[env].secretKey);
+  const readOnly = hasSaved && !editing;
+
+  const pick = (e: GatewayEnv) => {
+    if (e === env) return;
+    setEnv(e);
+    setErrors({});
+    setEditing(false);
+    setLoading(true); // skeleton while the other tab "loads"
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setLoading(false), 600);
+  };
+  const startEdit = () => {
+    setCreds((c) => ({ ...c, [env]: saved[env] })); // drop any unsaved typing
+    setErrors({});
+    setEditing(true);
+  };
+  const setField = (k: keyof GatewayCreds, v: string) => {
+    setCreds((c) => ({ ...c, [env]: { ...c[env], [k]: v.replace(/\s/g, "") } }));
+    setErrors((p) => {
+      const n = { ...p };
+      delete n[k];
+      return n;
+    });
+  };
+  const save = () => {
+    const e: Record<string, string> = {};
+    if (!creds[env].publishableKey.trim()) e.publishableKey = "Publishable Key is required";
+    if (!creds[env].secretKey.trim()) e.secretKey = "Secret Key is required";
+    setErrors(e);
+    if (Object.keys(e).length) return;
+    const clean = {
+      publishableKey: creds[env].publishableKey.trim(),
+      secretKey: creds[env].secretKey.trim(),
+    };
+    setCreds((c) => ({ ...c, [env]: clean }));
+    onSave(env, clean);
+    toast(hasSaved ? "Credentials updated" : "Credentials saved");
+    setEditing(false);
+  };
+  const cancel = () => {
+    setCreds((c) => ({ ...c, [env]: saved[env] }));
+    setErrors({});
+    setEditing(false);
+  };
+
+  return (
+    <Card
+      title="Payment Gateway"
+      description="Sandbox and live credentials for the payment gateway."
+    >
+      <div className="space-y-5">
+        <div role="tablist" aria-label="Environment" className="flex gap-1 border-b border-gray-200">
+          {GATEWAY_TABS.map((t) => {
+            const Icon = t.icon;
+            const active = env === t.value;
+            return (
+              <button
+                key={t.value}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => pick(t.value)}
+                className={`-mb-px inline-flex items-center gap-2 rounded-t-lg border-b-2 px-5 py-2.5 text-xs font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-brand/30 ${active
+                  ? t.on
+                  : "border-transparent text-muted hover:bg-gray-50 hover:text-ink"
+                  }`}
+              >
+                <Icon className="size-4" /> {t.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {loading ? (
+          <div className="space-y-5">
+            <div className="skeleton h-5 w-32" />
+            <div className="grid gap-5 sm:grid-cols-2">
+              {[0, 1].map((i) => (
+                <div key={i} className="space-y-2">
+                  <div className="skeleton h-3 w-28" />
+                  <div className="skeleton h-11 w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-xs font-bold text-ink">Credentials</h3>
+              {readOnly && (
+                <button
+                  type="button"
+                  aria-label="Edit credentials"
+                  title="Edit"
+                  onClick={startEdit}
+                  className="grid size-9 place-items-center rounded-lg border border-gray-200/80 bg-white text-ink outline-none transition hover:border-brand hover:text-brand focus-visible:ring-2 focus-visible:ring-brand/30"
+                >
+                  <Pencil className="size-4" />
+                </button>
+              )}
+            </div>
+
+            {readOnly ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <StatTile label="Publishable Key" value={saved[env].publishableKey} />
+                <StatTile label="Secret Key" value="••••••••" />
+              </div>
+            ) : (
+              <>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field label="Publishable Key *" error={errors.publishableKey}>
+                    <input
+                      className={inputClass}
+                      value={creds[env].publishableKey}
+                      autoComplete="off"
+                      onChange={(e) => setField("publishableKey", e.target.value)}
+                    />
+                  </Field>
+                  <Field label="Secret Key *" error={errors.secretKey}>
+                    <SecretField
+                      value={creds[env].secretKey}
+                      onChange={(v) => setField("secretKey", v)}
+                    />
+                  </Field>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={cancel}
+                    className="h-9 rounded-xl px-3 text-xs font-semibold text-muted outline-none transition-colors duration-200 hover:bg-gray-100 hover:text-ink focus-visible:ring-2 focus-visible:ring-brand/30"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={save}
+                    className="inline-flex h-9 min-w-[96px] items-center justify-center rounded-xl bg-brand px-4 text-xs font-semibold text-white shadow-sm outline-none transition hover:-translate-y-px hover:shadow-md focus-visible:ring-2 focus-visible:ring-brand/40 active:translate-y-0 active:scale-95"
+                  >
+                    {hasSaved ? "Update" : "Save"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }
 
@@ -777,6 +1004,7 @@ export default function SettingsPage() {
   const [draft, setDraft] = useState<SettingsState>(saved);
   const [tab, setTab] = useState<TabId>("profile");
   const [columnsTable, setColumnsTable] = useState<TableId>("products");
+  const [gateway, setGateway] = useState<GatewayState>(BLANK_GATEWAY); // saved keys live here so they survive tab switches
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -934,21 +1162,18 @@ export default function SettingsPage() {
                 aria-controls={`settings-panel-${t.id}`}
                 tabIndex={active ? 0 : -1}
                 onClick={() => selectTab(t.id)}
-                className={`group relative flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-left outline-none transition-[background-color,color,transform] duration-300 st-ease focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.98] md:w-full ${
-                  active ? "bg-brand/5 text-brand" : "text-ink hover:bg-gray-50"
-                }`}
+                className={`group relative flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-left outline-none transition-[background-color,color,transform] duration-300 st-ease focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.98] md:w-full ${active ? "bg-brand/5 text-brand" : "text-ink hover:bg-gray-50"
+                  }`}
               >
                 <span
-                  className={`absolute left-0 top-1/2 w-[3px] -translate-y-1/2 rounded-full bg-brand transition-[height,opacity] duration-300 st-ease max-md:hidden ${
-                    active ? "h-5 opacity-100" : "h-0 opacity-0"
-                  }`}
+                  className={`absolute left-0 top-1/2 w-[3px] -translate-y-1/2 rounded-full bg-brand transition-[height,opacity] duration-300 st-ease max-md:hidden ${active ? "h-5 opacity-100" : "h-0 opacity-0"
+                    }`}
                 />
                 <span
-                  className={`grid size-9 shrink-0 place-items-center rounded-lg transition-[background-color,transform] duration-300 st-spring ${
-                    active
-                      ? "scale-105 bg-brand/10"
-                      : "bg-gray-100 group-hover:scale-105"
-                  }`}
+                  className={`grid size-9 shrink-0 place-items-center rounded-lg transition-[background-color,transform] duration-300 st-spring ${active
+                    ? "scale-105 bg-brand/10"
+                    : "bg-gray-100 group-hover:scale-105"
+                    }`}
                 >
                   <Icon className="size-[18px]" />
                 </span>
@@ -978,6 +1203,12 @@ export default function SettingsPage() {
               {...panelProps}
               table={columnsTable}
               onTableChange={setColumnsTable}
+            />
+          )}
+          {tab === "gateway" && (
+            <PaymentGatewayPanel
+              saved={gateway}
+              onSave={(env, c) => setGateway((g) => ({ ...g, [env]: c }))}
             />
           )}
         </div>

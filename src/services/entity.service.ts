@@ -4,7 +4,8 @@ import type { Instance } from "@/data/instances";
 
 interface ApiEntity {
     _id?: string; id?: string; name: string;
-    description?: string; imageUrl?: string; status: "active" | "inactive";
+    description?: string; imageUrl?: string; isActive?: boolean;
+    subEntities?: { id: string; name: string }[];
 }
 
 const toUi = (x: ApiEntity): Instance => ({
@@ -12,9 +13,11 @@ const toUi = (x: ApiEntity): Instance => ({
     name: x.name,
     description: x.description ?? "",
     imageUrl: x.imageUrl ?? "",
-    status: x.status === "active" ? "Active" : "Inactive",
+    status: x.isActive === false ? "Inactive" : "Active",
     products: [], // backend has no products yet
+    environments: (x.subEntities ?? []).map((s) => s.name),
 });
+
 const toApiStatus = (s: Status) => (s === "Active" ? "active" : "inactive");
 
 export const entityService = {
@@ -32,9 +35,11 @@ export const entityService = {
             }),
         }).then((r) => toUi(r.data)),
 
-    update: (id: string, p: { name?: string; description?: string; imageUrl?: string; status?: Status }) =>
-        apiCall<ApiEntity>(`/entities/${id}/update-entity`, {
+    update: (id: string, p: { name?: string; description?: string; imageUrl?: string; status?: Status }) => {
+        const { status, ...rest } = p;
+        return apiCall<ApiEntity>(`/entities/${id}/update-entity`, {
             method: "PATCH",
-            body: JSON.stringify({ ...p, ...(p.status ? { status: toApiStatus(p.status) } : {}) }),
-        }).then((r) => toUi(r.data)),
+            body: JSON.stringify({ ...rest, ...(status ? { isActive: status === "Active" } : {}) }),
+        }).then((r) => toUi(r.data));
+    },
 };

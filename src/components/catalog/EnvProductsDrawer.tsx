@@ -12,8 +12,9 @@ import { useBackGuard } from "@/hooks/useBackGuard";
 
 const COLS = ["S.No", "Product Name", "Product Category", "Bundles", "Status"];
 
-export default function EnvProductsDrawer({ envName, products, initial, onSave }: {
+export default function EnvProductsDrawer({ envName, products, initial, onSave, onSaveAndNext }: {
     envName: string; products: ProductRec[]; initial: string[]; onSave: (ids: string[]) => void;
+    onSaveAndNext?: (ids: string[]) => void;
 }) {
     const { closeLayers } = useApp();
     const [sel, setSel] = useState<Set<string>>(() => new Set(initial));

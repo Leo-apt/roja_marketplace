@@ -112,7 +112,7 @@ const rules: Record<string, (f: Form) => string> = {
         }
         return "";
     },
-    productConfig: (f) => (f.productConfig ? "" : "Product configuration is required"),
+    productConfig: (f) => (f.audience === "provider" && !f.productConfig ? "Product configuration is required" : ""),
     placements: (f) => (f.placements.length ? "" : "Select at least one placement"),
     freqCap: (f) => {
         const v = f.freqCap.trim();
@@ -509,11 +509,11 @@ function ProductForm({ initial, categories, bundleOpts, providerOpts }: FormProp
                         <div className="flex flex-col gap-4">
                             <div className="grid gap-3 md:grid-cols-2">
                                 <RadioCard name="aud" title="Everyone" note="No promotional targeting rules. Available to all customers."
-                                    checked={f.audience === "everyone"} onChange={() => set("audience", "everyone")} />
+                                    checked={f.audience === "everyone"} onChange={() => setF((p) => ({ ...p, audience: "everyone", productConfig: "" }))} />
                                 <RadioCard name="aud" title="Provider rules" note="Available only to selected customers identified by the ML engine based on transaction signals."
                                     checked={f.audience === "provider"} onChange={() => set("audience", "provider")} />
                             </div>
-                            {(
+                            {f.audience === "provider" && (
                                 <Field label="Product Configuration" required error={errors.productConfig} className="md:max-w-[50%]">
                                     <Dropdownbox name="config" value={f.productConfig} options={cfgOpts} placeholder="Select configuration"
                                         rounded="rounded-md" compact error={errors.productConfig} loading={cfgLoading} onOpen={loadConfigs}

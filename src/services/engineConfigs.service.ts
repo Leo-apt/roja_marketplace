@@ -13,14 +13,14 @@ interface ApiSignal {
     cap?: number; divisor?: number; multiplier?: number; reference?: number; trigger?: number;
 }
 interface ApiConfig {
-    _id: string; providerId: string; offerType: string; name: string; category?: string; baseScore?: number;
+    _id: string; providerId: string; name: string; category?: string; baseScore?: number;
     thresholds: { show: number; review: number; hide?: number };
     signals?: ApiSignal[]; status: boolean | "active" | "inactive";
     createdBy: unknown; updatedBy: unknown; createdAt: string; updatedAt: string;
 }
 
 export interface EngineConfigInput {
-    providerId: string; offerType: string; name: string; category: string; baseScore: string;
+    providerId: string; name: string; category: string; baseScore: string;
     show: string; review: string; hide: string; status: Status; signals: Signal[];
 }
 
@@ -39,7 +39,7 @@ const toSignal = (s: ApiSignal): Signal => ({
 });
 
 const toUi = (a: ApiConfig): EngineConfig => ({
-    id: a._id, name: a.name, providerId: a.providerId, offerType: a.offerType, category: a.category ?? "",
+    id: a._id, name: a.name, providerId: a.providerId, category: a.category ?? "",
     baseScore: str(a.baseScore), show: str(a.thresholds?.show), review: str(a.thresholds?.review), hide: str(a.thresholds?.hide),
     status: a.status === false || a.status === "inactive" ? "Inactive" : "Active",
     signals: (a.signals ?? []).map(toSignal),
@@ -62,7 +62,7 @@ const toSignalPayload = (s: Signal) => ({
 });
 
 const toConfigPayload = (i: EngineConfigInput) => ({
-    providerId: i.providerId, offerType: i.offerType || undefined, name: i.name.trim(), category: i.category.trim(),
+    providerId: i.providerId, name: i.name.trim(), category: i.category.trim(),
     baseScore: num(i.baseScore),
     thresholds: { show: num(i.show), review: num(i.review), hide: num(i.hide) },
     status: i.status === "Active",
@@ -89,11 +89,10 @@ export const engineConfigsService = {
         }
         return out.map(toUi);
     },
-    // one page, with the backend search (name, provider id, offer type) and the offer type filter
-    listPage: (page: number, limit: number, search = "", offerType = "") => {
+    // one page, with the backend search (name, provider id)
+    listPage: (page: number, limit: number, search = "") => {
         const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
         if (search) qs.set("search", search);
-        if (offerType) qs.set("offerType", offerType);
         return apiCall<ConfigPage>(`${BASE}/get-all-configs?${qs}`)
             .then((r) => { const p = unpack(r); return { rows: p.items.map(toUi), total: p.total }; });
     },
