@@ -21,8 +21,8 @@ interface Props {
 const DURATION = 500;
 
 export default function Drawer({
-    title, kicker, tabs, tab, onTab, children, footer, onBeforeClose,
-    width = "min(930px, calc(100vw - 20px))", hideNote = false,
+    title, tabs, tab, onTab, children, footer, onBeforeClose,
+    width = "min(930px, calc(100vw - 20px))",
 }: Props) {
     const { closeLayers } = useApp();
     const [shown, setShown] = useState(false);

@@ -24,9 +24,12 @@ import {
   Rocket,
   type LucideIcon,
 } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useApp } from "@/hooks/useApp";
+import { gatewayService, type GatewayView } from "@/services/payment-gateway.service";
 import { useTheme, type ThemeMode } from "@/theme/ThemeProvider";
+import { settingsService } from "@/services/settings.service";
 import {
   DEFAULT_COLUMNS,
   SETTINGS_CHANGED_EVENT,
@@ -43,7 +46,6 @@ import {
 type SettingsState = {
   displayName: string;
   phone: string;
-  jobTitle: string;
   language: string;
   currency: string;
   dateFormat: string;
@@ -58,7 +60,6 @@ function makeDefaults(displayName = ""): SettingsState {
   return {
     displayName,
     phone: "",
-    jobTitle: "",
     language: "en",
     currency: "INR",
     dateFormat: "DD/MM/YYYY",
@@ -92,7 +93,6 @@ function loadSettings(fallbackName: string): SettingsState {
     return {
       displayName: str(stored.displayName, base.displayName),
       phone: str(stored.phone, base.phone),
-      jobTitle: str(stored.jobTitle, base.jobTitle),
       language: str(stored.language, base.language),
       currency: str(stored.currency, base.currency),
       dateFormat: str(stored.dateFormat, base.dateFormat),
@@ -119,7 +119,6 @@ function settingsEqual(a: SettingsState, b: SettingsState): boolean {
   const scalars: (keyof SettingsState)[] = [
     "displayName",
     "phone",
-    "jobTitle",
     "language",
     "currency",
     "dateFormat",
@@ -461,16 +460,6 @@ function ProfilePanel({ draft, set, email, initials }: PanelProps) {
               maxLength={80}
             />
           </Field>
-          <Field label="Job title">
-            <input
-              className={inputClass}
-              value={draft.jobTitle}
-              onChange={(e) => set("jobTitle", e.target.value)}
-              placeholder="e.g. Catalog manager"
-              autoComplete="organization-title"
-              maxLength={80}
-            />
-          </Field>
           <Field label="Phone" hint="Optional. Used for account recovery.">
             <input
               className={inputClass}
@@ -526,6 +515,8 @@ function PreferencesPanel({ draft, set }: PanelProps) {
                   x: r.left + r.width / 2,
                   y: r.top + r.height / 2,
                 });
+
+                void settingsService.updatePreferences({ theme: c.mode }).catch(() => { });
               }}
             />
           ))}
@@ -736,15 +727,10 @@ function ColumnsPanel({
   );
 }
 
-/* Payment gateway (design only, no backend yet) */
+/* Payment gateway */
 type GatewayEnv = "sandbox" | "live";
 type GatewayCreds = { publishableKey: string; secretKey: string };
-type GatewayState = Record<GatewayEnv, GatewayCreds>;
-
-const BLANK_GATEWAY: GatewayState = {
-  sandbox: { publishableKey: "", secretKey: "" },
-  live: { publishableKey: "", secretKey: "" },
-};
+const BLANK_CREDS: GatewayCreds = { publishableKey: "", secretKey: "" };
 
 const GATEWAY_TABS: {
   value: GatewayEnv;
@@ -759,9 +745,11 @@ const GATEWAY_TABS: {
 function SecretField({
   value,
   onChange,
+  placeholder,
 }: {
   value: string;
   onChange: (v: string) => void;
+  placeholder?: string;
 }) {
   const [show, setShow] = useState(false);
   return (
@@ -770,6 +758,7 @@ function SecretField({
         className={`${inputClass} pr-10`}
         type={show ? "text" : "password"}
         value={value}
+        placeholder={placeholder}
         autoComplete="off"
         onChange={(e) => onChange(e.target.value)}
       />
@@ -785,66 +774,89 @@ function SecretField({
   );
 }
 
-function PaymentGatewayPanel({
-  saved,
-  onSave,
-}: {
-  saved: GatewayState;
-  onSave: (env: GatewayEnv, c: GatewayCreds) => void;
-}) {
-  const { toast } = useApp();
-  const [env, setEnv] = useState<GatewayEnv>("sandbox");
-  const [loading, setLoading] = useState(false);
+function PaymentGatewayPanel() {
+  const { toast, toastError } = useApp();
+  const [sp, setSp] = useSearchParams();
+  const env: GatewayEnv = sp.get("env") === "live" ? "live" : "sandbox";
+  const setEnv = (e: GatewayEnv) => setSp({ tab: "gateway", env: e }, { replace: true });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [creds, setCreds] = useState<GatewayState>(saved);
+  const [view, setView] = useState<GatewayView | null>(null); // what the server has for this mode
+  const [creds, setCreds] = useState<GatewayCreds>(BLANK_CREDS);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const timer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(timer.current), []);
 
-  const hasSaved = !!(saved[env].publishableKey && saved[env].secretKey);
-  const readOnly = hasSaved && !editing;
-
-  const pick = (e: GatewayEnv) => {
-    if (e === env) return;
-    setEnv(e);
+  // loads the saved keys every time the mode changes (skeleton while loading)
+  useEffect(() => {
+    let live = true;
+    setLoading(true);
     setErrors({});
     setEditing(false);
-    setLoading(true); // skeleton while the other tab "loads"
-    window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setLoading(false), 600);
+    const minDelay = new Promise((r) => setTimeout(r, 500));
+    Promise.all([gatewayService.get(env), minDelay])
+      .then(([r]) => {
+        if (!live) return;
+        setView(r);
+        setCreds({ publishableKey: r.publishableKey, secretKey: "" });
+        setEditing(!r.configured); // nothing saved yet: open the form
+      })
+      .catch((e) => {
+        if (live) toastError(e instanceof Error ? e.message : "Failed to load credentials");
+      })
+      .finally(() => {
+        if (live) setLoading(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, [env]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const configured = !!view?.configured;
+  const readOnly = configured && !editing;
+
+  const pick = (e: GatewayEnv) => {
+    if (e !== env && !saving) setEnv(e);
   };
   const startEdit = () => {
-    setCreds((c) => ({ ...c, [env]: saved[env] })); // drop any unsaved typing
+    setCreds({ publishableKey: view?.publishableKey ?? "", secretKey: "" });
     setErrors({});
     setEditing(true);
   };
   const setField = (k: keyof GatewayCreds, v: string) => {
-    setCreds((c) => ({ ...c, [env]: { ...c[env], [k]: v.replace(/\s/g, "") } }));
+    setCreds((c) => ({ ...c, [k]: v.replace(/\s/g, "") }));
     setErrors((p) => {
       const n = { ...p };
       delete n[k];
       return n;
     });
   };
-  const save = () => {
+  const save = async () => {
     const e: Record<string, string> = {};
-    if (!creds[env].publishableKey.trim()) e.publishableKey = "Publishable Key is required";
-    if (!creds[env].secretKey.trim()) e.secretKey = "Secret Key is required";
+    if (!creds.publishableKey.trim()) e.publishableKey = "Publishable Key is required";
+    if (!configured && !creds.secretKey.trim()) e.secretKey = "Secret Key is required";
     setErrors(e);
     if (Object.keys(e).length) return;
-    const clean = {
-      publishableKey: creds[env].publishableKey.trim(),
-      secretKey: creds[env].secretKey.trim(),
-    };
-    setCreds((c) => ({ ...c, [env]: clean }));
-    onSave(env, clean);
-    toast(hasSaved ? "Credentials updated" : "Credentials saved");
-    setEditing(false);
+    setSaving(true);
+    try {
+      const secret = creds.secretKey.trim();
+      const r = await gatewayService.save(env, {
+        publishableKey: creds.publishableKey.trim(),
+        ...(secret ? { secretKey: secret } : {}), // blank = keep the saved secret
+      });
+      setView(r);
+      setCreds({ publishableKey: r.publishableKey, secretKey: "" });
+      toast(configured ? "Credentials updated" : "Credentials saved");
+      setEditing(false);
+    } catch (err) {
+      toastError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
   };
   const cancel = () => {
-    setCreds((c) => ({ ...c, [env]: saved[env] }));
+    setCreds({ publishableKey: view?.publishableKey ?? "", secretKey: "" });
     setErrors({});
-    setEditing(false);
+    setEditing(!configured);
   };
 
   return (
@@ -906,8 +918,8 @@ function PaymentGatewayPanel({
 
             {readOnly ? (
               <div className="grid gap-3 sm:grid-cols-2">
-                <StatTile label="Publishable Key" value={saved[env].publishableKey} />
-                <StatTile label="Secret Key" value="••••••••" />
+                <StatTile label="Publishable Key" value={view?.publishableKey || "N/A"} />
+                <StatTile label="Secret Key" value={view?.secretMasked || "N/A"} />
               </div>
             ) : (
               <>
@@ -915,14 +927,19 @@ function PaymentGatewayPanel({
                   <Field label="Publishable Key *" error={errors.publishableKey}>
                     <input
                       className={inputClass}
-                      value={creds[env].publishableKey}
+                      value={creds.publishableKey}
                       autoComplete="off"
                       onChange={(e) => setField("publishableKey", e.target.value)}
                     />
                   </Field>
-                  <Field label="Secret Key *" error={errors.secretKey}>
+                  <Field
+                    label={configured ? "Secret Key" : "Secret Key *"}
+                    hint={configured ? "Leave blank to keep the saved secret key." : undefined}
+                    error={errors.secretKey}
+                  >
                     <SecretField
-                      value={creds[env].secretKey}
+                      value={creds.secretKey}
+                      placeholder={configured ? "Saved. Leave blank to keep" : ""}
                       onChange={(v) => setField("secretKey", v)}
                     />
                   </Field>
@@ -931,16 +948,18 @@ function PaymentGatewayPanel({
                   <button
                     type="button"
                     onClick={cancel}
+                    disabled={saving}
                     className="h-9 rounded-xl px-3 text-xs font-semibold text-muted outline-none transition-colors duration-200 hover:bg-gray-100 hover:text-ink focus-visible:ring-2 focus-visible:ring-brand/30"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
-                    onClick={save}
+                    onClick={() => void save()}
+                    disabled={saving}
                     className="inline-flex h-9 min-w-[96px] items-center justify-center rounded-xl bg-brand px-4 text-xs font-semibold text-white shadow-sm outline-none transition hover:-translate-y-px hover:shadow-md focus-visible:ring-2 focus-visible:ring-brand/40 active:translate-y-0 active:scale-95"
                   >
-                    {hasSaved ? "Update" : "Save"}
+                    {saving ? (configured ? "Updating…" : "Saving…") : configured ? "Update" : "Save"}
                   </button>
                 </div>
               </>
@@ -986,6 +1005,7 @@ const PAGE_STYLES = `
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const { setMode } = useTheme();
   const email = user?.user_email;
 
   const fallbackName = useMemo(() => {
@@ -1002,9 +1022,11 @@ export default function SettingsPage() {
     loadSettings(fallbackName),
   );
   const [draft, setDraft] = useState<SettingsState>(saved);
-  const [tab, setTab] = useState<TabId>("profile");
+  const [sp, setSp] = useSearchParams();
+  const tabParam = sp.get("tab");
+  const tab: TabId = TABS.some((t) => t.id === tabParam) ? (tabParam as TabId) : "profile";
+  const setTab = (id: TabId) => setSp({ tab: id }, { replace: true });
   const [columnsTable, setColumnsTable] = useState<TableId>("products");
-  const [gateway, setGateway] = useState<GatewayState>(BLANK_GATEWAY); // saved keys live here so they survive tab switches
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -1014,11 +1036,45 @@ export default function SettingsPage() {
     draftRef.current = draft;
   }, [draft]);
 
+  const savedRef = useRef(saved);
+  useEffect(() => {
+    savedRef.current = saved;
+  }, [saved]);
+
   const dirty = useMemo(() => !settingsEqual(saved, draft), [saved, draft]);
   const dirtyRef = useRef(dirty);
   useEffect(() => {
     dirtyRef.current = dirty;
   }, [dirty]);
+
+  // Load profile + preferences from the server once.
+  useEffect(() => {
+    let live = true;
+    Promise.all([settingsService.getProfile(), settingsService.getPreferences()])
+      .then(([p, pr]) => {
+        if (!live) return;
+        const apply = (s: SettingsState): SettingsState => ({
+          ...s,
+          displayName: p.name,
+          phone: p.phone ?? "",
+          language: pr.language,
+          currency: pr.currency,
+          dateFormat: pr.dateFormat,
+          timezone: pr.timeZone,
+        });
+        const hadEdits = dirtyRef.current;
+        setSaved((s) => apply(s));
+        if (!hadEdits) setDraft((d) => apply(d));
+        setMode(pr.theme);
+      })
+      .catch(() => {
+        /* keep the local copy if the server is unreachable */
+      });
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const initials = useMemo(() => {
     const source = (draft.displayName || fallbackName || email || "U").trim();
@@ -1076,7 +1132,32 @@ export default function SettingsPage() {
     setSaveError(null);
     try {
       const payload = draftRef.current;
-      await saveSettings(payload);
+      const prev = savedRef.current;
+
+      if (payload.displayName !== prev.displayName || payload.phone !== prev.phone) {
+        const name = payload.displayName.trim();
+        if (!name) throw new Error("Display name can't be empty.");
+        await settingsService.updateProfile({
+          name,
+          phone: payload.phone.trim() || null,
+        });
+      }
+
+      const prefsChanged =
+        payload.language !== prev.language ||
+        payload.currency !== prev.currency ||
+        payload.dateFormat !== prev.dateFormat ||
+        payload.timezone !== prev.timezone;
+      if (prefsChanged) {
+        await settingsService.updatePreferences({
+          language: payload.language,
+          currency: payload.currency,
+          dateFormat: payload.dateFormat,
+          timeZone: payload.timezone, // backend spells it timeZone
+        });
+      }
+
+      await saveSettings(payload); // still writes localStorage (columns use it for now)
       setSaved(payload);
       setJustSaved(true);
     } catch (err) {
@@ -1205,12 +1286,7 @@ export default function SettingsPage() {
               onTableChange={setColumnsTable}
             />
           )}
-          {tab === "gateway" && (
-            <PaymentGatewayPanel
-              saved={gateway}
-              onSave={(env, c) => setGateway((g) => ({ ...g, [env]: c }))}
-            />
-          )}
+          {tab === "gateway" && <PaymentGatewayPanel />}
         </div>
       </div>
 

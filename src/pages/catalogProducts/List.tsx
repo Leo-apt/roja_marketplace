@@ -50,8 +50,7 @@ export default function CatalogProductsList() {
     const [query, setQuery] = useState({ page: 1, q: "", status: "" });
     const [tick, setTick] = useState(0);
     const [stats, setStats] = useState<{ all: number; active: number; draft: number; scheduled: number } | null>(null);
-    const [del, setDel] = useState<ProductRec | null>(null);
-    const [deleting, setDeleting] = useState(false);
+    const [, setDel] = useState<ProductRec | null>(null);
     const [pub, setPub] = useState<ProductRec | null>(null);
     const [publishing, setPublishing] = useState(false);
 
@@ -81,21 +80,6 @@ export default function CatalogProductsList() {
     if (!isAdmin) return <AdminNotice />;
     if (error) return <ErrorBox message={error} onRetry={() => { setError(""); setTick((t) => t + 1); }} />;
     if (!ready) return <LoadingBox />;
-
-    const confirmDelete = async () => {
-        if (!del) return;
-        setDeleting(true);
-        try {
-            await productsService.remove(del.id);
-            toast("Product deleted");
-            setDel(null);
-            setTick((t) => t + 1); // reload the current page and the cards
-        } catch (e) {
-            toastError(msg(e));
-        } finally {
-            setDeleting(false);
-        }
-    };
 
     const confirmPublish = async () => {
         if (!pub) return;

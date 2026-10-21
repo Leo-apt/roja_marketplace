@@ -5,18 +5,18 @@ import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
 import { useApp } from "@/hooks/useApp";
 import type { ProductRec } from "@/services/products.service";
-import { usd } from "@/utils/catalog";
 import { StatusBadge } from "./DetailBits";
 import { btn, SearchField } from "./FormBits";
 import { useBackGuard } from "@/hooks/useBackGuard";
 
 const COLS = ["S.No", "Product Name", "Product Category", "Bundles", "Status"];
 
-export default function EnvProductsDrawer({ envName, products, initial, onSave, onSaveAndNext }: {
-    envName: string; products: ProductRec[]; initial: string[]; onSave: (ids: string[]) => void;
-    onSaveAndNext?: (ids: string[]) => void;
+export default function EnvProductsDrawer({ envName, products, initial, onSave, onNext }: {
+    envName: string; products: ProductRec[]; initial: string[]; onSave: (ids: string[]) => Promise<void>;
+    onNext?: (ids: string[]) => void;
 }) {
-    const { closeLayers } = useApp();
+    const { closeLayers, toastError } = useApp();
+    const [saving, setSaving] = useState(false);
     const [sel, setSel] = useState<Set<string>>(() => new Set(initial));
     const [q, setQ] = useState("");
     const [confirm, setConfirm] = useState(false);
@@ -45,6 +45,20 @@ export default function EnvProductsDrawer({ envName, products, initial, onSave, 
         else { releaseGuard(); closeLayers(); nav(path, { replace: true }); }
     };
 
+    // runs the API save; returns true when it worked
+    const submit = async () => {
+        setSaving(true);
+        try {
+            if (dirty) await onSave([...sel]);
+            return true;
+        } catch (e) {
+            toastError(e instanceof Error ? e.message : "Save failed");
+            return false;
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const toggle = (id: string) => setSel((s) => {
         const n = new Set(s);
         if (n.has(id)) n.delete(id); else n.add(id);
@@ -64,10 +78,16 @@ export default function EnvProductsDrawer({ envName, products, initial, onSave, 
             onBeforeClose={() => { if (!dirty) return true; setConfirm(true); return false; }}
             footer={(close, tryClose) => (
                 <>
-                    <button className={btn.cancel} onClick={tryClose}>Cancel</button>
-                    <button className={btn.primary} disabled={!dirty} onClick={() => { onSave([...sel]); close(); }}>
-                        Save ({sel.size})
+                    <button className={btn.cancel} onClick={tryClose} disabled={saving}>Cancel</button>
+                    <button className={btn.primary} disabled={!dirty || saving} onClick={async () => { if (await submit()) close(); }}>
+                        {saving ? "Saving…" : `Save (${sel.size})`}
                     </button>
+                    {onNext && (
+                        <button className={btn.navy} disabled={!sel.size || saving}
+                            onClick={async () => { if (await submit()) { releaseGuard(); onNext([...sel]); } }}>
+                            Save &amp; Move to Margins
+                        </button>
+                    )}
                 </>
             )}
         >

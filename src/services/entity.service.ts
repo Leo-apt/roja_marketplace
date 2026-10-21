@@ -18,8 +18,6 @@ const toUi = (x: ApiEntity): Instance => ({
     environments: (x.subEntities ?? []).map((s) => s.name),
 });
 
-const toApiStatus = (s: Status) => (s === "Active" ? "active" : "inactive");
-
 export const entityService = {
     list: () => apiCall<ApiEntity[]>("/entities/get-all-entities").then((r) => r.data.map(toUi)),
 

@@ -335,7 +335,7 @@ function EnvSummarySkeleton() {
 }
 
 /* ---------------- Environment drawer (create + edit) ---------------- */
-interface SubEntity { id: string; name: string; description: string }
+interface SubEntity { id: string; name: string; description: string; productIds: string[] }
 
 function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (name: string, description: string) => Promise<void> }) {
     const [name, setName] = useState(initial?.name ?? "");
@@ -390,7 +390,8 @@ export default function InstanceDetail() {
         finally { setLoading(false); }
     }, []);
     useEffect(() => { if (id) void load(id); }, [id, load]);
-    const [sp] = useSearchParams();
+    const [sp, setSp] = useSearchParams();
+    const initialEnv = useRef(sp.get("env") ?? ""); // environment from the URL, used on first load only
     const [tab, setTab] = useState(sp.get("tab") === "token" ? "token" : "entity");
     const [subs, setSubs] = useState<SubEntity[]>([]);
     const [subId, setSubId] = useState("");
@@ -415,7 +416,10 @@ export default function InstanceDetail() {
         try {
             const list = await subEntityService.list(eid);
             setSubs(list);
-            setSubId((cur) => (list.some((s) => s.id === cur) ? cur : list[0]?.id ?? ""));
+            setSubId((cur) => {
+                const want = cur || initialEnv.current;
+                return list.some((s) => s.id === want) ? want : list[0]?.id ?? "";
+            });
         } catch (e) {
             setSubsErr(e instanceof Error ? e.message : "Failed to load environments");
         } finally {
@@ -423,9 +427,18 @@ export default function InstanceDetail() {
         }
     }, []);
     useEffect(() => { if (id) void loadSubs(id); }, [id, loadSubs]);
+
+    // keep the tab and the selected environment in the URL so a refresh restores them
+    useEffect(() => {
+        setSp((p) => {
+            const n = new URLSearchParams(p);
+            if (tab === "token") n.set("tab", "token"); else n.delete("tab");
+            if (!subsLoading) { if (subId) n.set("env", subId); else n.delete("env"); } // wait until the list is loaded
+            return n;
+        }, { replace: true });
+    }, [tab, subId, subsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
     const [allProducts, setAllProducts] = useState<ProductRec[]>([]);
     const [margins, setMargins] = useState<MarginRec[]>([]);
-    const [picked, setPicked] = useState<Record<string, string[]>>({}); // mock: subId -> product ids
     useEffect(() => {
         productsService.list().then(setAllProducts).catch(() => toastError("Failed to load products"));
         marginsService.list().then(setMargins).catch(() => toastError("Failed to load margins"));
@@ -453,18 +466,24 @@ export default function InstanceDetail() {
     if (!inst) return <NotFound backTo={BASE} />;
     const view = { ...inst, ...info };
     const envName = subs.find((s) => s.id === subId)?.name ?? view.name;
-    const pickedIds = picked[subId] ?? [];
+    const pickedIds = subs.find((s) => s.id === subId)?.productIds ?? [];
     const marginedIds = new Set(margins.map((m) => m.productId));
     const marginedCount = pickedIds.filter((pid) => marginedIds.has(pid)).length;
+    const saveProducts = async (ids: string[]) => {
+        const s = await subEntityService.saveProducts(subId, ids);
+        setSubs((l) => l.map((x) => (x.id === subId ? s : x)));
+        toast("Products saved");
+    };
     const openProducts = () => openDrawer(
         <EnvProductsDrawer envName={envName} products={allProducts} initial={pickedIds}
-            onSave={(ids) => { setPicked((m) => ({ ...m, [subId]: ids })); toast("Products saved"); }} />);
-    const openMargins = () => {
-        if (!pickedIds.length) { toastError("Select products first"); return; }
+            onSave={saveProducts} onNext={(ids) => openMarginsFor(ids)} />);
+    const openMarginsFor = (ids: string[]) => {
+        if (!ids.length) { toastError("Select products first"); return; }
         openDrawer(
-            <EnvMarginsDrawer envName={envName} products={allProducts.filter((p) => pickedIds.includes(p.id))} margins={margins}
+            <EnvMarginsDrawer envName={envName} products={allProducts.filter((p) => ids.includes(p.id))} margins={margins}
                 onSaved={(recs) => setMargins((l) => [...l.filter((x) => !recs.some((r) => r.productId === x.productId)), ...recs])} />);
     };
+    const openMargins = () => openMarginsFor(pickedIds);
     const startInfoEdit = () => {
         setInfoDraft({ name: view.name, description: view.description ?? "", status: view.status });
         setInfoErr("");

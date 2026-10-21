@@ -1,12 +1,16 @@
 import { apiCall } from "@/services/auth.service";
 
-interface ApiSub { _id?: string; id?: string; name: string; description?: string }
-export interface SubEntityUi { id: string; name: string; description: string }
+interface ApiSub {
+    _id?: string; id?: string; name: string; description?: string;
+    products?: (string | { _id?: string; id?: string })[];
+}
+export interface SubEntityUi { id: string; name: string; description: string; productIds: string[] }
 
 const toUi = (x: ApiSub): SubEntityUi => ({
     id: x._id ?? x.id ?? "",
     name: x.name,
     description: x.description ?? "",
+    productIds: (x.products ?? []).map((p) => (typeof p === "string" ? p : p._id ?? p.id ?? "")).filter(Boolean),
 });
 
 export const subEntityService = {
@@ -16,6 +20,11 @@ export const subEntityService = {
     create: (entityId: string, p: { name: string; description: string }) =>
         apiCall<ApiSub>(`/sub-entities/${entityId}/create-sub-entity`, {
             method: "POST", body: JSON.stringify(p),
+        }).then((r) => toUi(r.data)),
+
+    saveProducts: (id: string, productIds: string[]) =>
+        apiCall<ApiSub>(`/sub-entities/${id}/save-products`, {
+            method: "PUT", body: JSON.stringify({ productIds }),
         }).then((r) => toUi(r.data)),
 
     update: (id: string, p: { name: string; description: string }) =>

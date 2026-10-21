@@ -1,4 +1,4 @@
-import { apiCall, ApiError } from "@/services/auth.service";
+import { apiCall } from "@/services/auth.service";
 
 interface ApiKeyRow { _id?: string; id?: string; note?: string; prefix: string; expiresAt?: string | null; isActive: boolean; createdAt?: string; type?: string }
 interface Issued { id: string; note?: string; prefix: string; expiresAt?: string | null; key: string }

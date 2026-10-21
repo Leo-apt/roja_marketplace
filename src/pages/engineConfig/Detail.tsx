@@ -30,26 +30,23 @@ export default function EngineConfigDetail() {
         <DetailShell backTo={BASE}>
             <DetailHeader
                 title={c.name}
-                subtitle={`${providerLabel} · ${c.offerType}`}
+                subtitle={providerLabel}
                 status={c.status}
                 highlight={{ label: "Base Score", value: dash(c.baseScore) }}
                 editTo={`${BASE}/${c.id}/edit`}
             >
                 <DRows>
                     <DRow label="Provider ID">{providerLabel}</DRow>
-                    <DRow label="Offer Type">{c.offerType}</DRow>
                     <DRow label="Category">{dash(c.category)}</DRow>
                 </DRows>
             </DetailHeader>
 
             <DSection title="Decision Thresholds">
-                <DSection title="Decision Thresholds">
-                    <DRows>
-                        <DRow label="Show ≥">{dash(c.show)}</DRow>
-                        <DRow label="Review ≥">{dash(c.review)}</DRow>
-                        <DRow label="Hide">{dash(c.hide)}</DRow>
-                    </DRows>
-                </DSection>
+                <DRows>
+                    <DRow label="Show ≥">{dash(c.show)}</DRow>
+                    <DRow label="Review ≥">{dash(c.review)}</DRow>
+                    <DRow label="Hide">{dash(c.hide)}</DRow>
+                </DRows>
             </DSection>
 
             {c.signals.length === 0 && <DSection title="Signals"><EmptyState compact title="No signals configured" /></DSection>}
