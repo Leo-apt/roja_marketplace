@@ -25,6 +25,9 @@ import MarginsManage from "@/pages/margins/Manage";
 import EngineConfigList from "@/pages/engineConfig/List";
 import EngineConfigDetail from "@/pages/engineConfig/Detail";
 import EngineConfigManage from "@/pages/engineConfig/Manage";
+import EngineSignalsList from "@/pages/signals/List";
+import EngineSignalsDetail from "@/pages/signals/Detail";
+import EngineSignalsManage from "@/pages/signals/Manage";
 import InstancesList from "@/pages/instance/InstancesList";
 import InstanceDetail from "@/pages/instance/InstanceDetail";
 import LoginPage from "@/pages/auth/LoginPage";
@@ -79,6 +82,11 @@ export default function App() {
                     <Route path="/catalog/engine-configuration/new" element={<EngineConfigManage />} />
                     <Route path="/catalog/engine-configuration/:id" element={<EngineConfigDetail />} />
                     <Route path="/catalog/engine-configuration/:id/edit" element={<EngineConfigManage />} />
+
+                    <Route path="/catalog/engine-signals" element={<EngineSignalsList />} />
+                    <Route path="/catalog/engine-signals/new" element={<EngineSignalsManage />} />
+                    <Route path="/catalog/engine-signals/:id" element={<EngineSignalsDetail />} />
+                    <Route path="/catalog/engine-signals/:id/edit" element={<EngineSignalsManage />} />
 
                     <Route path="/instances" element={<InstancesList />} />
                     <Route path="/instances/:id" element={<InstanceDetail />} />

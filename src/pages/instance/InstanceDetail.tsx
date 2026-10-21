@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useSearchParams } from "react-router-dom";
-import { Calendar, Check as CheckIcon, ChevronRight, Clock, Copy, Globe, KeyRound, Layers, MousePointerClick, Package, Pencil, Percent, Plus, RefreshCw, Settings, Trash2 } from "lucide-react";
+import { Calendar, Check as CheckIcon, ChevronRight, Clock, Copy, CreditCard, Eye, EyeOff, FlaskConical, Globe, KeyRound, Layers, MousePointerClick, Package, Pencil, Percent, Plus, RefreshCw, Rocket, Settings, Trash2 } from "lucide-react";
 import { useApp } from "@/hooks/useApp";
 import Drawer from "@/components/shared/Drawer";
 import Dropdownbox from "@/components/shared/Dropdownbox";
@@ -19,7 +19,6 @@ import { apiKeyService, type Env, type TokenRec } from "@/services/api-key.servi
 import { marginsService, type MarginRec } from "@/services/margins.service";
 import EnvProductsDrawer from "@/components/catalog/EnvProductsDrawer";
 import EnvMarginsDrawer from "@/components/catalog/EnvMarginsDrawer";
-import credsIllustration from "@/assets/Empty-pana.svg";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 
 const BASE = "/instances";
@@ -375,6 +374,166 @@ function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (na
     );
 }
 
+/* ---------------- Payment Gateway panel (design only) ---------------- */
+function SecretInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+    const [show, setShow] = useState(false);
+    return (
+        <div className="relative">
+            <TextInput type={show ? "text" : "password"} value={value} placeholder={placeholder} autoComplete="off" className="pr-10"
+                onChange={(e) => onChange(e.target.value)} />
+            <button type="button" aria-label={show ? "Hide" : "Show"} onClick={() => setShow((s) => !s)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink">
+                {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+        </div>
+    );
+}
+
+const GATEWAY_TABS: { value: Env; label: string; icon: React.ComponentType<{ className?: string }>; on: string }[] = [
+    { value: "sandbox", label: "Sandbox", icon: FlaskConical, on: "bg-amber-600 text-white" },
+    { value: "live", label: "Live", icon: Rocket, on: "bg-emerald-600 text-white" },
+];
+
+function PaymentGatewayPanel() {
+    const [env, setEnv] = useState<Env>("sandbox");
+    const [loading, setLoading] = useState(false);
+    const { toast } = useApp();
+    const blank = { publishableKey: "", secretKey: "" };
+    const [creds, setCreds] = useState<Record<Env, typeof blank>>({ sandbox: blank, live: blank });
+    const [saved, setSaved] = useState<Record<Env, typeof blank>>({ sandbox: blank, live: blank });
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [editing, setEditing] = useState(false);
+    const timer = useRef<number | undefined>(undefined);
+    useEffect(() => () => window.clearTimeout(timer.current), []);
+
+    const pick = (e: Env) => {
+        if (e === env) return;
+        setEnv(e);
+        setErrors({});
+        setEditing(false);
+        setLoading(true); // skeleton while the other tab "loads"
+        window.clearTimeout(timer.current);
+        timer.current = window.setTimeout(() => setLoading(false), 600);
+    };
+    const providerCount = Object.values(saved).filter((c) => c.publishableKey && c.secretKey).length;
+    const hasSaved = !!(saved[env].publishableKey && saved[env].secretKey);
+    const readOnly = hasSaved && !editing; // saved and not being edited: show the view
+    const startEdit = () => {
+        setCreds((c) => ({ ...c, [env]: saved[env] })); // drop any unsaved typing
+        setErrors({});
+        setEditing(true);
+    };
+    const set = (k: "publishableKey" | "secretKey", v: string) => {
+        setCreds((c) => ({ ...c, [env]: { ...c[env], [k]: v } }));
+        setErrors((p) => { const n = { ...p }; delete n[k]; return n; });
+    };
+    const save = () => {
+        const e: Record<string, string> = {};
+        if (!creds[env].publishableKey.trim()) e.publishableKey = "Publishable Key is required";
+        if (!creds[env].secretKey.trim()) e.secretKey = "Secret Key is required";
+        setErrors(e);
+        if (Object.keys(e).length) return;
+        const clean = { publishableKey: creds[env].publishableKey.trim(), secretKey: creds[env].secretKey.trim() };
+        setCreds((c) => ({ ...c, [env]: clean }));
+        setSaved((s) => ({ ...s, [env]: clean }));
+        toast(hasSaved ? "Credentials updated" : "Credentials saved");
+        setEditing(false);
+    };
+    const cancel = () => {
+        setCreds((c) => ({ ...c, [env]: saved[env] }));
+        setErrors({});
+        setEditing(false);
+    };
+
+    return (
+        <div className="grid gap-4 md:grid-cols-[260px_1fr]">
+            <aside className="h-fit rounded-xl border border-line bg-white p-3">
+                <p className="px-2 pb-2 text-xs font-bold uppercase tracking-wide text-muted">Services</p>
+                <button type="button" aria-current="true"
+                    className="flex w-full items-center gap-3 rounded-lg border-l-[3px] border-brand bg-brandsoft px-3 py-3 text-left">
+                    <CreditCard className="size-5 shrink-0 text-brand" />
+                    <span className="flex flex-col leading-tight">
+                        <span className="text-sm font-semibold text-brand">Payment Gateway</span>
+                        <span className="text-xs text-muted">{providerCount} providers</span>
+                    </span>
+                </button>
+            </aside>
+
+            <section className="overflow-hidden rounded-xl border border-line bg-white">
+                <div className="flex items-center gap-3 border-b border-line px-6 py-4">
+                    <CreditCard className="size-5 text-ink" />
+                    <h3 className="text-base font-bold text-ink">Payment Gateway</h3>
+                </div>
+                <div role="tablist" aria-label="Environment" className="flex gap-2 bg-surfacealt px-4 py-3">
+                    {GATEWAY_TABS.map((t) => {
+                        const Icon = t.icon;
+                        const active = env === t.value;
+                        return (
+                            <button key={t.value} type="button" role="tab" aria-selected={active} onClick={() => pick(t.value)}
+                                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${active ? t.on : "bg-gray-100 text-muted hover:bg-gray-200"}`}>
+                                <Icon className="size-4" /> {t.label}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <div className="p-6">
+                    {loading ? (
+                        <div className="flex flex-col gap-5">
+                            <div className="skeleton h-5 w-32" />
+                            <div className="grid gap-5 md:grid-cols-2">
+                                {[0, 1].map((i) => (
+                                    <div key={i} className="flex flex-col gap-2">
+                                        <div className="skeleton h-3 w-28" />
+                                        <div className="skeleton h-10 w-full" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-5">
+                            <div className="flex items-center justify-between gap-3">
+                                <h4 className="text-sm font-bold text-ink">Credentials</h4>
+                                {readOnly && (
+                                    <button type="button" aria-label="Edit credentials" title="Edit" onClick={startEdit}
+                                        className="grid size-9 place-items-center rounded-lg border border-line bg-white text-ink transition hover:border-brand hover:text-brand">
+                                        <Pencil className="size-4" />
+                                    </button>
+                                )}
+                            </div>
+                            {readOnly && (
+                                <div className="grid gap-4 rounded-xl border border-line bg-surfacealt p-4 md:grid-cols-2">
+                                    <div className="min-w-0">
+                                        <p className="text-xs font-semibold text-muted">Publishable Key</p>
+                                        <p className="mt-1 break-all text-sm text-ink">{saved[env].publishableKey}</p>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-xs font-semibold text-muted">Secret Key</p>
+                                        <p className="mt-1 text-sm text-ink">••••••••</p>
+                                    </div>
+                                </div>
+                            )}
+                            <div className={`grid gap-5 md:grid-cols-2 ${readOnly ? "hidden" : ""}`}>
+                                <Field label="Publishable Key" required error={errors.publishableKey}>
+                                    <TextInput value={creds[env].publishableKey} autoComplete="off"
+                                        onChange={(e) => set("publishableKey", e.target.value.replace(/\s/g, ""))} />
+                                </Field>
+                                <Field label="Secret Key" required error={errors.secretKey}>
+                                    <SecretInput value={creds[env].secretKey} onChange={(v) => set("secretKey", v.replace(/\s/g, ""))} />
+                                </Field>
+                            </div>
+                            <div className={`flex justify-end gap-2 ${readOnly ? "hidden" : ""}`}>
+                                <button type="button" className={btn.cancel} onClick={cancel}>Cancel</button>
+                                <button type="button" className={btn.primary} onClick={save}>{hasSaved ? "Update" : "Save"}</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </section>
+        </div>
+    );
+}
+
 /* ---------------- Page ---------------- */
 export default function InstanceDetail() {
     const { id } = useParams();
@@ -616,13 +775,7 @@ export default function InstanceDetail() {
                             <EnvSummaryCards name={envName} total={allProducts.length} picked={pickedIds.length} margined={marginedCount}
                                 recs={tokens[subId]} onProducts={openProducts} onMargins={openMargins} />
                         )}
-                        <section className="flex flex-col items-center gap-4 rounded-xl border border-line bg-white px-6 py-10 text-center">
-                            <img src={credsIllustration} alt="Environment credentials" className="h-48 w-auto max-w-full" />
-                            <div>
-                                <h3 className="text-sm font-bold text-ink">Environment credentials will appear here</h3>
-                                <p className="mt-1 text-xs text-muted">Credentials for {envName} will be available in this section soon.</p>
-                            </div>
-                        </section>
+                        <PaymentGatewayPanel key={subId} />
                     </>
                 )}
             </div>

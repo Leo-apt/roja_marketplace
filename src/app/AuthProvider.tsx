@@ -15,11 +15,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // On reload, verify the stored token (auto-refreshes if expired)
     useEffect(() => {
         if (!getSession()) return;
-        authService.me().catch(() => { /* 401 is handled via AUTH_EXPIRED */ }).finally(() => setReady(true));
+        authService.me()
+            .then((me) => setUser((u) => (u ? { ...u, user_name: me.name } : u)))
+            .catch(() => { /* 401 is handled via AUTH_EXPIRED */ })
+            .finally(() => setReady(true));
     }, []);
 
     const login = useCallback(async (email: string, password: string) => {
         const s = await authService.login({ email, password });
+        console.log("LOGIN USER:", s.user);
         setUser(s.user);
     }, []);
 

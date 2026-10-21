@@ -13,6 +13,7 @@ export type ViewKey =
     | "margins"
     | "instances"
     | "engineConfig"
+    | "engineSignals"
     | "settings";
 
 export interface ViewInfo {
@@ -238,6 +239,19 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
         scope: "All engine configurations.",
     },
 
+    engineSignals: {
+        title: "Product engine signals",
+        nav: "Engine signals",
+        path: "/catalog/engine-signals",
+        icon: "⚙",
+        subtitle: "Signals used by the engine to score transactions.",
+        dateLabel: "Created on",
+        search: "signal id / label",
+        statuses: ["all"],
+        statusLabel: "Status",
+        scope: "All engine signals.",
+    },
+
     settings: {
         title: "Settings",
         nav: "Settings",
@@ -265,6 +279,7 @@ export const navGroups: { label: string; items: ViewKey[] }[] = [
             "catalogProducts",
             "margins",
             "engineConfig",
+            "engineSignals",
         ],
     },
     { label: "Business", items: ["instances"] },

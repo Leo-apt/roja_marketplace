@@ -131,6 +131,11 @@ export const authService = {
         if (!r?.token?.access_token || !r.userData) throw new ApiError(500, "Unexpected login response from the server");
         const s: Session = { tokens: r.token, user: r.userData };
         saveSession(s);
+        try {
+            const me = await authService.me();
+            s.user = { ...s.user, user_name: me.name };
+            saveSession(s);
+        } catch { /* keep login data */ }
         return s;
     },
 
@@ -143,5 +148,5 @@ export const authService = {
         } catch { /* already logged out locally */ }
     },
 
-    me: () => apiCall<{ id: string; email: string; role: string }>("/auth/me").then((r) => r.data),
+    me: () => apiCall<{ id: string; name: string; email: string; role: string }>("/auth/me").then((r) => r.data),
 };

@@ -137,9 +137,8 @@ function IconButton({
       aria-current={active ? "page" : undefined}
       title={label}
       onClick={onClick}
-      className={`relative grid size-11 place-items-center rounded-xl ${cardBase} ${
-        active ? "bg-gray-50 text-brand" : "text-ink"
-      } ${className}`}
+      className={`relative grid size-11 place-items-center rounded-xl ${cardBase} ${active ? "bg-gray-50 text-brand" : "text-ink"
+        } ${className}`}
     >
       {children}
     </button>
@@ -582,14 +581,16 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
   const initials = (email ?? "U").slice(0, 2).toUpperCase();
   const onSettingsPage = pathname.startsWith("/settings");
 
-  const displayName = email
-    ? email
+  const displayName =
+    user?.user_name?.trim() ||
+    (email
+      ? email
         .split("@")[0]
         .split(/[._-]+/)
         .filter(Boolean)
         .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
         .join(" ")
-    : "Account";
+      : "Account");
 
   // TODO: drive this from your notifications state
   const hasUnread = true;
@@ -597,7 +598,7 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
   const shortcut = useMemo(
     () =>
       typeof navigator !== "undefined" &&
-      /Mac|iPhone|iPad/i.test(navigator.platform)
+        /Mac|iPhone|iPad/i.test(navigator.platform)
         ? "⌘K"
         : "Ctrl K",
     [],
@@ -633,17 +634,15 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
         </button>
 
         <div
-          className={`relative w-full rounded-xl transition-[max-width,box-shadow] duration-500 ${
-            focused
+          className={`relative w-full rounded-xl transition-[max-width,box-shadow] duration-500 ${focused
               ? "max-w-[440px] shadow-[0_0_0_4px] shadow-brand/[0.08]"
               : "max-w-[340px]"
-          }`}
+            }`}
           style={{ transitionTimingFunction: "var(--tb-ease)" }}
         >
           <Search
-            className={`pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 transition-colors duration-300 ${
-              focused ? "text-brand" : "text-muted"
-            }`}
+            className={`pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 transition-colors duration-300 ${focused ? "text-brand" : "text-muted"
+              }`}
           />
           <input
             ref={inputRef}
@@ -676,9 +675,8 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
             <X className="size-4" />
           </button>
           <kbd
-            className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-sans text-[10px] font-semibold text-muted transition-opacity duration-200 max-[850px]:hidden ${
-              query || focused ? "opacity-0" : "opacity-100"
-            }`}
+            className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-sans text-[10px] font-semibold text-muted transition-opacity duration-200 max-[850px]:hidden ${query || focused ? "opacity-0" : "opacity-100"
+              }`}
           >
             {shortcut}
           </kbd>
