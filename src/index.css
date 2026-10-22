@@ -20,11 +20,72 @@
   /* Smooth easing used by the sidebar (utility: ease-smooth) */
   --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* Brand (deep navy, from the New Environment button) with a full tonal scale */
-  --color-brand: #1e3a8a;
-  --color-brandhover: #172554;
-  --color-brandsoft: #eef2fb;
-  --color-brandring: #c7d2ec;
+  /* Animations (utilities: animate-fade-in, animate-slide-in-right, ...) */
+  --animate-fade-in: fadeIn 0.3s ease-in-out;
+  --animate-slide-in-right: slideInRight 0.25s ease-out;
+  --animate-slide-in-left: slideInLeft 0.2s ease-out;
+  --animate-smooth-wave: smooth-wave 1.2s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+    }
+
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      transform: translateX(-100%);
+    }
+
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes smooth-wave {
+
+    0%,
+    100% {
+      transform: scaleY(0.4);
+      opacity: 0.6;
+    }
+
+    50% {
+      transform: scaleY(1.2);
+      opacity: 1;
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Brand (deep navy, from the New Environment button) with a full tonal scale.
+     brand, brandsoft, action and action-hover alias the scale below, so they
+     follow the dark theme automatically. */
   --color-brand-50: #eef2fb;
   --color-brand-100: #dbe3f5;
   --color-brand-200: #c7d2ec;
@@ -32,6 +93,10 @@
   --color-brand-500: #2f4fa8;
   --color-brand-600: #1e3a8a;
   --color-brand-700: #172554;
+  --color-brand: var(--color-brand-600);
+  --color-brandhover: #172554;
+  --color-brandsoft: var(--color-brand-50);
+  --color-brandring: #c7d2ec;
 
   /* Secondary accent (sky) */
   --color-accent: #0ea5e9;
@@ -90,9 +155,16 @@
   --color-disabled-text: #a3afc0;
 
   /* Table action button, active page number, links */
-  --color-action: #1e3a8a;
-  --color-action-hover: #172554;
+  --color-action: var(--color-brand);
+  --color-action-hover: var(--color-brandhover);
   --color-link: #1e40af;
+
+  /* Interaction: keyboard focus ring, text selection, scrollbar */
+  --color-focus-ring: #bfdbfe;
+  --color-selection-bg: #bfdbfe;
+  --color-selection-text: #0f172a;
+  --color-scrollbar: #cbd5e1;
+  --color-scrollbar-hover: #94a3b8;
 
   /* Sidebar: clean white */
   --color-sidebar-bg: #ffffff;
@@ -108,7 +180,7 @@
   --color-sidebar-logo-bg: #eef2fb;
   --color-sidebar-logo-text: #1e3a8a;
   --color-sidebar-logo-line: #e2e8f0;
-  --color-sidebar-logo-line-accent: #1e3a8a;
+  --color-sidebar-logo-line-accent: var(--color-brand);
 
   /* Topbar */
   --color-topbar-bg: #ffffff;
@@ -184,10 +256,14 @@
   /* One height for the sidebar logo row and the topbar, so their bottom lines align */
   :root {
     --topbar-h: 76px;
+    color-scheme: light;
   }
 
   html {
     scrollbar-gutter: stable;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
@@ -206,8 +282,8 @@
   }
 
   ::selection {
-    background: #bfdbfe;
-    color: #0f172a;
+    background: var(--color-selection-bg);
+    color: var(--color-selection-text);
   }
 
   ::placeholder {
@@ -249,75 +325,13 @@
   input:focus-visible,
   select:focus-visible,
   textarea:focus-visible {
-    outline: 3px solid #bfdbfe;
+    outline: 3px solid var(--color-focus-ring);
     outline-offset: 2px;
-  }
-
-  h1,
-  h2,
-  h3,
-  p {
-    margin: 0;
   }
 
   [hidden] {
     display: none !important;
   }
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-  }
-
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    transform: translateX(-100%);
-  }
-
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-@utility animate-fade-in {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@utility animate-slide-in-right {
-  animation: slideInRight 0.25s ease-out;
-}
-
-@utility animate-slide-in-left {
-  animation: slideInLeft 0.2s ease-out;
 }
 
 /* Skeleton loading placeholder */
@@ -327,7 +341,7 @@
       var(--color-skeleton-shine) 50%,
       var(--color-skeleton) 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.6s ease-in-out infinite;
+  animation: var(--animate-shimmer);
   border-radius: 8px;
 }
 
@@ -338,8 +352,12 @@
 }
 
 .thin-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--color-scrollbar);
   border-radius: 9999px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-scrollbar-hover);
 }
 
 .thin-scrollbar::-webkit-scrollbar-track {
@@ -348,7 +366,24 @@
 
 .thin-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: var(--color-scrollbar) transparent;
+}
+
+/* Reduced motion: keep state changes, drop the movement */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .skeleton {
+    animation: none;
+  }
 }
 
 /* Print */
@@ -356,24 +391,13 @@
   @page {
     margin: 12mm;
   }
-}
 
-@keyframes smooth-wave {
-
-  0%,
-  100% {
-    transform: scaleY(0.4);
-    opacity: 0.6;
+  body {
+    background: #ffffff;
+    color: #000000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-
-  50% {
-    transform: scaleY(1.2);
-    opacity: 1;
-  }
-}
-
-.animate-smooth-wave {
-  animation: smooth-wave 1.2s ease-in-out infinite;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -382,7 +406,8 @@
    1. Token overrides (the semantic colours above).
    2. A compatibility layer for hardcoded Tailwind colours
       (bg-white, gray-*, blue-50, ...) so existing screens go dark
-      without being edited.
+      without being edited. New code should prefer tokens
+      (bg-card, text-ink, border-line) over bg-white / gray-*.
    ═══════════════════════════════════════════════════════════════ */
 .dark {
   color-scheme: dark;
@@ -392,11 +417,8 @@
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.35);
   --shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35);
 
-  /* Brand: lightened so it stays readable on dark surfaces */
-  --color-brand: #5b7fe6;
-  --color-brandhover: #7c99f0;
-  --color-brandsoft: #16213f;
-  --color-brandring: #2a3a6b;
+  /* Brand: lightened so it stays readable on dark surfaces.
+     brand, brandsoft, action and action-hover follow these automatically. */
   --color-brand-50: #16213f;
   --color-brand-100: #1c2a52;
   --color-brand-200: #26376b;
@@ -404,6 +426,8 @@
   --color-brand-500: #6a8cf0;
   --color-brand-600: #5b7fe6;
   --color-brand-700: #8aa6f5;
+  --color-brandhover: #7c99f0;
+  --color-brandring: #2a3a6b;
 
   --color-accent: #38bdf8;
   --color-accenthover: #7dd3fc;
@@ -459,9 +483,14 @@
   --color-disabled-bg: #141d31;
   --color-disabled-text: #5f6f8c;
 
-  --color-action: #5b7fe6;
-  --color-action-hover: #7c99f0;
   --color-link: #8aa6f5;
+
+  /* Interaction */
+  --color-focus-ring: #3b5fd0;
+  --color-selection-bg: #2a4a9a;
+  --color-selection-text: #ffffff;
+  --color-scrollbar: #34425f;
+  --color-scrollbar-hover: #4a5b7d;
 
   /* Sidebar */
   --color-sidebar-bg: #0d1424;
@@ -477,7 +506,6 @@
   --color-sidebar-logo-bg: #1a2748;
   --color-sidebar-logo-text: #9db4f5;
   --color-sidebar-logo-line: #1f2a44;
-  --color-sidebar-logo-line-accent: #5b7fe6;
 
   /* Topbar */
   --color-topbar-bg: #0d1424;
@@ -617,31 +645,9 @@
 
 .dark .tb-btn.tb-danger:hover,
 .dark .tb-btn.tb-danger:focus-visible {
-  border-color: rgb(239 68 68 / 0.4);
-  background-color: rgb(239 68 68 / 0.14);
-  color: #f87171;
-}
-
-/* Base-layer pieces that hardcode light colours */
-.dark ::selection {
-  background: #2a4a9a;
-  color: #ffffff;
-}
-
-.dark button:focus-visible,
-.dark a:focus-visible,
-.dark input:focus-visible,
-.dark select:focus-visible,
-.dark textarea:focus-visible {
-  outline-color: #3b5fd0;
-}
-
-.dark .thin-scrollbar::-webkit-scrollbar-thumb {
-  background: #34425f;
-}
-
-.dark .thin-scrollbar {
-  scrollbar-color: #34425f transparent;
+  border-color: color-mix(in srgb, var(--color-btn-danger) 40%, transparent);
+  background-color: color-mix(in srgb, var(--color-btn-danger) 14%, transparent);
+  color: var(--color-bad);
 }
 
 /* Short cross-fade while the theme flips (class added by ThemeProvider for ~350ms) */
