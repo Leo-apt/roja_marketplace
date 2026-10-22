@@ -13,6 +13,7 @@ import { productsService, type ProductRec } from "@/services/products.service";
 import { entityService } from "@/services/entity.service";
 import { subEntityService } from "@/services/sub-entity.service";
 import { providersService } from "@/services/providers.service";
+import MultiSelect from "@/components/shared/MultiSelect";
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import type { Status } from "@/data/catalog";
 import { statusFormOptions } from "@/utils/catalog";
@@ -336,10 +337,10 @@ function EnvSummarySkeleton() {
 }
 
 /* ---------------- Environment drawer (create + edit) ---------------- */
-interface SubEntity { id: string; name: string; description: string; productIds: string[]; providerId: string }
+interface SubEntity { id: string; name: string; description: string; productIds: string[]; providerIds: string[] }
 
-function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (name: string, description: string, providerId: string) => Promise<void> }) {
-    const [providerId, setProviderId] = useState(initial?.providerId ?? "");
+function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (name: string, description: string, providerIds: string[]) => Promise<void> }) {
+    const [providerIds, setProviderIds] = useState<string[]>(initial?.providerIds ?? []);
     const [provErr, setProvErr] = useState("");
     const [provOpts, setProvOpts] = useState<{ value: string; label: string }[]>([]);
     const [provLoading, setProvLoading] = useState(true);
@@ -366,10 +367,10 @@ function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (na
                     <button className={`${btn.primary} disabled:opacity-60`} disabled={saving} onClick={async () => {
                         setErr(""); setProvErr("");
                         if (!name.trim()) { setErr("Name is required"); return; }
-                        if (!providerId) { setProvErr("Provider is required"); return; }
+                        if (!providerIds.length) { setProvErr("Select at least one provider"); return; }
                         setSaving(true);
                         try {
-                            await onSave(name.trim(), desc.trim(), providerId);
+                            await onSave(name.trim(), desc.trim(), providerIds);
                             close();
                         } catch (e) {
                             setErr(e instanceof Error ? e.message : "Save failed");
@@ -383,11 +384,10 @@ function SubEntityDrawer({ initial, onSave }: { initial?: SubEntity; onSave: (na
             <Field label="Environment Name" required error={err}>
                 <TextInput value={name} placeholder="e.g. Local" onChange={(e) => setName(e.target.value)} />
             </Field>
-            <Field label="Provider" required error={provErr}
-                note={initial?.providerId && providerId !== initial.providerId && initial.productIds.length ? "Changing the provider clears the products already selected for this environment." : undefined}>
-                <Dropdownbox name="envprovider" value={providerId} options={provOpts} placeholder="Select provider"
-                    rounded="rounded-md" compact loading={provLoading}
-                    onChange={(e) => { setProviderId(e.target.value); setProvErr(""); }} />
+            <Field label="Providers" required error={provErr}
+                note={initial?.productIds.length ? "Removing a provider also removes its products from this environment's selection." : undefined}>
+                <MultiSelect options={provOpts} value={providerIds} loading={provLoading} placeholder="Select providers"
+                    onChange={(v) => { setProviderIds(v); setProvErr(""); }} />
             </Field>
             <Field label="Description">
                 <TextArea rows={4} value={desc} placeholder="What is this Environment used for?" onChange={(e) => setDesc(e.target.value)} />
@@ -461,7 +461,7 @@ export default function InstanceDetail() {
     const [allProducts, setAllProducts] = useState<ProductRec[]>([]);
     const [margins, setMargins] = useState<MarginRec[]>([]);
     useEffect(() => {
-        productsService.list().then(setAllProducts).catch(() => toastError("Failed to load products"));
+        productsService.list().then((l) => { console.log("PRODUCT providerIds", l.map((p) => p.providerId)); setAllProducts(l); }).catch(() => toastError("Failed to load products"));
         marginsService.list().then(setMargins).catch(() => toastError("Failed to load margins"));
     }, [toastError]);
     const [tokens, setTokens] = useState<Record<string, Record<Env, TokenRec | null>>>({});
@@ -488,9 +488,9 @@ export default function InstanceDetail() {
     const view = { ...inst, ...info };
     const envName = subs.find((s) => s.id === subId)?.name ?? view.name;
     const pickedIds = subs.find((s) => s.id === subId)?.productIds ?? [];
-    const envProvider = subs.find((s) => s.id === subId)?.providerId ?? "";
+    const envProviders = subs.find((s) => s.id === subId)?.providerIds ?? [];
     // no provider set yet (older environments): show every product
-    const envProducts = envProvider ? allProducts.filter((p) => p.providerId === envProvider) : allProducts;
+    const envProducts = envProviders.length ? allProducts.filter((p) => envProviders.includes(p.providerId)) : allProducts;
     const marginedIds = new Set(margins.map((m) => m.productId));
     const marginedCount = pickedIds.filter((pid) => marginedIds.has(pid)).length;
     const saveProducts = async (ids: string[]) => {
@@ -531,19 +531,23 @@ export default function InstanceDetail() {
         }
     };
 
-    const addSub = async (name: string, description: string, providerId: string) => {
-        const s = await subEntityService.create(inst.id, { name, description, providerId });
+    const addSub = async (name: string, description: string, providerIds: string[]) => {
+        const s = await subEntityService.create(inst.id, { name, description, providerIds });
         setSubs((l) => [...l, s]);
         setSubId(s.id);
         setTokens((m) => ({ ...m, [s.id]: { sandbox: null, live: null } }));
         toast("Environment created");
     };
-    const editSub = async (sid: string, name: string, description: string, providerId: string) => {
+    const editSub = async (sid: string, name: string, description: string, providerIds: string[]) => {
         const old = subs.find((x) => x.id === sid);
-        let s = await subEntityService.update(sid, { name, description, providerId });
-        // provider changed: the old product picks no longer match, so clear them
-        if (old && old.providerId !== providerId && old.productIds.length) {
-            s = await subEntityService.saveProducts(sid, []);
+        let s = await subEntityService.update(sid, { name, description, providerIds });
+        // keep only the picked products whose provider is still selected
+        const keep = (old?.productIds ?? []).filter((pid) => {
+            const p = allProducts.find((x) => x.id === pid);
+            return !!p && providerIds.includes(p.providerId);
+        });
+        if (old && keep.length !== old.productIds.length) {
+            s = await subEntityService.saveProducts(sid, keep);
         }
         setSubs((l) => l.map((x) => (x.id === sid ? s : x)));
         toast("Environment updated");
