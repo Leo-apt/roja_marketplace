@@ -1,26 +1,41 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Field, inputCls } from "@/components/catalog/FormBits";
+import logo from "@/assets/roja-logo.png";
 
-export function AuthShell({ title, subtitle, children, footer }: {
-    title: string; subtitle: string; children: ReactNode; footer: ReactNode;
+const SKELETON_MS = 600; // how long the grey blocks show when the page opens
+
+export function AuthShell({ title, subtitle, children, footer, skeletonFields = 2 }: {
+    title: string; subtitle: string; children: ReactNode; footer?: ReactNode; skeletonFields?: number;
 }) {
+    const [ready, setReady] = useState(false);
+    useEffect(() => {
+        const t = window.setTimeout(() => setReady(true), SKELETON_MS);
+        return () => window.clearTimeout(t);
+    }, []);
+
     return (
         <div className="grid min-h-screen place-items-center bg-page px-4 py-10">
             <div className="w-full max-w-[420px]">
-                <div className="mb-6 flex items-center justify-center gap-[11px]">
-                    <div className="grid size-[37px] place-items-center rounded-[9px] bg-brand text-[22px] font-extrabold text-white">R</div>
-                    <div>
-                        <strong className="text-lg tracking-[1.5px] text-ink">ROJA</strong>
-                        <small className="block text-[10px] tracking-[0.8px] text-muted">BUSINESS CONSOLE</small>
-                    </div>
+                <div className="mb-6 flex justify-center">
+                    <img src={logo} alt="Roja Marketplace" className="h-14 w-auto max-w-[200px] object-contain" />
                 </div>
                 <div className="rounded-2xl border border-line bg-white p-7 shadow-sm">
                     <h1 className="text-xl font-bold text-ink">{title}</h1>
                     <p className="mb-5 mt-1 text-xs text-muted">{subtitle}</p>
-                    {children}
+                    {ready ? children : (
+                        <div className="flex flex-col gap-4" aria-busy="true" aria-label="Loading">
+                            {Array.from({ length: skeletonFields }).map((_, i) => (
+                                <div key={i} className="space-y-2">
+                                    <div className="skeleton h-3 w-24" />
+                                    <div className="skeleton h-11 w-full" />
+                                </div>
+                            ))}
+                            <div className="skeleton h-10 w-full" />
+                        </div>
+                    )}
                 </div>
-                <p className="mt-4 text-center text-sm text-muted">{footer}</p>
+                {footer && <p className="mt-4 text-center text-sm text-muted">{footer}</p>}
             </div>
         </div>
     );

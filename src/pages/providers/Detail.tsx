@@ -1,107 +1,67 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff, Layers, KeyRound, Pencil, Save } from "lucide-react";
+import { Layers, KeyRound, Pencil, Save } from "lucide-react";
 import { DSection, DTile, DTiles, NotFound, StatusBadge } from "@/components/catalog/DetailBits";
-import { btn, Field, Radio, TextInput } from "@/components/catalog/FormBits";
+import { btn } from "@/components/catalog/FormBits";
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import { useApp } from "@/hooks/useApp";
-import { providersService, type ProviderCreds, type ProviderRec } from "@/services/providers.service";
+import { providersService, type ProviderRec } from "@/services/providers.service";
+import {
+    blankCreds, CRED_FIELDS, credsErrors, CredsCardShell, CredsFields, CredsSkeleton, CredsView, MODES,
+    type CredKey, type CredValues, type Mode,
+} from "./CredsBits";
 import { fmtPhone } from "./List";
 
 const BASE = "/catalog/providers";
 const na = (v?: string) => (v ? v : "N/A");
-const emptyCreds: ProviderCreds = { mode: "live", apiUrl: "", tokenUrl: "", clientId: "", clientSecret: "", refreshToken: "", instanceUrl: "" };
 
-function Secret({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
-    const [show, setShow] = useState(false);
-    return (
-        <div className="relative">
-            <TextInput type={show ? "text" : "password"} value={value} placeholder={placeholder} className="pr-10" onChange={(e) => onChange(e.target.value)} />
-            <button type="button" aria-label={show ? "Hide" : "Show"} onClick={() => setShow((s) => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink">
-                {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            </button>
-        </div>
-    );
-}
-
-function CredsSkeleton() {
-    return (
-        <div className="grid gap-5 md:grid-cols-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="flex flex-col gap-2">
-                    <div className="skeleton h-3 w-24" />
-                    <div className="skeleton h-10 w-full" />
-                </div>
-            ))}
-        </div>
-    );
-}
-
-function CredsView({ c }: { c: ProviderCreds; has: { secret: boolean; refresh: boolean } }) {
-    const rows: [string, string][] = [
-        ["API URL", c.apiUrl], ["Token URL", c.tokenUrl], ["Client ID", c.clientId],
-        ["Client Secret", c.clientSecret], ["Refresh Token", c.refreshToken], ["Instance URL", c.instanceUrl],
-    ];
-    return (
-        <div className="grid gap-4 rounded-xl border border-line bg-surfacealt p-4 md:grid-cols-2">
-            {rows.map(([k, v]) => (
-                <div key={k} className="min-w-0">
-                    <p className="text-xs font-semibold text-muted">{k}</p>
-                    <p className="mt-1 break-all text-sm text-ink">{v || "N/A"}</p>
-                </div>
-            ))}
-        </div>
-    );
-}
-
-function Credentials({ id }: { id: string }) {
+function CredCard({ id, mode }: { id: string; mode: Mode }) {
     const { toast, toastError } = useApp();
     const [has, setHas] = useState({ exists: false, secret: false, refresh: false });
-    const [saved, setSaved] = useState<ProviderCreds>(emptyCreds);
-    const [c, setC] = useState<ProviderCreds>(emptyCreds);
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [saved, setSaved] = useState<CredValues>(blankCreds);
+    const [c, setC] = useState<CredValues>(blankCreds);
+    const [touched, setTouched] = useState<Record<string, boolean>>({});
+    const [submitted, setSubmitted] = useState(false);
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
 
-    const mode = c.mode;
     useEffect(() => {
         let live = true;
         setLoading(true);
-        setErrors({});
         const minDelay = new Promise((res) => setTimeout(res, 600));
         Promise.all([providersService.getCreds(id, mode), minDelay])
             .then(([r]) => {
                 if (!live) return;
-                const base = r?.creds ?? { ...emptyCreds, mode };
+                const base: CredValues = r ? r.creds : blankCreds;
                 setSaved(base); setC(base);
                 setHas({ exists: !!r, secret: !!r?.hasSecret, refresh: !!r?.hasRefresh });
-                setEditing(!r);
+                setEditing(!r); // nothing saved yet: open the fields
             })
             .catch((e) => { if (live) toastError(e instanceof Error ? e.message : "Failed to load credentials"); })
             .finally(() => { if (live) setLoading(false); });
         return () => { live = false; };
     }, [id, mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const set = <K extends keyof ProviderCreds>(k: K, v: ProviderCreds[K]) => {
-        setC((p) => ({ ...p, [k]: v }));
-        setErrors((p) => { const n = { ...p }; delete n[k]; return n; });
-    };
+    const errors = credsErrors(c, has);
+    const err = (k: CredKey) => (touched[k] || submitted ? errors[k] ?? "" : "");
+    const touch = (k: CredKey) => setTouched((p) => ({ ...p, [k]: true }));
+    const set = (k: CredKey, v: string) => { setC((p) => ({ ...p, [k]: v })); touch(k); };
+    const reset = () => { setC(saved); setTouched({}); setSubmitted(false); };
+    const startEdit = () => { reset(); setEditing(true); };
+    const cancel = () => { reset(); setEditing(!has.exists); };
+
     const save = async () => {
-        const e: Record<string, string> = {};
-        const req: [keyof ProviderCreds, string][] = [["apiUrl", "API URL"], ["tokenUrl", "Token URL"], ["clientId", "Client ID"], ["clientSecret", "Client Secret"], ["refreshToken", "Refresh Token"], ["instanceUrl", "Instance URL"]];
-        for (const [k, label] of req) {
-            const kept = (k === "clientSecret" && has.secret) || (k === "refreshToken" && has.refresh);
-            if (!c[k].trim() && !kept) e[k] = `${label} is required`;
-        }
-        setErrors(e);
-        if (Object.keys(e).length) return;
+        setSubmitted(true);
+        const first = CRED_FIELDS.find((f) => errors[f.key]);
+        if (first) { document.getElementById(`cred-${mode}-${first.key}`)?.focus(); return; }
         setSaving(true);
         try {
-            await providersService.saveCreds(id, c, has.exists);
-            setHas({ exists: true, secret: has.secret || !!c.clientSecret.trim(), refresh: has.refresh || !!c.refreshToken.trim() });
-            setSaved(c); setC(c); // keep the saved values in the fields
+            await providersService.saveCreds(id, { ...c, mode }, has.exists);
+            const next: CredValues = { ...c, clientSecret: c.clientSecret || saved.clientSecret, refreshToken: c.refreshToken || saved.refreshToken };
+            setHas({ exists: true, secret: has.secret || !!c.clientSecret, refresh: has.refresh || !!c.refreshToken });
+            setSaved(next); setC(next);
+            setTouched({}); setSubmitted(false);
             toast(has.exists ? "Credentials updated" : "Credentials saved");
             setEditing(false);
         } catch (e) { toastError(e instanceof Error ? e.message : "Save failed"); }
@@ -109,39 +69,25 @@ function Credentials({ id }: { id: string }) {
     };
 
     return (
-        <DSection title="Credentials">
-            <div className="flex flex-col gap-5">
-                <div className="flex items-start justify-between gap-3">
-                    <Field label="Mode" required>
-                        <div className="flex gap-6 pt-1">
-                            <Radio name="mode" label="Live" checked={c.mode === "live"} onChange={() => set("mode", "live")} />
-                            <Radio name="mode" label="Sandbox" checked={c.mode === "sandbox"} onChange={() => set("mode", "sandbox")} />
-                        </div>
-                    </Field>
-                    {!loading && has.exists && !editing && (
-                        <button type="button" className={btn.secondary} onClick={() => setEditing(true)}>
-                            <Pencil className="size-4" /> Edit
+        <CredsCardShell mode={mode}
+            action={!loading && has.exists && !editing ? (
+                <button type="button" aria-label={`Edit ${mode} credentials`} title="Edit" onClick={startEdit}
+                    className="grid size-9 place-items-center rounded-lg border border-line bg-white text-ink transition hover:border-brand hover:text-brand">
+                    <Pencil className="size-4" />
+                </button>
+            ) : undefined}>
+            {loading ? <CredsSkeleton /> : !editing ? <CredsView values={saved} has={has} /> : (
+                <div className="flex flex-col gap-5">
+                    <CredsFields idPrefix={`cred-${mode}`} values={c} has={has} error={err} onChange={set} onTouch={touch} />
+                    <div className="flex justify-end gap-2">
+                        <button className={btn.secondary} disabled={saving} onClick={cancel}>Cancel</button>
+                        <button className={btn.primary} disabled={saving} onClick={() => void save()}>
+                            <Save className="size-4" /> {saving ? (has.exists ? "Updating…" : "Saving…") : has.exists ? "Update" : "Save"}
                         </button>
-                    )}
+                    </div>
                 </div>
-                {loading && <CredsSkeleton />}
-                {!loading && !editing && <CredsView c={c} has={has} />}
-                <div className={`grid gap-5 md:grid-cols-2 ${!loading && editing ? "" : "hidden"}`}>
-                    <Field label="API URL" required error={errors.apiUrl}><TextInput value={c.apiUrl} onChange={(e) => set("apiUrl", e.target.value)} /></Field>
-                    <Field label="Token URL" required error={errors.tokenUrl}><TextInput value={c.tokenUrl} onChange={(e) => set("tokenUrl", e.target.value)} /></Field>
-                    <Field label="Client ID" required error={errors.clientId}><TextInput value={c.clientId} onChange={(e) => set("clientId", e.target.value)} /></Field>
-                    <Field label="Client Secret" required error={errors.clientSecret}><Secret value={c.clientSecret} placeholder={has.secret ? "Saved. Leave blank to keep" : ""} onChange={(v) => set("clientSecret", v)} /></Field>
-                    <Field label="Refresh Token" required error={errors.refreshToken}><Secret value={c.refreshToken} placeholder={has.refresh ? "Saved. Leave blank to keep" : ""} onChange={(v) => set("refreshToken", v)} /></Field>
-                    <Field label="Instance URL" required error={errors.instanceUrl}><TextInput value={c.instanceUrl} onChange={(e) => set("instanceUrl", e.target.value)} /></Field>
-                </div>
-                <div className={`flex justify-end gap-2 ${!loading && editing ? "" : "hidden"}`}>
-                    <button className={btn.secondary} disabled={saving} onClick={() => { setC(saved); setErrors({}); setEditing(!has.exists); }}>Cancel</button>
-                    <button className={btn.primary} disabled={saving} onClick={() => void save()}>
-                        <Save className="size-4" /> {saving ? (has.exists ? "Updating…" : "Saving…") : has.exists ? "Update" : "Save"}
-                    </button>
-                </div>
-            </div>
-        </DSection>
+            )}
+        </CredsCardShell>
     );
 }
 
@@ -210,7 +156,11 @@ export default function ProvidersDetail() {
                     </DTiles>
                 </DSection>
             </div>
-            {tab === "creds" && <Credentials id={rec.id} />}
+            {tab === "creds" && (
+                <div className="grid items-start gap-4 lg:grid-cols-2">
+                    {MODES.map((m) => <CredCard key={m.value} id={rec.id} mode={m.value} />)}
+                </div>
+            )}
         </div>
     );
 }

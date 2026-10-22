@@ -60,6 +60,7 @@ export const providersService = {
     getCreds: async (id: string, mode: ProviderCreds["mode"]): Promise<CredsView | null> => {
         try {
             const r = (await apiCall<ApiCred>(`/providers/${id}/credentials/${mode}/update-provider-credential`)).data;
+            console.log("CREDS FROM API", mode, JSON.stringify(r));
             return {
                 creds: {
                     mode, apiUrl: r.apiUrl ?? "", tokenUrl: r.tokenUrl ?? "", clientId: r.clientId ?? "",

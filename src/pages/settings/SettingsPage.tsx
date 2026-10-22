@@ -266,17 +266,20 @@ function Field({
   label,
   hint,
   error,
+  required,
   children,
 }: {
   label: string;
   hint?: string;
   error?: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-xs font-semibold text-ink">
         {label}
+        {required && <span className="text-red-600">*</span>}
       </span>
       {children}
       {error ? (
@@ -924,7 +927,7 @@ function PaymentGatewayPanel() {
             ) : (
               <>
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <Field label="Publishable Key *" error={errors.publishableKey}>
+                  <Field label="Publishable Key" required error={errors.publishableKey}>
                     <input
                       className={inputClass}
                       value={creds.publishableKey}
@@ -933,7 +936,8 @@ function PaymentGatewayPanel() {
                     />
                   </Field>
                   <Field
-                    label={configured ? "Secret Key" : "Secret Key *"}
+                    label="Secret Key"
+                    required={!configured}
                     hint={configured ? "Leave blank to keep the saved secret key." : undefined}
                     error={errors.secretKey}
                   >
@@ -1004,7 +1008,7 @@ const PAGE_STYLES = `
 `;
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { setMode } = useTheme();
   const email = user?.user_email;
 
@@ -1141,6 +1145,7 @@ export default function SettingsPage() {
           name,
           phone: payload.phone.trim() || null,
         });
+        await refreshUser().catch(() => { }); // top bar picks up the new name
       }
 
       const prefsChanged =

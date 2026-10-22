@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { btn, Field, TextInput } from "@/components/catalog/FormBits";
 import { Alert, AuthShell, PasswordField } from "@/components/auth/AuthShell";
@@ -29,9 +29,7 @@ export default function LoginPage() {
     };
 
     return (
-        <AuthShell title="Sign in" subtitle="Log in to continue to the ROJA console."
-            footer={<>New here? <Link to="/register" className="font-semibold text-brand hover:underline">Create an account</Link></>}>
-            {st?.registered && <Alert kind="success">Account created. Please log in.</Alert>}
+        <AuthShell title="Sign in" subtitle="Log in to continue to the ROJA console.">
             {error && <Alert kind="error">{error}</Alert>}
             <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
                 <Field label="Email" required>

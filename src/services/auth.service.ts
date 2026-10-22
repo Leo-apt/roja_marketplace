@@ -137,7 +137,7 @@ export const authService = {
             saveSession(s);
         } catch { /* keep login data */ }
         return s;
-    },
+    }, // .
 
     async logout(): Promise<void> {
         const t = getSession()?.tokens;

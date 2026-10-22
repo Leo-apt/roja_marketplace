@@ -92,7 +92,7 @@ export default function EnvProductsDrawer({ envName, products, initial, onSave, 
             )}
         >
             {!products.length ? (
-                <EmptyState title="No products yet" message="No products are available." />
+                <EmptyState title="No products found" message="No products are available for this environment's provider." />
             ) : (
                 <>
                     <SearchField value={q} onChange={setQ} placeholder="Search by product or category" />

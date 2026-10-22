@@ -13,6 +13,7 @@ export type ViewKey =
     | "margins"
     | "instances"
     | "engineConfig"
+    | "productTemplates"
     | "engineSignals"
     | "settings";
 
@@ -252,6 +253,19 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
         scope: "All engine signals.",
     },
 
+    productTemplates: {
+        title: "Product templates",
+        nav: "Product templates",
+        path: "/catalog/product-templates",
+        icon: "▤",
+        subtitle: "Manage the look of product cards: images, colors and text styles.",
+        dateLabel: "Created on",
+        search: "template name",
+        statuses: ["all", "Active", "Inactive"],
+        statusLabel: "Status",
+        scope: "All product templates.",
+    },
+
     settings: {
         title: "Settings",
         nav: "Settings",
@@ -279,6 +293,7 @@ export const navGroups: { label: string; items: ViewKey[] }[] = [
             "catalogProducts",
             "margins",
             "engineConfig",
+            "productTemplates",
             "engineSignals",
         ],
     },

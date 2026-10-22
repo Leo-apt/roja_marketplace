@@ -28,10 +28,13 @@ import EngineConfigManage from "@/pages/engineConfig/Manage";
 import EngineSignalsList from "@/pages/signals/List";
 import EngineSignalsDetail from "@/pages/signals/Detail";
 import EngineSignalsManage from "@/pages/signals/Manage";
+import ProductTemplatesList from "@/pages/productTemplates/List";
+import ProductTemplatesDetail from "@/pages/productTemplates/Detail";
+import ProductTemplatesManage from "@/pages/productTemplates/Manage";
 import InstancesList from "@/pages/instance/InstancesList";
 import InstanceDetail from "@/pages/instance/InstanceDetail";
 import LoginPage from "@/pages/auth/LoginPage";
-import RegisterPage from "@/pages/auth/RegisterPage";
+// import RegisterPage from "@/pages/auth/RegisterPage";
 import { PublicOnly, RequireAuth } from "@/components/auth/RouteGuards";
 import SettingsPage from "@/pages/settings/SettingsPage";
 
@@ -40,7 +43,7 @@ export default function App() {
         <Routes>
             <Route element={<PublicOnly />}>
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
+                {/* <Route path="/register" element={<RegisterPage />} /> */}
             </Route>
             <Route element={<RequireAuth />}>
                 <Route element={<Layout />}>
@@ -87,6 +90,11 @@ export default function App() {
                     <Route path="/catalog/engine-signals/new" element={<EngineSignalsManage />} />
                     <Route path="/catalog/engine-signals/:id" element={<EngineSignalsDetail />} />
                     <Route path="/catalog/engine-signals/:id/edit" element={<EngineSignalsManage />} />
+
+                    <Route path="/catalog/product-templates" element={<ProductTemplatesList />} />
+                    <Route path="/catalog/product-templates/new" element={<ProductTemplatesManage />} />
+                    <Route path="/catalog/product-templates/:id" element={<ProductTemplatesDetail />} />
+                    <Route path="/catalog/product-templates/:id/edit" element={<ProductTemplatesManage />} />
 
                     <Route path="/instances" element={<InstancesList />} />
                     <Route path="/instances/:id" element={<InstanceDetail />} />

@@ -37,7 +37,7 @@ export default function RegisterPage() {
     };
 
     return (
-        <AuthShell title="Create account" subtitle="Register, then log in to access the console."
+        <AuthShell title="Create account" subtitle="Register, then log in to access the console." skeletonFields={4}
             footer={<>Already registered? <Link to="/login" className="font-semibold text-brand hover:underline">Sign in</Link></>}>
             {apiError && <Alert kind="error">{apiError}</Alert>}
             <form onSubmit={submit} className="flex flex-col gap-4" noValidate>

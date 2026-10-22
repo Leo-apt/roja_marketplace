@@ -16,6 +16,7 @@ import {
   Scale,
   UserStar,
   SlidersHorizontal,
+  LayoutTemplate,
   TrendingUp,
   Settings, Building2, Activity
 } from "lucide-react";
@@ -39,6 +40,7 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
   margins: BadgePercent,
   instances: UserStar,
   engineConfig: SlidersHorizontal,
+  productTemplates: LayoutTemplate,
   engineSignals: Activity,
   settings: Settings
 };
