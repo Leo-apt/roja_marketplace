@@ -3,9 +3,13 @@ import { useEffect, useState } from "react";
 import Drawer from "@/components/shared/Drawer";
 import { historyService, type HistoryDetail } from "@/services/history.service";
 import { CallStatus, money, when } from "./format";
+import { SkeletonDrawer } from "../../components/shared/SkeletonLoader";
 
 const words = (a: string) => { const s = a.replace(/-/g, " "); return s.charAt(0).toUpperCase() + s.slice(1); };
 const json = (v: unknown) => JSON.stringify(v, null, 2);
+
+const MIN_LOAD_MS = 600; // the skeleton stays at least this long
+const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 export default function CallDrawer({ id }: { id: string }) {
     const [d, setD] = useState<HistoryDetail | null>(null);
@@ -13,8 +17,8 @@ export default function CallDrawer({ id }: { id: string }) {
 
     useEffect(() => {
         let live = true;
-        historyService.get(id)
-            .then((r) => { if (live) setD(r); })
+        Promise.all([historyService.get(id), wait(MIN_LOAD_MS)])
+            .then(([r]) => { if (live) setD(r); })
             .catch((e) => { if (live) setError(e instanceof Error ? e.message : "Failed to load"); });
         return () => { live = false; };
     }, [id]);
@@ -26,7 +30,7 @@ export default function CallDrawer({ id }: { id: string }) {
     return (
         <Drawer title="Call details" kicker={d ? `${d.environment} · ${d.action}` : "API call"} width="min(720px, calc(100vw - 20px))">
             {error && <p className="text-sm text-bad" role="alert">{error}</p>}
-            {!d && !error && <p className="text-sm text-muted">Loading…</p>}
+            {!d && !error && <SkeletonDrawer />}
             {d && (
                 <>
                     <div className="flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surfacealt p-4">

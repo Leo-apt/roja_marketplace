@@ -63,7 +63,7 @@ export default function HistoryCalls() {
     return (
         <div className="flex flex-col gap-4">
             <div className="overflow-hidden rounded-xl border border-line bg-white">
-                <Tabs label="Environment" value={env} onChange={(k) => { setEnv(k as "sandbox" | "live"); setPage(1); }}
+                <Tabs label="Environment" large value={env} onChange={(k) => { setEnv(k as "sandbox" | "live"); setPage(1); }}
                     tabs={[["sandbox", "Sandbox"], ["live", "Live"]]} />
                 <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-5">
                     <Field label="Action">

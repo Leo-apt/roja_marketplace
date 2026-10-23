@@ -78,10 +78,10 @@ export default function Drawer({
                 className={`fixed inset-y-0 right-0 z-[41] flex max-w-[100vw] flex-col bg-white shadow-[-15px_0_60px_#071c342b] transition-transform duration-500 ease-out ${shown ? "translate-x-0" : "translate-x-full"}`}
             >
                 <>
-                    <div className="flex items-center justify-between gap-2.5 bg-sidebar-bg px-[26px] py-[18px] max-[850px]:p-[18px]">
-                        <h2 className="text-[21px] font-bold tracking-[-0.25px] text-sidebar-text-active">{title}</h2>
+                    <div className="flex items-center justify-between gap-2.5 bg-brand px-[26px] py-[18px] max-[850px]:p-[18px]">
+                        <h2 className="text-[21px] font-bold tracking-[-0.25px] text-white">{title}</h2>
                         <button
-                            className="inline-flex min-h-9 items-center justify-center rounded-lg border border-sidebar-border px-3 py-[7px] font-semibold text-sidebar-text-active hover:bg-sidebar-hover"
+                            className="inline-flex min-h-9 items-center justify-center rounded-lg border border-white/30 px-3 py-[7px] font-semibold text-white hover:bg-white/15"
                             onClick={attemptClose}
                             aria-label="Close details"
                         >

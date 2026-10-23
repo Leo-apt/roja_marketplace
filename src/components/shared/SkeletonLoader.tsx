@@ -40,6 +40,34 @@ export function SkeletonTable({ rows = 8 }: { rows?: number }) {
     );
 }
 
+export function SkeletonDrawer() {
+    return (
+        <div role="status" aria-busy="true" aria-label="Loading call details" className="flex flex-col gap-4">
+            {/* summary box */}
+            <div className="flex items-center gap-3 rounded-lg border border-line bg-surfacealt p-4">
+                <div className={`h-6 w-20 rounded-full ${shimmer}`} />
+                <div className={`h-4 w-2/3 rounded ${shimmer}`} />
+            </div>
+            {/* object id / customer / type */}
+            <div className="grid gap-3 sm:grid-cols-2">
+                {[0, 1, 2].map((i) => (
+                    <div key={i} className="flex flex-col gap-1.5">
+                        <div className={`h-3 w-16 rounded-full ${shimmer}`} />
+                        <div className={`h-4 w-4/5 rounded ${shimmer}`} />
+                    </div>
+                ))}
+            </div>
+            {/* request */}
+            <div>
+                <div className={`mb-2 h-4 w-20 rounded ${shimmer}`} />
+                <div className={`h-40 w-full rounded-lg ${shimmer}`} />
+            </div>
+            {/* response */}
+            <div className={`h-10 w-full rounded-lg ${shimmer}`} />
+        </div>
+    );
+}
+
 export default function PageSkeleton() {
     return (
         <div role="status" aria-busy="true" aria-label="Loading page" className="flex flex-col gap-[18px]">
