@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { KeyRound } from "lucide-react";
 import ListShell, { type Col } from "@/components/catalog/ListShell";
 import type { FilterField } from "@/components/catalog/ListDrawers";
-import { StatusBadge } from "@/components/catalog/DetailBits";
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import { providersService, type ProviderRec } from "@/services/providers.service";
 
@@ -20,7 +19,6 @@ const cols: Col<ProviderRec>[] = [
     { key: "name", label: "Name", render: (r) => r.name },
     { key: "email", label: "Email", render: (r) => r.email },
     { key: "phone", label: "Cell Phone Number", render: (r) => fmtPhone(r.phone) },
-    { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
 ];
 const PAGE_SIZE = 10;
 const fields: FilterField[] = [];
@@ -43,6 +41,17 @@ export default function ProvidersList() {
         return () => { live = false; };
     }, [page, q]);
 
+    const setRowActive = (id: string, v: boolean) =>
+        setData((d) => d && { ...d, rows: d.rows.map((r) => (r.id === id ? { ...r, isActive: v, status: v ? "Active" : "Inactive" } : r)) });
+
+    const toggleStatus = (id: string, next: boolean) => {
+        setRowActive(id, next); // the toggle moves immediately
+        providersService.setStatus(id, next).catch((e) => {
+            setRowActive(id, !next); // save failed, so it goes back
+            console.error("Status update failed", e);
+        });
+    };
+
     if (error) return <ErrorBox message={error} onRetry={() => { setError(""); setPage(1); setQ(""); }} />;
     if (!data) return <LoadingBox />;
 
@@ -56,6 +65,7 @@ export default function ProvidersList() {
             searchPlaceholder="Search providers…"
             filterFields={fields}
             match={() => true}
+            statusToggle={{ isActive: (r) => r.isActive, onToggle: toggleStatus }}
             extraActions={[
                 { label: "Credentials", icon: <KeyRound className="size-4" />, onClick: (id) => nav(`/catalog/providers/${id}?tab=creds`) },
             ]}

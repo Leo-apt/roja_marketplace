@@ -6,7 +6,7 @@ import { DCard } from "@/components/catalog/DetailBits";
 import { Alert } from "@/components/auth/AuthShell";
 import { AdminNotice, ErrorBox, LoadingBox, useIsAdmin } from "@/components/catalog/PageState";
 import { imageError } from "@/utils/validate";
-import { providersService, type ProviderRec } from "@/services/providers.service";
+import { providersService, type ProviderRec, type CredsView as SavedCreds } from "@/services/providers.service";
 import {
     blankCreds, CRED_FIELDS, credsErrors, CredsCardShell, CredsFields, CredsSkeleton, MODES,
     type CredKey, type CredValues, type Has, type Mode,
@@ -24,9 +24,9 @@ function StepTitle({ n, children }: { n: number; children: ReactNode }) {
     );
 }
 
-function ProviderForm({ initial }: { initial?: ProviderRec }) {
+function ProviderForm({ initial, initialCreds }: { initial?: ProviderRec; initialCreds?: { sandbox: SavedCreds | null; live: SavedCreds | null } }) {
     const nav = useNavigate();
-    const { toast, toastError } = useApp();
+    const { toast } = useApp();
     const isEdit = !!initial;
     const [name, setName] = useState(initial?.name ?? "");
     const [phone, setPhone] = useState(initial?.phone ?? "");
@@ -37,31 +37,18 @@ function ProviderForm({ initial }: { initial?: ProviderRec }) {
     const [saving, setSaving] = useState(false);
 
     // credentials: 6 fields each for Sandbox and Live
-    const noCreds = { exists: false, secret: false, refresh: false };
-    const [creds, setCreds] = useState<Record<Mode, CredValues>>({ sandbox: blankCreds, live: blankCreds });
-    const [has, setHas] = useState<Record<Mode, Has & { exists: boolean }>>({ sandbox: noCreds, live: noCreds });
-    const [credsLoading, setCredsLoading] = useState(isEdit);
-    const [credsFailed, setCredsFailed] = useState(false);
+    const hasOf = (s?: SavedCreds | null): Has & { exists: boolean } => ({ exists: !!s, secret: !!s?.hasSecret, refresh: !!s?.hasRefresh });
+    const [creds, setCreds] = useState<Record<Mode, CredValues>>({
+        sandbox: initialCreds?.sandbox?.creds ?? blankCreds,
+        live: initialCreds?.live?.creds ?? blankCreds,
+    });
+    const [has] = useState<Record<Mode, Has & { exists: boolean }>>({
+        sandbox: hasOf(initialCreds?.sandbox), live: hasOf(initialCreds?.live),
+    });
+    const credsLoading = false; // data now arrives with the provider
+    const credsFailed = false;
     const [touched, setTouched] = useState<Record<string, boolean>>({});
     const [submitted, setSubmitted] = useState(false);
-
-    // edit: load what is already saved for both modes
-    useEffect(() => {
-        if (!initial) return;
-        let live = true;
-        Promise.all([providersService.getCreds(initial.id, "sandbox"), providersService.getCreds(initial.id, "live")])
-            .then(([sb, lv]) => {
-                if (!live) return;
-                setCreds({ sandbox: sb ? sb.creds : blankCreds, live: lv ? lv.creds : blankCreds });
-                setHas({
-                    sandbox: { exists: !!sb, secret: !!sb?.hasSecret, refresh: !!sb?.hasRefresh },
-                    live: { exists: !!lv, secret: !!lv?.hasSecret, refresh: !!lv?.hasRefresh },
-                });
-            })
-            .catch((e) => { if (live) { setCredsFailed(true); setApiError(e instanceof Error ? e.message : "Failed to load credentials"); } })
-            .finally(() => { if (live) setCredsLoading(false); });
-        return () => { live = false; };
-    }, [initial?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const touchCred = (m: Mode, k: CredKey) => setTouched((p) => ({ ...p, [`${m}.${k}`]: true }));
     const setCredField = (m: Mode, k: CredKey, v: string) => {
@@ -82,24 +69,20 @@ function ProviderForm({ initial }: { initial?: ProviderRec }) {
         setSubmitted(true);
         setApiError("");
         if (Object.keys(e).length) return;
-        console.log("SANDBOX", credsErrors(creds.sandbox, has.sandbox), "LIVE", credsErrors(creds.live, has.live), has);
         const firstCred = MODES.flatMap((m) =>
             CRED_FIELDS.filter((f) => credsErrors(creds[m.value], has[m.value])[f.key]).map((f) => `cred-${m.value}-${f.key}`))[0];
         if (firstCred) { document.getElementById(firstCred)?.focus(); return; }
         setSaving(true);
         try {
             const input = { name, email, phone, logoFile: logo };
-            const rec = initial ? await providersService.update(initial.id, input) : await providersService.create(input);
-            try {
+            if (initial) {
+                await providersService.update(initial.id, input);
                 for (const m of MODES) {
-                    await providersService.saveCreds(rec.id, { ...creds[m.value], mode: m.value }, has[m.value].exists);
+                    await providersService.saveCreds(initial.id, { ...creds[m.value], mode: m.value }, has[m.value].exists);
                 }
-            } catch (err) {
-                if (initial) throw err;
-                // the provider already exists: continue in edit mode so nothing is created twice
-                toastError(`Provider created, but saving the credentials failed: ${err instanceof Error ? err.message : "Save failed"}. Add them here.`);
-                nav(`${BASE}/${rec.id}/edit`);
-                return;
+            } else {
+                // create: provider + sandbox + live in ONE request
+                await providersService.create({ ...input, credentials: MODES.map((m) => ({ ...creds[m.value], mode: m.value })) });
             }
             toast(isEdit ? "Provider updated" : "Provider created");
             nav(BASE);
@@ -157,14 +140,14 @@ function ProviderForm({ initial }: { initial?: ProviderRec }) {
 export default function ProvidersManage() {
     const { id } = useParams();
     const isAdmin = useIsAdmin();
-    const [rec, setRec] = useState<ProviderRec | null>(null);
+    const [data, setData] = useState<{ rec: ProviderRec; sandbox: SavedCreds | null; live: SavedCreds | null } | null>(null);
     const [error, setError] = useState("");
 
     useEffect(() => {
         if (!id || !isAdmin) return;
         let live = true;
-        providersService.get(id)
-            .then((r) => { if (live) setRec(r); })
+        providersService.getWithCreds(id)
+            .then((r) => { if (live) setData(r); })
             .catch((e) => { if (live) setError(e instanceof Error ? e.message : "Failed to load"); });
         return () => { live = false; };
     }, [id, isAdmin]);
@@ -172,6 +155,6 @@ export default function ProvidersManage() {
     if (!isAdmin) return <AdminNotice />;
     if (!id) return <ProviderForm />;
     if (error) return <ErrorBox message={error} backTo={BASE} />;
-    if (!rec || rec.id !== id) return <LoadingBox />;
-    return <ProviderForm initial={rec} />;
+    if (!data || data.rec.id !== id) return <LoadingBox />;
+    return <ProviderForm initial={data.rec} initialCreds={data} />;
 }

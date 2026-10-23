@@ -461,7 +461,7 @@ export default function InstanceDetail() {
     const [allProducts, setAllProducts] = useState<ProductRec[]>([]);
     const [margins, setMargins] = useState<MarginRec[]>([]);
     useEffect(() => {
-        productsService.list().then((l) => { console.log("PRODUCT providerIds", l.map((p) => p.providerId)); setAllProducts(l); }).catch(() => toastError("Failed to load products"));
+        productsService.list().then(setAllProducts).catch(() => toastError("Failed to load products"));
         marginsService.list().then(setMargins).catch(() => toastError("Failed to load margins"));
     }, [toastError]);
     const [tokens, setTokens] = useState<Record<string, Record<Env, TokenRec | null>>>({});

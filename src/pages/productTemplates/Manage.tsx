@@ -35,7 +35,7 @@ function validate(f: Form) {
 }
 
 const blank: Form = {
-    name: "", status: "", bgImage: null, frontImage: null,
+    name: "", status: "Active", bgImage: null, frontImage: null,
     cardBg: "", buttonBg: "", buttonText: "", textPrimary: "", textSecondary: "",
 };
 

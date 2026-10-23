@@ -19,7 +19,8 @@ import {
     btn, Check, ColorField, Field, FileInput, HexNote, MoneyInput, Radio, RadioCard, Section, Stepper, TextArea, TextInput,
 } from "@/components/catalog/FormBits";
 import { imageError, noLead, plainText, priceError, textError } from "@/utils/validate";
-import { productTemplates, type Bundle } from "@/data/catalog";
+import type { Bundle } from "@/data/catalog";
+import { productTemplatesService } from "@/services/productTemplates.service";
 import { calcMargin, discountTypeFormOptions, isHex, num, sellingPrice, usd, type DiscountType } from "@/utils/catalog";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -144,6 +145,7 @@ interface FormProps {
     categories: { id: string; name: string }[];
     bundleOpts: BundleOpt[];
     providerOpts: { value: string; label: string }[];
+    templateOpts: { value: string; label: string }[];
 }
 
 const fromRec = (r: ProductRec): Form => ({
@@ -160,7 +162,7 @@ const fromRec = (r: ProductRec): Form => ({
     publish: r.publish, availableFrom: r.availableFrom, expires: !!r.expiresOn, expiresOn: r.expiresOn,
 });
 
-function ProductForm({ initial, categories, bundleOpts, providerOpts }: FormProps) {
+function ProductForm({ initial, categories, bundleOpts, providerOpts, templateOpts }: FormProps) {
     const nav = useNavigate();
     const { toast, toastError, openDrawer } = useApp();
     const isEdit = !!initial;
@@ -440,7 +442,11 @@ function ProductForm({ initial, categories, bundleOpts, providerOpts }: FormProp
                                 <h3 className="text-sm font-bold text-ink">Dashboard Content</h3>
                                 <div className="grid gap-5 md:grid-cols-2">
                                     <Field label="Product Template" required error={errors.dTemplate}>
-                                        {dd("template", f.template, productTemplates.map((t) => ({ value: t, label: t })), (v) => set("template", v), "Select template")}
+                                        {dd("template", f.template,
+                                            f.template && !templateOpts.some((o) => o.value === f.template)
+                                                ? [{ value: f.template, label: f.template }, ...templateOpts]
+                                                : templateOpts,
+                                            (v) => set("template", v), "Select template")}
                                     </Field>
                                     <Field label="Title" required error={errors.dTitle}>
                                         <TextInput maxLength={LIMITS.title[1]} {...tp("dashTitle", "dTitle")} />
@@ -642,7 +648,7 @@ function ProductForm({ initial, categories, bundleOpts, providerOpts }: FormProp
 export default function CatalogProductsManage() {
     const { id } = useParams();
     const isAdmin = useIsAdmin();
-    const [data, setData] = useState<{ rec?: ProductRec; cats: { id: string; name: string }[]; opts: BundleOpt[]; provs: { value: string; label: string }[] } | null>(null);
+    const [data, setData] = useState<{ rec?: ProductRec; cats: { id: string; name: string }[]; tpls: { value: string; label: string }[]; opts: BundleOpt[]; provs: { value: string; label: string }[] } | null>(null);
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -653,12 +659,13 @@ export default function CatalogProductsManage() {
             bundlesService.list(1, 100),
             id ? productsService.get(id) : Promise.resolve(undefined),
             providersService.listPage(1, 1000),
+            productTemplatesService.listPage(1, 100),
         ])
-            .then(([cats, bs, rec, ps]) => {
+            .then(([cats, bs, rec, ps, ts]) => {
                 if (!live) return;
                 const c = cats.map((x) => ({ id: x.id, name: x.name }));
                 if (rec && rec.categoryId && !c.some((x) => x.id === rec.categoryId)) c.push({ id: rec.categoryId, name: rec.categoryName });
-                setData({ rec, cats: c, provs: ps.rows.map((p) => ({ value: p.id, label: p.providerId ? `${p.name} - ${p.providerId}` : p.name })), opts: bs.rows.map((b) => ({ id: b.id, label: b.shortCode ? `${b.name} (${b.shortCode})` : b.name, type: b.pricingType })) });
+                setData({ rec, cats: c, tpls: ts.rows.filter((t) => t.status === "Active").map((t) => ({ value: t.name, label: t.name })), provs: ps.rows.map((p) => ({ value: p.id, label: p.providerId ? `${p.name} - ${p.providerId}` : p.name })), opts: bs.rows.map((b) => ({ id: b.id, label: b.shortCode ? `${b.name} (${b.shortCode})` : b.name, type: b.pricingType })) });
             })
             .catch((e) => { if (live) setError(e instanceof Error ? e.message : "Failed to load"); });
         return () => { live = false; };
@@ -667,5 +674,5 @@ export default function CatalogProductsManage() {
     if (!isAdmin) return <AdminNotice />;
     if (error) return <ErrorBox message={error} backTo={BASE} />;
     if (!data || (id && data.rec?.id !== id)) return <LoadingBox />;
-    return <ProductForm key={id ?? "new"} initial={data.rec} categories={data.cats} bundleOpts={data.opts} providerOpts={data.provs} />;
+    return <ProductForm key={id ?? "new"} initial={data.rec} categories={data.cats} bundleOpts={data.opts} providerOpts={data.provs} templateOpts={data.tpls} />;
 }

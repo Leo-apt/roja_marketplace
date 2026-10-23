@@ -109,5 +109,7 @@ export const engineConfigsService = {
         });
         return toUi(r.data);
     },
+    setStatus: (id: string, active: boolean) =>
+        apiCall<ApiConfig>(`${BASE}/${id}/update-config`, { method: "PATCH", body: JSON.stringify({ status: active }) }),
     remove: (id: string) => apiCall<{ deleted: boolean }>(`${BASE}/${id}/remove-config`, { method: "DELETE" }).then((r) => r.data),
 };

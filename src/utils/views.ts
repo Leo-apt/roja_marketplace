@@ -15,6 +15,8 @@ export type ViewKey =
     | "engineConfig"
     | "productTemplates"
     | "engineSignals"
+    | "history"
+    | "documents"
     | "settings";
 
 export interface ViewInfo {
@@ -266,6 +268,32 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
         scope: "All product templates.",
     },
 
+    history: {
+        title: "History",
+        nav: "History",
+        path: "/history",
+        icon: "◷",
+        subtitle: "Every Stripe API call made with your clients' tokens.",
+        dateLabel: "Called on",
+        search: "action / object id",
+        statuses: ["all", "success", "failed"],
+        statusLabel: "Status",
+        scope: "All recorded API calls.",
+    },
+
+    documents: {
+        title: "Documents",
+        nav: "Documents",
+        path: "/tools/Documents",
+        icon: "⚙",
+        subtitle: "Track the Documents running in the system.",
+        dateLabel: "Started on",
+        search: "documents name",
+        statuses: ["all"],
+        statusLabel: "Status",
+        scope: "All Documents.",
+    },
+
     settings: {
         title: "Settings",
         nav: "Settings",
@@ -297,5 +325,6 @@ export const navGroups: { label: string; items: ViewKey[] }[] = [
             "engineSignals",
         ],
     },
-    { label: "Business", items: ["instances"] },
+    { label: "Business", items: ["instances", "history"] },
+    { label: "Tools", items: ["documents"] },
 ];

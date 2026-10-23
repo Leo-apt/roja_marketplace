@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import ListShell, { type Col } from "@/components/catalog/ListShell";
 import type { FilterField } from "@/components/catalog/ListDrawers";
-import { StatusBadge } from "@/components/catalog/DetailBits";
+import type { Status } from "@/data/catalog";
+import { useApp } from "@/hooks/useApp";
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import { productTemplatesService, type TemplateRec } from "@/services/productTemplates.service";
 
@@ -22,12 +23,12 @@ const cols: Col<TemplateRec>[] = [
     { key: "buttonText", label: "Button Text", render: (r) => <Swatch v={r.buttonText} /> },
     { key: "textPrimary", label: "Text Primary", render: (r) => <Swatch v={r.textPrimary} /> },
     { key: "textSecondary", label: "Text Secondary", render: (r) => <Swatch v={r.textSecondary} /> },
-    { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
 ];
 const PAGE_SIZE = 10;
 const fields: FilterField[] = [];
 
 export default function ProductTemplatesList() {
+    const { toastError } = useApp();
     const [data, setData] = useState<{ rows: TemplateRec[]; total: number } | null>(null);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -47,6 +48,13 @@ export default function ProductTemplatesList() {
     if (error) return <ErrorBox message={error} onRetry={() => { setError(""); setPage(1); setQ(""); }} />;
     if (!data) return <LoadingBox />;
 
+    const toggleStatus = (id: string, next: boolean) => {
+        const put = (v: boolean) =>
+            setData((d) => d && { ...d, rows: d.rows.map((r) => (r.id === id ? { ...r, status: (v ? "Active" : "Inactive") as Status } : r)) });
+        put(next);
+        productTemplatesService.setStatus(id, next).catch((e) => { put(!next); toastError(e instanceof Error ? e.message : "Status update failed"); });
+    };
+
     return (
         <ListShell
             rows={data.rows}
@@ -57,6 +65,7 @@ export default function ProductTemplatesList() {
             searchPlaceholder="Search templates…"
             filterFields={fields}
             match={() => true}
+            statusToggle={{ isActive: (r) => r.status === "Active", onToggle: toggleStatus }}
             server={{ total: data.total, pageSize: PAGE_SIZE, loading, onChange: (p, s) => { setPage(p); setQ(s); } }}
         />
     );

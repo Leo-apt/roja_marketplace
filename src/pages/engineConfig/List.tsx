@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import ListShell, { type Col } from "@/components/catalog/ListShell";
-import { StatusBadge } from "@/components/catalog/DetailBits";
+import type { Status } from "@/data/catalog";
 import { AdminNotice, ErrorBox, LoadingBox, useIsAdmin } from "@/components/catalog/PageState";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { useApp } from "@/hooks/useApp";
@@ -15,7 +15,6 @@ const cols: Col<EngineConfig>[] = [
     { key: "providerId", label: "Provider ID", render: (r) => providerName(r.providerId) },
     { key: "category", label: "Category", render: (r) => r.category || "-" },
     { key: "baseScore", label: "Base Score", align: "right", render: (r) => r.baseScore || "-" },
-    { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
 ];
 
 const PAGE_SIZE = 10;
@@ -52,6 +51,13 @@ export default function EngineConfigList() {
     if (error) return <ErrorBox message={error} onRetry={() => { setError(""); setPage(1); setQ(""); setTick((t) => t + 1); }} />;
     if (!data) return <LoadingBox />;
 
+    const toggleStatus = (id: string, next: boolean) => {
+        const put = (v: boolean) =>
+            setData((d) => d && { ...d, rows: d.rows.map((r) => (r.id === id ? { ...r, status: (v ? "Active" : "Inactive") as Status } : r)) });
+        put(next); // toggle moves immediately
+        engineConfigsService.setStatus(id, next).catch((e) => { put(!next); toastError(msg(e)); }); // goes back if the save fails
+    };
+
     const confirmDelete = async () => {
         if (!del) return;
         setDeleting(true);
@@ -78,6 +84,7 @@ export default function EngineConfigList() {
                 searchPlaceholder="Search configs…"
                 filterFields={[]}
                 match={() => true}
+                statusToggle={{ isActive: (r) => r.status === "Active", onToggle: toggleStatus }}
                 server={{
                     total: data.total, pageSize: PAGE_SIZE, loading,
                     onChange: (p, s) => { setPage(p); setQ(s); },

@@ -18,7 +18,7 @@ import {
   SlidersHorizontal,
   LayoutTemplate,
   TrendingUp,
-  Settings, Building2, Activity
+  Settings, Building2, Activity, History as HistoryIcon, Workflow
 } from "lucide-react";
 import { viewInfo, type ViewKey } from "@/utils/views";
 import { displayGroups } from "@/utils/navGroups";
@@ -42,6 +42,8 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
   engineConfig: SlidersHorizontal,
   productTemplates: LayoutTemplate,
   engineSignals: Activity,
+  history: HistoryIcon,
+  documents: Workflow,
   settings: Settings
 };
 

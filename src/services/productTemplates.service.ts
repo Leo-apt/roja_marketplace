@@ -1,4 +1,9 @@
+import { apiCall, ApiError } from "@/services/auth.service";
+import { who } from "@/services/categories.service";
 import type { Status } from "@/data/catalog";
+
+const API = ((import.meta.env.VITE_API_URL as string | undefined) ?? "").replace(/\/$/, "");
+const BASE = "/product-templates";
 
 export type ColorKey = "cardBg" | "buttonBg" | "buttonText" | "textPrimary" | "textSecondary";
 export const COLOR_FIELDS: { key: ColorKey; label: string }[] = [
@@ -24,70 +29,53 @@ export class TemplateError extends Error {
     constructor(field: string, message: string) { super(message); this.field = field; }
 }
 
-const ACTOR = "Marketplace Admin";
-const delay = (ms = 450) => new Promise((r) => setTimeout(r, ms));
+interface ApiTemplate extends Partial<Record<ColorKey, string>> {
+    id: string; name: string; status: "active" | "inactive"; bgImage?: string; frontImage?: string;
+    createdAt?: string; updatedAt?: string; createdBy?: unknown; updatedBy?: unknown;
+}
+type ApiPage = ApiTemplate[] | { data: ApiTemplate[]; total: number };
 
-const seed = (n: number, name: string, status: Status, at: string, c: Partial<Record<ColorKey, string>>): TemplateRec => ({
-    id: `tpl_${n}`, name, status, bgImageUrl: "", frontImageUrl: "",
-    cardBg: "", buttonBg: "", buttonText: "", textPrimary: "", textSecondary: "", ...c,
-    createdBy: ACTOR, createdAt: at, updatedBy: ACTOR, updatedAt: at,
+const toUi = (a: ApiTemplate): TemplateRec => ({
+    id: a.id, name: a.name, status: (a.status === "active" ? "Active" : "Inactive") as Status,
+    bgImageUrl: a.bgImage ? `${API}${a.bgImage}` : "", frontImageUrl: a.frontImage ? `${API}${a.frontImage}` : "",
+    cardBg: a.cardBg ?? "", buttonBg: a.buttonBg ?? "", buttonText: a.buttonText ?? "",
+    textPrimary: a.textPrimary ?? "", textSecondary: a.textSecondary ?? "",
+    createdBy: who(a.createdBy), createdAt: a.createdAt ?? "", updatedBy: who(a.updatedBy), updatedAt: a.updatedAt ?? "",
 });
 
-let db: TemplateRec[] = [
-    seed(1, "FinancialConnect", "Active", "2026-10-18T10:20:00Z", { cardBg: "#EEF2FA", buttonBg: "#3B2BD9", buttonText: "#FFFFFF", textPrimary: "#101828", textSecondary: "#667085" }),
-    seed(2, "Quick Loans", "Active", "2026-10-17T08:05:00Z", { cardBg: "#FFF7E6", buttonBg: "#D97706", buttonText: "#FFFFFF", textPrimary: "#1F2937", textSecondary: "#6B7280" }),
-    seed(3, "Savings Boost", "Inactive", "2026-10-15T14:40:00Z", { cardBg: "#ECFDF3", buttonBg: "#047857", buttonText: "#FFFFFF" }),
-];
-
-const check = (i: TemplateInput, excludeId?: string) => {
-    if (db.some((t) => t.id !== excludeId && t.name.toLowerCase() === i.name.trim().toLowerCase()))
-        throw new TemplateError("name", "Template name already exists");
+const toForm = (i: TemplateInput) => {
+    const f = new FormData();
+    f.append("name", i.name.trim());
+    f.append("status", String(i.status).toLowerCase());
+    for (const c of COLOR_FIELDS) f.append(c.key, i[c.key].trim()); // empty = clears the colour
+    if (i.bgImage) f.append("bgImage", i.bgImage);
+    if (i.frontImage) f.append("frontImage", i.frontImage);
+    return f;
 };
 
-const colors = (i: TemplateInput) =>
-    Object.fromEntries(COLOR_FIELDS.map((c) => [c.key, i[c.key].trim()])) as Record<ColorKey, string>;
+// a duplicate name (409) is shown under the Template Name field
+const fieldError = (e: unknown) => (e instanceof ApiError && e.status === 409 ? new TemplateError("name", e.message) : e);
 
-// TODO: replace the bodies below with apiCall(...) once the backend is ready; keep the signatures.
 export const productTemplatesService = {
     async listPage(page = 1, limit = 10, search = "") {
-        await delay();
-        const q = search.trim().toLowerCase();
-        const all = db
-            .filter((t) => !q || t.name.toLowerCase().includes(q))
-            .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-        return { rows: all.slice((page - 1) * limit, page * limit), total: all.length };
+        const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
+        if (search) qs.set("search", search);
+        const r = await apiCall<ApiPage>(`${BASE}/get-all-product-templates?${qs}`);
+        const d = r.data;
+        const items = Array.isArray(d) ? d : d.data;
+        const total = Array.isArray(d) ? (r.meta?.total ?? d.length) : d.total;
+        return { rows: items.map(toUi), total };
     },
-    async get(id: string) {
-        await delay(300);
-        const r = db.find((t) => t.id === id);
-        if (!r) throw new Error("Template not found");
-        return r;
+    get: (id: string) => apiCall<ApiTemplate>(`${BASE}/${id}/get-product-template`).then((r) => toUi(r.data)),
+    setStatus: (id: string, active: boolean) => {
+        const f = new FormData();
+        f.append("status", active ? "active" : "inactive");
+        return apiCall<ApiTemplate>(`${BASE}/${id}/update-product-template`, { method: "PATCH", body: f });
     },
-    async create(i: TemplateInput) {
-        await delay();
-        check(i);
-        const now = new Date().toISOString();
-        const rec: TemplateRec = {
-            id: `tpl_${Date.now()}`, name: i.name.trim(), status: i.status as Status,
-            bgImageUrl: i.bgImage ? URL.createObjectURL(i.bgImage) : "",
-            frontImageUrl: i.frontImage ? URL.createObjectURL(i.frontImage) : "",
-            ...colors(i), createdBy: ACTOR, createdAt: now, updatedBy: ACTOR, updatedAt: now,
-        };
-        db = [rec, ...db];
-        return rec;
-    },
-    async update(id: string, i: TemplateInput) {
-        await delay();
-        check(i, id);
-        const old = db.find((t) => t.id === id);
-        if (!old) throw new Error("Template not found");
-        const rec: TemplateRec = {
-            ...old, name: i.name.trim(), status: i.status as Status,
-            bgImageUrl: i.bgImage ? URL.createObjectURL(i.bgImage) : old.bgImageUrl, // no new file: keep the old image
-            frontImageUrl: i.frontImage ? URL.createObjectURL(i.frontImage) : old.frontImageUrl,
-            ...colors(i), updatedBy: ACTOR, updatedAt: new Date().toISOString(),
-        };
-        db = db.map((t) => (t.id === id ? rec : t));
-        return rec;
-    },
+    create: (i: TemplateInput) =>
+        apiCall<ApiTemplate>(`${BASE}/create-product-template`, { method: "POST", body: toForm(i) })
+            .then((r) => toUi(r.data)).catch((e) => { throw fieldError(e); }),
+    update: (id: string, i: TemplateInput) =>
+        apiCall<ApiTemplate>(`${BASE}/${id}/update-product-template`, { method: "PATCH", body: toForm(i) })
+            .then((r) => toUi(r.data)).catch((e) => { throw fieldError(e); }),
 };

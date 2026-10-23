@@ -34,6 +34,7 @@ interface Props<T extends { id: string }> {
     canPublish?: (id: string) => boolean;
     onCreate?: () => void;
     onEdit?: (id: string) => void;
+    statusToggle?: { isActive: (r: T) => boolean; onToggle: (id: string, next: boolean) => void };
     /** Server mode: rows is the current page only; paging and search go through onChange. */
     server?: { total: number; pageSize: number; loading?: boolean; onChange: (page: number, q: string, f: Record<string, string>) => void };
 }
@@ -43,7 +44,7 @@ const th = "whitespace-nowrap border-b border-linesoft bg-surfacealt px-3 py-3 t
 const td = "whitespace-nowrap border-b border-linesoft px-3 py-3 align-middle text-xs text-td-text";
 
 export default function ListShell<T extends { id: string }>({
-    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, extraActions, onPublish, canPublish, onCreate, onEdit, server,
+    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, extraActions, onPublish, canPublish, onCreate, onEdit, server, statusToggle,
 }: Props<T>) {
     const nav = useNavigate();
     const { openDrawer } = useApp();
@@ -178,6 +179,7 @@ export default function ListShell<T extends { id: string }>({
                                         ) : c.label}
                                     </th>
                                 ))}
+                                {statusToggle && <th className={th}>Status</th>}
                                 <th className={th}>Action</th>
                             </tr>
                         </thead>
@@ -195,6 +197,21 @@ export default function ListShell<T extends { id: string }>({
                                             ) : c.render(r)}
                                         </td>
                                     ))}
+                                    {statusToggle && (
+                                        <td className={td}>
+                                            {(() => {
+                                                const on = statusToggle.isActive(r);
+                                                return (
+                                                    <button type="button" role="switch" aria-checked={on}
+                                                        onClick={() => statusToggle.onToggle(r.id, !on)}
+                                                        className={`relative inline-flex h-6 w-[78px] items-center rounded-full px-2 text-[10px] font-bold text-white transition-colors ${on ? "justify-start bg-emerald-500" : "justify-end bg-gray-400"}`}>
+                                                        <span>{on ? "Active" : "Inactive"}</span>
+                                                        <span className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-all ${on ? "right-0.5" : "left-0.5"}`} />
+                                                    </button>
+                                                );
+                                            })()}
+                                        </td>
+                                    )}
                                     <td className={td}>
                                         <button data-action-menu aria-label="Actions" title="Actions"
                                             onClick={(e) => openMenu(e, r.id)}

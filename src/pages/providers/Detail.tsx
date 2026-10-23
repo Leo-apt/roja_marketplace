@@ -5,7 +5,7 @@ import { DSection, DTile, DTiles, NotFound, StatusBadge } from "@/components/cat
 import { btn } from "@/components/catalog/FormBits";
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import { useApp } from "@/hooks/useApp";
-import { providersService, type ProviderRec } from "@/services/providers.service";
+import { providersService, type ProviderRec, type CredsView as SavedCreds } from "@/services/providers.service";
 import {
     blankCreds, CRED_FIELDS, credsErrors, CredsCardShell, CredsFields, CredsSkeleton, CredsView, MODES,
     type CredKey, type CredValues, type Mode,
@@ -15,33 +15,16 @@ import { fmtPhone } from "./List";
 const BASE = "/catalog/providers";
 const na = (v?: string) => (v ? v : "N/A");
 
-function CredCard({ id, mode }: { id: string; mode: Mode }) {
+function CredCard({ id, mode, initial }: { id: string; mode: Mode; initial: SavedCreds | null }) {
     const { toast, toastError } = useApp();
-    const [has, setHas] = useState({ exists: false, secret: false, refresh: false });
-    const [saved, setSaved] = useState<CredValues>(blankCreds);
-    const [c, setC] = useState<CredValues>(blankCreds);
+    const [has, setHas] = useState({ exists: !!initial, secret: !!initial?.hasSecret, refresh: !!initial?.hasRefresh });
+    const [saved, setSaved] = useState<CredValues>(initial?.creds ?? blankCreds);
+    const [c, setC] = useState<CredValues>(initial?.creds ?? blankCreds);
     const [touched, setTouched] = useState<Record<string, boolean>>({});
     const [submitted, setSubmitted] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [editing, setEditing] = useState(false);
-
-    useEffect(() => {
-        let live = true;
-        setLoading(true);
-        const minDelay = new Promise((res) => setTimeout(res, 600));
-        Promise.all([providersService.getCreds(id, mode), minDelay])
-            .then(([r]) => {
-                if (!live) return;
-                const base: CredValues = r ? r.creds : blankCreds;
-                setSaved(base); setC(base);
-                setHas({ exists: !!r, secret: !!r?.hasSecret, refresh: !!r?.hasRefresh });
-                setEditing(!r); // nothing saved yet: open the fields
-            })
-            .catch((e) => { if (live) toastError(e instanceof Error ? e.message : "Failed to load credentials"); })
-            .finally(() => { if (live) setLoading(false); });
-        return () => { live = false; };
-    }, [id, mode]); // eslint-disable-line react-hooks/exhaustive-deps
+    const loading = false; // data arrives with the provider
+    const [editing, setEditing] = useState(!initial); // nothing saved yet: open the fields
 
     const errors = credsErrors(c, has);
     const err = (k: CredKey) => (touched[k] || submitted ? errors[k] ?? "" : "");
@@ -94,7 +77,7 @@ function CredCard({ id, mode }: { id: string; mode: Mode }) {
 export default function ProvidersDetail() {
     const { id } = useParams();
     const nav = useNavigate();
-    const [rec, setRec] = useState<ProviderRec | null>(null);
+    const [data, setData] = useState<{ rec: ProviderRec; sandbox: SavedCreds | null; live: SavedCreds | null } | null>(null);
     const [error, setError] = useState("");
     const [sp] = useSearchParams();
     const [tab, setTab] = useState<"overview" | "creds">(sp.get("tab") === "creds" ? "creds" : "overview");
@@ -102,15 +85,16 @@ export default function ProvidersDetail() {
     useEffect(() => {
         if (!id) return;
         let live = true;
-        providersService.get(id)
-            .then((r) => { if (live) setRec(r); })
+        providersService.getWithCreds(id)
+            .then((r) => { if (live) setData(r); })
             .catch((e) => { if (live) setError(e instanceof Error ? e.message : "Failed to load"); });
         return () => { live = false; };
     }, [id]);
 
     if (error) return <ErrorBox message={error} backTo={BASE} />;
     if (!id) return <NotFound backTo={BASE} />;
-    if (!rec || rec.id !== id) return <LoadingBox />;
+    if (!data || data.rec.id !== id) return <LoadingBox />;
+    const rec = data.rec;
 
     return (
         <div className="flex flex-col gap-4">
@@ -158,7 +142,7 @@ export default function ProvidersDetail() {
             </div>
             {tab === "creds" && (
                 <div className="grid items-start gap-4 lg:grid-cols-2">
-                    {MODES.map((m) => <CredCard key={m.value} id={rec.id} mode={m.value} />)}
+                    {MODES.map((m) => <CredCard key={m.value} id={rec.id} mode={m.value} initial={m.value === "sandbox" ? data.sandbox : data.live} />)}
                 </div>
             )}
         </div>

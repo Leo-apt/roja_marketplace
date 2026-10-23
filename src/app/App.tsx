@@ -37,6 +37,10 @@ import LoginPage from "@/pages/auth/LoginPage";
 // import RegisterPage from "@/pages/auth/RegisterPage";
 import { PublicOnly, RequireAuth } from "@/components/auth/RouteGuards";
 import SettingsPage from "@/pages/settings/SettingsPage";
+import HistoryClients from "@/pages/history/Clients";
+import HistoryEnvironments from "@/pages/history/Environments";
+import HistoryCalls from "@/pages/history/Calls";
+import ToolsDocuments from "@/pages/tools/Documents";
 
 export default function App() {
     return (
@@ -99,6 +103,10 @@ export default function App() {
                     <Route path="/instances" element={<InstancesList />} />
                     <Route path="/instances/:id" element={<InstanceDetail />} />
                     <Route path="/instances/:id/edit" element={<InstanceDetail />} />
+                    <Route path="/history" element={<HistoryClients />} />
+                    <Route path="/history/:entityId" element={<HistoryEnvironments />} />
+                    <Route path="/history/:entityId/:subEntityId" element={<HistoryCalls />} />
+                    <Route path="/tools/documents" element={<ToolsDocuments />} />
                     <Route path="/settings" element={<SettingsPage />} />
                 </Route>
             </Route>

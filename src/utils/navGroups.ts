@@ -10,7 +10,7 @@ const RENAMES: Record<string, string> = {
 };
 
 // Display order. Any group not listed goes after these, in its original order.
-const ORDER = ["General", "Business", "Marketplace"];
+const ORDER = ["General", "Business", "Marketplace", "Tools"];
 
 const rank = (label: string) => {
     const i = ORDER.indexOf(label);
