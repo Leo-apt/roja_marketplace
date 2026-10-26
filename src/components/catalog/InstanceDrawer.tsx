@@ -2,17 +2,11 @@ import { useMemo, useState } from "react";
 import Drawer from "@/components/shared/Drawer";
 import { btn, Field, FileInput, TextArea, TextInput } from "./FormBits";
 
-export interface InstanceDraft { name: string; description: string; imageUrl: string }
-
-const toBase64 = (f: File) => new Promise<string>((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result)); // "data:image/png;base64,...."
-    r.onerror = () => reject(new Error("Could not read the image"));
-    r.readAsDataURL(f);
-});
+export interface InstanceDraft { name: string; description: string; file: File | null }
 
 export default function InstanceDrawer({ onSubmit, initial }: {
-    onSubmit: (d: InstanceDraft) => Promise<void>; initial?: InstanceDraft | null;
+    onSubmit: (d: InstanceDraft) => Promise<void>;
+    initial?: { name: string; description: string; imageUrl?: string } | null;
 }) {
     const [name, setName] = useState(initial?.name ?? "");
     const [desc, setDesc] = useState(initial?.description ?? "");
@@ -31,8 +25,7 @@ export default function InstanceDrawer({ onSubmit, initial }: {
         if (e.name || e.image) return;
         setSaving(true);
         try {
-            const imageUrl = file ? await toBase64(file) : (initial?.imageUrl ?? "");
-            await onSubmit({ name: name.trim(), description: desc.trim(), imageUrl });
+            await onSubmit({ name: name.trim(), description: desc.trim(), file });
             close();
         } catch (x) {
             setErr({ name: x instanceof Error ? x.message : "Save failed", image: "" });

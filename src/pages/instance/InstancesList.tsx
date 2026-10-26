@@ -53,10 +53,9 @@ export default function InstancesList() {
             const rec = await entityService.update(editing.id, {
                 name: d.name,
                 description: d.description,
-                // only send the image if it changed, so a name-only edit does not resend the large base64
-                imageUrl: d.imageUrl !== editing.imageUrl ? d.imageUrl : undefined,
+                file: d.file, // only set when a new image was picked
             });
-            setRows((r) => r.map((x) => (x.id === editing.id ? { ...rec, products: x.products } : x)));
+            setRows((r) => r.map((x) => (x.id === editing.id ? { ...rec, products: x.products, environments: x.environments } : x)));
             toast("Client updated");
             return;
         }
