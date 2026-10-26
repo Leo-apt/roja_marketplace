@@ -37,14 +37,12 @@ export const entityService = {
         const { status, file, ...rest } = p;
         let body: BodyInit;
         if (file) {
-            // new image: multipart (name, description, file)
             const fd = new FormData();
             if (rest.name !== undefined) fd.append("name", rest.name);
             if (rest.description !== undefined) fd.append("description", rest.description);
             fd.append("file", file);
             body = fd;
         } else {
-            // no new image: plain JSON as before (used by the status toggle too)
             body = JSON.stringify({ ...rest, ...(status ? { isActive: status === "Active" } : {}) });
         }
         return apiCall<ApiEntity>(`/entities/${id}/update-entity`, { method: "PATCH", body })
