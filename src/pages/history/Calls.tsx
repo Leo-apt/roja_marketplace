@@ -12,6 +12,7 @@ import { useApp } from "@/hooks/useApp";
 import { historyService, type HistoryRow } from "@/services/history.service";
 import CallDrawer from "./CallDrawer";
 import { CallStatus, money, td, th, when } from "./format";
+import { useEnv } from "@/env/EnvContext";
 
 const SIZE = 10;
 const ACTIONS = [
@@ -27,7 +28,7 @@ export default function HistoryCalls() {
     const { subEntityId = "" } = useParams();
     const [sp] = useSearchParams();
     const { openDrawer } = useApp();
-    const [env, setEnv] = useState<"sandbox" | "live">(sp.get("env") === "live" ? "live" : "sandbox");
+    const { mode: env, setMode: setEnv } = useEnv();
     const [action, setAction] = useState("all");
     const [status, setStatus] = useState("all");
     const [from, setFrom] = useState("");
@@ -57,6 +58,14 @@ export default function HistoryCalls() {
     const change = <T,>(set: (v: T) => void) => (v: T) => { set(v); setPage(1); };
     const pages = Math.max(1, Math.ceil(data.total / SIZE));
     const start = (page - 1) * SIZE;
+
+    // opened from a Live or Sandbox cell: switch the whole site to it
+    useEffect(() => {
+        const e = sp.get("env");
+        if (e === "live" || e === "sandbox") setEnv(e);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // switching from the top bar goes back to page 1
+    useEffect(() => { setPage(1); }, [env]);
 
     if (error) return <ErrorBox message={error} onRetry={() => { setError(""); setTick((t) => t + 1); }} backTo="/history" />;
 

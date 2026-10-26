@@ -27,6 +27,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useProfileImage } from "@/hooks/useProfileImage";
 import { useAuth } from "@/hooks/useAuth";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import { useEnv } from "@/env/EnvContext";
 
 type QuickAction = {
   label: string;
@@ -573,6 +574,7 @@ const TOPBAR_STYLES = `
 export default function Topbar({ onMenu }: { onMenu: () => void }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { mode, setMode } = useEnv();
   const { pathname } = useLocation();
   const [confirmOut, setConfirmOut] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -716,6 +718,27 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
         >
           <LogOut className="tb-nudge size-[18px]" />
         </IconButton>
+
+        <button
+          type="button"
+          role="switch"
+          aria-checked={mode === "live"}
+          aria-label="Data environment"
+          title="Switch between Sandbox and Live"
+          onClick={() => setMode(mode === "live" ? "sandbox" : "live")}
+          className="tb-btn relative hidden h-9 w-[132px] shrink-0 items-center rounded-full border border-gray-200/80 bg-gray-100 p-0.5 text-[11px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-brand/30 md:inline-flex"
+        >
+          <span
+            className={`absolute top-0.5 h-[30px] w-[62px] rounded-full shadow-sm transition-all duration-300 ${mode === "live" ? "left-[66px] bg-good" : "left-0.5 bg-caution"
+              }`}
+          />
+          <span className={`relative z-10 w-1/2 text-center transition-colors ${mode === "sandbox" ? "text-white" : "text-muted"}`}>
+            Sandbox
+          </span>
+          <span className={`relative z-10 w-1/2 text-center transition-colors ${mode === "live" ? "text-white" : "text-muted"}`}>
+            Live
+          </span>
+        </button>
 
         <ProfileMenu
           email={email}

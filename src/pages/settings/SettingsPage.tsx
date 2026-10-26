@@ -21,10 +21,11 @@ import {
   CreditCard,
   FlaskConical,
   Pencil,
-  Rocket,
+  Rocket, Activity, Building2, Layers, LayoutTemplate,
   type LucideIcon,
 } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { viewInfo, type ViewKey } from "@/utils/views";
 import { useAuth } from "@/hooks/useAuth";
 import { useApp } from "@/hooks/useApp";
 import { gatewayService, type GatewayView } from "@/services/payment-gateway.service";
@@ -51,6 +52,7 @@ type SettingsState = {
   currency: string;
   dateFormat: string;
   timezone: string;
+  withdrawalMin: string;
   columns: ColumnsState;
 };
 
@@ -65,6 +67,7 @@ function makeDefaults(displayName = ""): SettingsState {
     currency: "INR",
     dateFormat: "DD/MM/YYYY",
     timezone: "Asia/Kolkata",
+    withdrawalMin: "100",
     columns: mergeColumns(null),
   };
 }
@@ -98,6 +101,7 @@ function loadSettings(fallbackName: string): SettingsState {
       currency: str(stored.currency, base.currency),
       dateFormat: str(stored.dateFormat, base.dateFormat),
       timezone: str(stored.timezone, base.timezone),
+      withdrawalMin: str(stored.withdrawalMin, base.withdrawalMin),
       columns: mergeColumns(stored.columns),
     };
   } catch {
@@ -124,6 +128,7 @@ function settingsEqual(a: SettingsState, b: SettingsState): boolean {
     "currency",
     "dateFormat",
     "timezone",
+    "withdrawalMin",
   ];
   for (const key of scalars) {
     if (a[key] !== b[key]) return false;
@@ -556,6 +561,24 @@ function PreferencesPanel({ draft, set }: PanelProps) {
           />
         </div>
       </Card>
+
+      <Card
+        title="Client withdrawals"
+        description="Clients can withdraw only after their balance reaches this amount."
+      >
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Minimum balance to withdraw" hint="Display only for now. Payouts are not enabled yet.">
+            <input
+              className={inputClass}
+              type="number"
+              min={0}
+              inputMode="decimal"
+              value={draft.withdrawalMin}
+              onChange={(e) => set("withdrawalMin", e.target.value)}
+            />
+          </Field>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -974,6 +997,16 @@ function PaymentGatewayPanel() {
   );
 }
 
+const MARKET: { key: ViewKey; icon: LucideIcon }[] = [
+  { key: "providers", icon: Building2 },
+  { key: "productCategories", icon: FolderTree },
+  { key: "bundles", icon: Layers },
+  { key: "catalogProducts", icon: Package },
+  { key: "engineConfig", icon: SlidersHorizontal },
+  { key: "productTemplates", icon: LayoutTemplate },
+  { key: "engineSignals", icon: Activity },
+];
+
 /* ───────────────────────── Page ───────────────────────── */
 
 const PAGE_STYLES = `
@@ -1009,6 +1042,7 @@ const PAGE_STYLES = `
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth();
   const { setMode } = useTheme();
+  const navigate = useNavigate();
   const email = user?.user_email;
 
   const fallbackName = useMemo(() => {
@@ -1224,55 +1258,69 @@ export default function SettingsPage() {
       <style>{PAGE_STYLES}</style>
 
       <div className="grid items-start gap-6 md:grid-cols-[260px_minmax(0,1fr)]">
-        {/* Tab list */}
-        <div
-          role="tablist"
-          aria-orientation="vertical"
-          onKeyDown={onKeyTabs}
-          className="flex gap-1 overflow-x-auto rounded-2xl border border-gray-200/80 bg-white p-2 shadow-sm md:sticky md:top-24 md:flex-col md:overflow-visible"
-        >
-          {TABS.map((t) => {
-            const Icon = t.icon;
-            const active = tab === t.id;
-            return (
-              <button
-                key={t.id}
-                ref={(el) => {
-                  tabRefs.current[t.id] = el;
-                }}
-                id={`settings-tab-${t.id}`}
-                role="tab"
-                type="button"
-                aria-selected={active}
-                aria-controls={`settings-panel-${t.id}`}
-                tabIndex={active ? 0 : -1}
-                onClick={() => selectTab(t.id)}
-                className={`group relative flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-left outline-none transition-[background-color,color,transform] duration-300 st-ease focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.98] md:w-full ${active ? "bg-brand/5 text-brand" : "text-ink hover:bg-gray-50"
-                  }`}
-              >
-                <span
-                  className={`absolute left-0 top-1/2 w-[3px] -translate-y-1/2 rounded-full bg-brand transition-[height,opacity] duration-300 st-ease max-md:hidden ${active ? "h-5 opacity-100" : "h-0 opacity-0"
-                    }`}
-                />
-                <span
-                  className={`grid size-9 shrink-0 place-items-center rounded-lg transition-[background-color,transform] duration-300 st-spring ${active
-                    ? "scale-105 bg-brand/10"
-                    : "bg-gray-100 group-hover:scale-105"
+        <div className="flex flex-col gap-4 md:sticky md:top-24">
+          {/* Tab list */}
+          <div
+            role="tablist"
+            aria-orientation="vertical"
+            onKeyDown={onKeyTabs}
+            className="flex gap-1 overflow-x-auto rounded-2xl border border-gray-200/80 bg-white p-2 shadow-sm md:flex-col md:overflow-visible"
+          >
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              const active = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  ref={(el) => {
+                    tabRefs.current[t.id] = el;
+                  }}
+                  id={`settings-tab-${t.id}`}
+                  role="tab"
+                  type="button"
+                  aria-selected={active}
+                  aria-controls={`settings-panel-${t.id}`}
+                  tabIndex={active ? 0 : -1}
+                  onClick={() => selectTab(t.id)}
+                  className={`group relative flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-left outline-none transition-[background-color,color,transform] duration-300 st-ease focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.98] md:w-full ${active ? "bg-brand/5 text-brand" : "text-ink hover:bg-gray-50"
                     }`}
                 >
+                  <span
+                    className={`absolute left-0 top-1/2 w-[3px] -translate-y-1/2 rounded-full bg-brand transition-[height,opacity] duration-300 st-ease max-md:hidden ${active ? "h-5 opacity-100" : "h-0 opacity-0"
+                      }`}
+                  />
+                  <span
+                    className={`grid size-9 shrink-0 place-items-center rounded-lg transition-[background-color,transform] duration-300 st-spring ${active
+                      ? "scale-105 bg-brand/10"
+                      : "bg-gray-100 group-hover:scale-105"
+                      }`}
+                  >
+                    <Icon className="size-[18px]" />
+                  </span>
+                  <span className="leading-tight">
+                    <span className="block text-xs font-semibold">{t.label}</span>
+                    <span className="block text-[11px] text-muted max-md:hidden">
+                      {t.hint}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <nav aria-label="Marketplace" className="flex gap-1 overflow-x-auto rounded-2xl border border-gray-200/80 bg-white p-2 shadow-sm md:flex-col md:overflow-visible">
+            <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted max-md:hidden">Marketplace</p>
+            {MARKET.map(({ key, icon: Icon }) => (
+              <button key={key} type="button" onClick={() => navigate(viewInfo[key].path)}
+                className="flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-ink outline-none transition hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-brand/30 md:w-full">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-gray-100">
                   <Icon className="size-[18px]" />
                 </span>
-                <span className="leading-tight">
-                  <span className="block text-xs font-semibold">{t.label}</span>
-                  <span className="block text-[11px] text-muted max-md:hidden">
-                    {t.hint}
-                  </span>
-                </span>
+                {viewInfo[key].nav}
               </button>
-            );
-          })}
+            ))}
+          </nav>
         </div>
-
         {/* Panel. Changing `key` replays the entrance animation on every tab switch. */}
         <div
           key={tab}

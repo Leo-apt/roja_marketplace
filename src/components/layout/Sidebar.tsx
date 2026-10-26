@@ -18,7 +18,7 @@ import {
   SlidersHorizontal,
   LayoutTemplate,
   TrendingUp,
-  Settings, Building2, Activity, History as HistoryIcon, Workflow, FileText
+  Settings, Building2, Activity, History as HistoryIcon, Workflow, FileText, BarChart3
 } from "lucide-react";
 import { viewInfo, type ViewKey } from "@/utils/views";
 import { displayGroups } from "@/utils/navGroups";
@@ -46,6 +46,7 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
   documents: Workflow,
   settings: Settings,
   documentsManage: FileText,
+  reports: BarChart3,
 };
 
 type Tip = { label: string; top: number; left: number };
@@ -92,6 +93,11 @@ const isActivePath = (pathname: string, path: string) =>
   The footer button uses the same numbers (1px border + 7px padding = 8px).
 */
 
+const SETTINGS_SUB: ViewKey[] = ["providers", "productCategories", "bundles", "catalogProducts", "margins", "engineConfig", "productTemplates", "engineSignals"];
+const isActiveKey = (pathname: string, k: ViewKey) =>
+  isActivePath(pathname, viewInfo[k].path) ||
+  (k === "settings" && SETTINGS_SUB.some((s) => isActivePath(pathname, viewInfo[s].path)));
+
 export default function Sidebar({
   open,
   onNavigate,
@@ -133,7 +139,7 @@ export default function Sidebar({
   // Navigating to a page re-opens the group that contains it
   useEffect(() => {
     const g = visibleGroups.find((grp) =>
-      grp.items.some((k) => isActivePath(pathname, viewInfo[k].path)),
+      grp.items.some((k) => isActiveKey(pathname, k)),
     );
     if (g && closed.includes(g.label)) {
       setClosed((prev) => {
@@ -319,7 +325,7 @@ export default function Sidebar({
               // when the sidebar is icon-only, every group stays open
               const groupOpen = collapsed || !closed.includes(g.label);
               const hasActive = g.items.some((k) =>
-                isActivePath(pathname, viewInfo[k].path),
+                isActiveKey(pathname, k),
               );
               const contentId = `sb-group-${gi}`;
 
@@ -375,7 +381,7 @@ export default function Sidebar({
                       {g.items.map((k) => {
                         const v = viewInfo[k];
                         const Icon = iconMap[k];
-                        const active = isActivePath(pathname, v.path);
+                        const active = isActiveKey(pathname, k);
                         const delay = Math.min(itemIndex++ * 28, 420);
                         return (
                           <button

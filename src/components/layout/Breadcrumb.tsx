@@ -17,7 +17,7 @@ import {
   UserStar,
   SlidersHorizontal,
   LayoutTemplate,
-  Settings, Building2, Activity, History as HistoryIcon, Workflow, FileText
+  Settings, Building2, Activity, History as HistoryIcon, Workflow, FileText, BarChart3
 } from "lucide-react";
 import { viewInfo, type ViewKey } from "@/utils/views";
 import { displayGroups } from "@/utils/navGroups";
@@ -43,9 +43,21 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
   documents: Workflow,
   settings: Settings,
   documentsManage: FileText,
+  reports: BarChart3,
 };
 
 type SubLabel = "Create" | "Edit" | "Details";
+
+/** Pages that now live under Settings → Marketplace. */
+const MARKET_KEYS: ViewKey[] = [
+  "providers",
+  "productCategories",
+  "bundles",
+  "catalogProducts",
+  "engineConfig",
+  "productTemplates",
+  "engineSignals",
+];
 
 const subStyles: Record<SubLabel, string> = {
   Create: "bg-emerald-50 text-emerald-700 ring-emerald-200",
@@ -68,7 +80,10 @@ export default function Breadcrumb() {
   if (!key) return null;
 
   const v = viewInfo[key];
-  const group = displayGroups.find((g) => g.items.includes(key));
+  const inSettings = MARKET_KEYS.includes(key);
+  const group = inSettings
+    ? null
+    : displayGroups.find((g) => g.items.includes(key));
   const PageIcon = iconMap[key];
   const rest = pathname.slice(v.path.length);
   const sub: SubLabel | null =
@@ -142,6 +157,18 @@ export default function Breadcrumb() {
             <Home className="crumb-ease size-3.5 transition-transform duration-300 group-hover:scale-110" />
             <span className="hidden sm:inline">Home</span>
           </NavLink>
+
+          {inSettings && (
+            <div className="flex items-center gap-1.5">
+              <ChevronRight className="size-3 shrink-0 text-crumb-sep" />
+              <NavLink
+                to={viewInfo.settings.path}
+                className={`crumb-ease rounded-lg px-2.5 py-1 text-crumb-text outline-none transition-all duration-300 ${linkHover}`}
+              >
+                {viewInfo.settings.nav}
+              </NavLink>
+            </div>
+          )}
 
           {group && (
             <div className="flex items-center gap-1.5">

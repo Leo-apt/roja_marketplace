@@ -6,10 +6,13 @@ import EmptyState from "@/components/shared/EmptyState";
 import { entityService } from "@/services/entity.service";
 import { historyService, type HistoryEnv } from "@/services/history.service";
 import { paidText, StatsCell, td, th, when } from "./format";
+import { useEnv } from "@/env/EnvContext";
 
 export default function HistoryEnvironments() {
     const { entityId = "" } = useParams();
     const nav = useNavigate();
+    const { mode } = useEnv();
+    const label = mode === "live" ? "Live" : "Sandbox";
     const [rows, setRows] = useState<HistoryEnv[] | null>(null);
     const [client, setClient] = useState("");
     const [error, setError] = useState("");
@@ -36,21 +39,20 @@ export default function HistoryEnvironments() {
                     <table className="w-full border-collapse text-left text-xs">
                         <thead>
                             <tr>
-                                <th className={`${th} pl-5`}>S.No</th><th className={th}>Environment</th>
-                                <th className={th}>Sandbox</th><th className={th}>Live</th>
-                                <th className={th}>Paid (Sandbox)</th><th className={th}>Paid (Live)</th><th className={th}>Last Activity</th>
+                                <th className={`${th} pl-5`}>S.No</th>
+                                <th className={th}>Environment</th>
+                                <th className={th}>{label}</th><th className={th}>Paid ({label})</th>
+                                <th className={th}>Last Activity</th>
                             </tr>
                         </thead>
                         <tbody>
                             {rows.map((r, i) => (
                                 <tr key={r.id} className="hover:bg-row-hover">
                                     <td className={`${td} pl-5`}>{i + 1}</td>
-                                    <td className={td}><button type="button" onClick={() => go(r.id, "sandbox")} className={link}>{r.name}</button></td>
-                                    <td className={td}><button type="button" onClick={() => go(r.id, "sandbox")} className="text-left"><StatsCell s={r.sandbox} /></button></td>
-                                    <td className={td}><button type="button" onClick={() => go(r.id, "live")} className="text-left"><StatsCell s={r.live} /></button></td>
-                                    <td className={td}>{paidText(r.sandbox.paid)}</td>
-                                    <td className={td}>{paidText(r.live.paid)}</td>
-                                    <td className={td}>{when([r.sandbox.lastAt, r.live.lastAt].filter(Boolean).sort().pop())}</td>
+                                    <td className={td}><button type="button" onClick={() => go(r.id, mode)} className={link}>{r.name}</button></td>
+                                    <td className={td}><button type="button" onClick={() => go(r.id, mode)} className="text-left"><StatsCell s={r[mode]} /></button></td>
+                                    <td className={td}>{paidText(r[mode].paid)}</td>
+                                    <td className={td}>{when(r[mode].lastAt)}</td>
                                 </tr>
                             ))}
                         </tbody>

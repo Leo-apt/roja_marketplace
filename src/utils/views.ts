@@ -19,6 +19,7 @@ export type ViewKey =
     | "documents"
     | "settings"
     | "documentsManage"
+    | "reports"
 
 export interface ViewInfo {
     title: string;
@@ -320,24 +321,24 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
         statusLabel: "Status",
         scope: "All API documentation.",
     },
+    reports: {
+        title: "Reports",
+        nav: "Reports",
+        path: "/marketplace/reports",
+        icon: "▤",
+        subtitle: "Sales, transactions and amounts to pay for each client environment.",
+        dateLabel: "Transaction date",
+        search: "client / environment / product",
+        statuses: ["all"],
+        statusLabel: "Status",
+        scope: "All transactions in the selected environment.",
+    },
 };
 
 export const navGroups: { label: string; items: ViewKey[] }[] = [
     // { label: "ARS Marketplace", items: ["overview", "products", "purchases", "subscriptions"] },
     // { label: "Finance & control", items: ["margin", "settlements", "reconciliation"] },
-    {
-        label: "Catalog",
-        items: [
-            "providers",
-            "productCategories",
-            "bundles",
-            "catalogProducts",
-            "margins",
-            "engineConfig",
-            "productTemplates",
-            "engineSignals",
-        ],
-    },
+    { label: "Marketplace", items: ["reports"] },
     { label: "Business", items: ["instances", "history"] },
     { label: "Tools", items: ["documents"] },
 ];
