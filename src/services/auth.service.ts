@@ -1,3 +1,5 @@
+import { assetUrl } from "@/utils/assetUrl";
+
 const BASE = ((import.meta.env.VITE_API_URL as string | undefined) ?? "").replace(/\/$/, "");
 const KEY = "roja_session";
 export const AUTH_EXPIRED = "auth:expired";
@@ -153,5 +155,6 @@ export const authService = {
 
     // the photo comes from the profile API (key: profileImageUrl)
     profileImage: () =>
-        apiCall<{ profileImageUrl?: string | null }>("/settings/profile").then((r) => r.data.profileImageUrl ?? null),
+        apiCall<{ profileImageKey?: string | null; profileImageUrl?: string | null }>("/settings/profile")
+            .then((r) => assetUrl(r.data.profileImageKey, r.data.profileImageUrl)),
 };
