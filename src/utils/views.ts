@@ -17,7 +17,8 @@ export type ViewKey =
     | "engineSignals"
     | "history"
     | "documents"
-    | "settings";
+    | "settings"
+    | "documentsManage"
 
 export interface ViewInfo {
     title: string;
@@ -306,6 +307,18 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
         statuses: ["all", "Active", "Inactive"],
         statusLabel: "Status",
         scope: "All engine configurations.",
+    },
+    documentsManage: {
+        title: "API documentation",
+        nav: "Documents setup",
+        path: "/tools/documents-manage",
+        icon: "⚙",
+        subtitle: "Create and edit the API documentation shown on the Documents page.",
+        dateLabel: "Created on",
+        search: "api name",
+        statuses: ["all", "Active", "Inactive"],
+        statusLabel: "Status",
+        scope: "All API documentation.",
     },
 };
 

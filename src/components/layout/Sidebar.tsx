@@ -18,7 +18,7 @@ import {
   SlidersHorizontal,
   LayoutTemplate,
   TrendingUp,
-  Settings, Building2, Activity, History as HistoryIcon, Workflow
+  Settings, Building2, Activity, History as HistoryIcon, Workflow, FileText
 } from "lucide-react";
 import { viewInfo, type ViewKey } from "@/utils/views";
 import { displayGroups } from "@/utils/navGroups";
@@ -44,13 +44,16 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
   engineSignals: Activity,
   history: HistoryIcon,
   documents: Workflow,
-  settings: Settings
+  settings: Settings,
+  documentsManage: FileText,
 };
 
 type Tip = { label: string; top: number; left: number };
 
 // Menu items to hide. Add or remove keys here to show or hide them.
 const HIDDEN: ViewKey[] = ["margins"];
+// Menu items that open in a new browser tab
+const NEW_TAB: ViewKey[] = ["documents"];
 const visibleGroups = displayGroups
   .map((g) => ({ ...g, items: g.items.filter((k) => !HIDDEN.includes(k)) }))
   .filter((g) => g.items.length > 0);
@@ -389,7 +392,8 @@ export default function Sidebar({
                             onBlur={() => hideTip()}
                             onClick={() => {
                               hideTip(true);
-                              navigate(v.path);
+                              if (NEW_TAB.includes(k)) window.open(v.path, "_blank", "noopener");
+                              else navigate(v.path);
                               onNavigate();
                             }}
                             className={`sb-item group relative my-0.5 flex w-full items-center gap-3 overflow-hidden rounded-xl px-2 py-1.5 text-left text-[13px] font-medium outline-none transition-[background-color,color,box-shadow,scale] duration-200 ease-smooth hover:bg-sidebar-hover hover:text-sidebar-text-active focus-visible:ring-2 focus-visible:ring-brand/30 active:scale-[0.98] ${collapsed

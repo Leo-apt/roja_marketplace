@@ -249,6 +249,27 @@
   --color-chart-gain: #34b58a;
   --color-chart-loss: #e5707f;
   --color-chart-grid: #e2e8f0;
+
+  /* Documents page: light panels that follow the site theme */
+  --color-docs-bg: var(--color-card);
+  --color-docs-deep: var(--color-surfacealt);
+  --color-docs-text: var(--color-brand);
+  --color-docs-muted: var(--color-brand-500);
+  --color-docs-line: var(--color-line);
+  --color-docs-hover: var(--color-brandsoft);
+  --color-docs-svc: var(--color-brand-100);
+  --color-docs-prov: var(--color-brandsoft);
+  --color-docs-api: var(--color-brand-200);
+  --color-docs-api-text: var(--color-brand-700);
+  --color-docs-method: var(--color-brand);
+
+  /* Code colours on a light background */
+  --color-code-key: #6d28d9;
+  --color-code-string: #15803d;
+  --color-code-bool: #1d4ed8;
+  --color-code-number: #b45309;
+  --color-code-punct: #64748b;
+  --color-code-status: #15803d;
 }
 
 @layer base {
@@ -567,6 +588,14 @@
   --color-chart-gain: #4cc38a;
   --color-chart-loss: #f0808d;
   --color-chart-grid: #1f2a44;
+
+  /* Documents page: code colours on a dark background */
+  --color-code-key: #c3a6ff;
+  --color-code-string: #d4f59a;
+  --color-code-bool: #7aa2ff;
+  --color-code-number: #f5c07a;
+  --color-code-punct: #8b95a8;
+  --color-code-status: #7fe0a8;
 
   /* ── Compatibility: neutral scales (inverted for dark) ── */
   --color-gray-50: #162037;

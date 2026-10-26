@@ -10,7 +10,7 @@ const TABLE_API: Record<TableId, string> = {
     "Engine configuration": "engine-configurations",
 };
 
-export interface ProfileView { id: string; name: string; email: string; phone: string | null; role: string }
+export interface ProfileView { id: string; name: string; email: string; phone: string | null; role: string; profileImageUrl?: string | null }
 export interface PrefsView { theme: "light" | "dark" | "system"; language: string; currency: string; dateFormat: string; timeZone: string }
 export interface ColumnView { key: string; label: string; locked: boolean; visible: boolean; order: number }
 export interface ColumnsView { table: string; shown: number; total: number; columns: ColumnView[] }

@@ -34,6 +34,7 @@ interface Props<T extends { id: string }> {
     canPublish?: (id: string) => boolean;
     onCreate?: () => void;
     onEdit?: (id: string) => void;
+    hideView?: boolean;
     statusToggle?: { isActive: (r: T) => boolean; onToggle: (id: string, next: boolean) => void };
     /** Server mode: rows is the current page only; paging and search go through onChange. */
     server?: { total: number; pageSize: number; loading?: boolean; onChange: (page: number, q: string, f: Record<string, string>) => void };
@@ -44,7 +45,7 @@ const th = "whitespace-nowrap border-b border-linesoft bg-surfacealt px-3 py-3 t
 const td = "whitespace-nowrap border-b border-linesoft px-3 py-3 align-middle text-xs text-td-text";
 
 export default function ListShell<T extends { id: string }>({
-    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, extraActions, onPublish, canPublish, onCreate, onEdit, server, statusToggle,
+    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, extraActions, onPublish, canPublish, onCreate, onEdit, server, statusToggle, hideView,
 }: Props<T>) {
     const nav = useNavigate();
     const { openDrawer } = useApp();
@@ -108,7 +109,7 @@ export default function ListShell<T extends { id: string }>({
     const openMenu = (e: ReactMouseEvent<HTMLButtonElement>, id: string) => {
         if (menu?.id === id) { setMenu(null); return; }
         const r = e.currentTarget.getBoundingClientRect();
-        const items = 2 + (onDelete ? 1 : 0) + (onPublish && (!canPublish || canPublish(id)) ? 1 : 0) + (extraActions?.length ?? 0);
+        const items = (hideView ? 1 : 2) + (onDelete ? 1 : 0) + (onPublish && (!canPublish || canPublish(id)) ? 1 : 0) + (extraActions?.length ?? 0);
         const h = 16 + 36 * items; // dropdown height
         const top = r.bottom + h > window.innerHeight ? r.top - h - 4 : r.bottom + 4; // opens upward near screen bottom
         setMenu({ id, top, left: Math.max(8, r.right - 176) });
@@ -243,10 +244,12 @@ export default function ListShell<T extends { id: string }>({
             {menu && (
                 <div data-action-menu style={{ top: menu.top, left: menu.left }}
                     className="fixed z-50 w-44 rounded-lg border border-line bg-white py-1 shadow-lg">
-                    <button onClick={() => { nav(`${basePath}/${menu.id}`); setMenu(null); }}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-xs text-brand hover:bg-brandsoft">
-                        <Eye className="size-4" /> View
-                    </button>
+                    {!hideView && (
+                        <button onClick={() => { nav(`${basePath}/${menu.id}`); setMenu(null); }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-xs text-brand hover:bg-brandsoft">
+                            <Eye className="size-4" /> View
+                        </button>
+                    )}
                     <button onClick={() => { if (onEdit) onEdit(menu.id); else nav(`${basePath}/${menu.id}/edit`); setMenu(null); }}
                         className="flex w-full items-center gap-2 px-3 py-2 text-xs text-cell-text hover:bg-gray-50">
                         <Pencil className="size-4" /> Edit

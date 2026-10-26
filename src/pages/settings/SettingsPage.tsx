@@ -30,6 +30,7 @@ import { useApp } from "@/hooks/useApp";
 import { gatewayService, type GatewayView } from "@/services/payment-gateway.service";
 import { useTheme, type ThemeMode } from "@/theme/ThemeProvider";
 import { settingsService } from "@/services/settings.service";
+import ProfileAvatar from "@/pages/settings/ProfileAvatar";
 import {
   DEFAULT_COLUMNS,
   SETTINGS_CHANGED_EVENT,
@@ -427,9 +428,7 @@ function ProfilePanel({ draft, set, email, initials }: PanelProps) {
         <div className="h-20 bg-gradient-to-r from-brand/15 via-brand/5 to-transparent" />
         <div className="px-5 pb-5">
           <div className="-mt-9 flex flex-wrap items-end gap-4">
-            <span className="grid size-[72px] place-items-center rounded-2xl bg-topbar-avatar-bg text-lg font-bold text-topbar-avatar-text ring-4 ring-white">
-              {initials}
-            </span>
+            <ProfileAvatar initials={initials} />
             <div className="min-w-0 pb-1 leading-tight">
               <p className="truncate text-sm font-bold text-ink">
                 {draft.displayName || "Your name"}

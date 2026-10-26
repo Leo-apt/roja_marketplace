@@ -20,7 +20,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (!getSession()) return;
         authService.me()
-            .then((me) => setUser((u) => (u ? { ...u, user_name: me.name } : u)))
+            .then(async (me) => {
+                const image = await authService.profileImage().catch(() => null);
+                setUser((u) => (u ? { ...u, user_name: me.name, user_image: image } : u));
+            })
             .catch(() => { /* 401 is handled via AUTH_EXPIRED */ })
             .finally(() => setReady(true));
     }, []);
@@ -45,7 +48,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const refreshUser = useCallback(async () => {
         await refreshTokens();
         const me = await authService.me();
-        setUser((u) => (u ? { ...u, user_name: me.name } : u));
+        const image = await authService.profileImage().catch(() => null);
+        setUser((u) => (u ? { ...u, user_name: me.name, user_image: image } : u));
+    }, []);
+
+    // updates the top bar and Settings avatar right after an upload
+    const setProfileImage = useCallback((url: string | null) => {
+        setUser((u) => (u ? { ...u, user_image: url } : u));
     }, []);
 
     // Idle timeout: logs out after IDLE_MS with no activity (all tabs share one clock)
@@ -81,6 +90,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
     }, [loggedIn, logout]);
 
-    const value = useMemo<AuthCtx>(() => ({ user, ready, login, register, logout, refreshUser }), [user, ready, login, register, logout, refreshUser]);
+    const value = useMemo<AuthCtx>(() => ({ user, ready, login, register, logout, refreshUser, setProfileImage }), [user, ready, login, register, logout, refreshUser, setProfileImage]);
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -17,7 +17,7 @@ import {
   UserStar,
   SlidersHorizontal,
   LayoutTemplate,
-  Settings, Building2, Activity, History as HistoryIcon, Workflow,
+  Settings, Building2, Activity, History as HistoryIcon, Workflow, FileText
 } from "lucide-react";
 import { viewInfo, type ViewKey } from "@/utils/views";
 import { displayGroups } from "@/utils/navGroups";
@@ -41,7 +41,8 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
   engineSignals: Activity,
   history: HistoryIcon,
   documents: Workflow,
-  settings: Settings
+  settings: Settings,
+  documentsManage: FileText,
 };
 
 type SubLabel = "Create" | "Edit" | "Details";

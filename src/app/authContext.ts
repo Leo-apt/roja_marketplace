@@ -8,6 +8,7 @@ export interface AuthCtx {
     register: (name: string, email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
+    setProfileImage: (url: string | null) => void;
 }
 
 export const AuthContext = createContext<AuthCtx | null>(null);

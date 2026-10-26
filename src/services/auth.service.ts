@@ -3,7 +3,7 @@ const KEY = "roja_session";
 export const AUTH_EXPIRED = "auth:expired";
 
 export interface Tokens { access_token: string; refresh_token: string }
-export interface UserData { user_name: string; user_email: string; user_role: string; user_status: boolean }
+export interface UserData { user_name: string; user_email: string; user_role: string; user_status: boolean; user_image?: string | null }
 export interface Session { tokens: Tokens; user: UserData }
 interface LoginResponse { userData: UserData; token: Tokens }
 export interface RegisterPayload { name: string; email: string; password: string }
@@ -134,9 +134,10 @@ export const authService = {
         try {
             const me = await authService.me();
             s.user = { ...s.user, user_name: me.name };
-            saveSession(s);
+            saveSession(s); // the saved session never holds the image
         } catch { /* keep login data */ }
-        return s;
+        const image = await authService.profileImage().catch(() => null);
+        return { ...s, user: { ...s.user, user_image: image } };
     }, // .
 
     async logout(): Promise<void> {
@@ -149,4 +150,8 @@ export const authService = {
     },
 
     me: () => apiCall<{ id: string; name: string; email: string; role: string }>("/auth/me").then((r) => r.data),
+
+    // the photo comes from the profile API (key: profileImageUrl)
+    profileImage: () =>
+        apiCall<{ profileImageUrl?: string | null }>("/settings/profile").then((r) => r.data.profileImageUrl ?? null),
 };

@@ -1,12 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
-import OverviewPage from "@/pages/OverviewPage";
-import ProductsPage from "@/pages/ProductsPage";
-import PurchasesPage from "@/pages/PurchasesPage";
-import SubscriptionsPage from "@/pages/SubscriptionsPage";
-import MarginPage from "@/pages/MarginPage";
-import SettlementsPage from "@/pages/SettlementsPage";
-import ReconciliationPage from "@/pages/ReconciliationPage";
 import ProductCategoriesList from "@/pages/productCategories/List";
 import ProductCategoriesDetail from "@/pages/productCategories/Detail";
 import ProductCategoriesManage from "@/pages/productCategories/Manage";
@@ -41,6 +34,8 @@ import HistoryClients from "@/pages/history/Clients";
 import HistoryEnvironments from "@/pages/history/Environments";
 import HistoryCalls from "@/pages/history/Calls";
 import ToolsDocuments from "@/pages/tools/Documents";
+import DocsList from "@/pages/documents/List";
+import DocsManage from "@/pages/documents/Manage";
 
 export default function App() {
     return (
@@ -50,15 +45,9 @@ export default function App() {
                 {/* <Route path="/register" element={<RegisterPage />} /> */}
             </Route>
             <Route element={<RequireAuth />}>
+                <Route path="/tools/documents" element={<ToolsDocuments />} />
                 <Route element={<Layout />}>
                     <Route index element={<Navigate to="/catalog/product-categories" replace />} />
-                    <Route path="/overview" element={<OverviewPage />} />
-                    <Route path="/products" element={<ProductsPage />} />
-                    <Route path="/purchases" element={<PurchasesPage />} />
-                    <Route path="/subscriptions" element={<SubscriptionsPage />} />
-                    <Route path="/margin" element={<MarginPage />} />
-                    <Route path="/settlements" element={<SettlementsPage />} />
-                    <Route path="/reconciliation" element={<ReconciliationPage />} />
 
                     <Route path="/catalog/providers" element={<ProvidersList />} />
                     <Route path="/catalog/providers/new" element={<ProvidersManage />} />
@@ -106,7 +95,10 @@ export default function App() {
                     <Route path="/history" element={<HistoryClients />} />
                     <Route path="/history/:entityId" element={<HistoryEnvironments />} />
                     <Route path="/history/:entityId/:subEntityId" element={<HistoryCalls />} />
-                    <Route path="/tools/documents" element={<ToolsDocuments />} />
+                    <Route path="/tools/documents-manage" element={<DocsList />} />
+                    <Route path="/tools/documents-manage/new" element={<DocsManage />} />
+                    <Route path="/tools/documents-manage/:id" element={<DocsManage />} />
+                    <Route path="/tools/documents-manage/:id/edit" element={<DocsManage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                 </Route>
             </Route>

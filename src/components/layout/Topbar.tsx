@@ -24,6 +24,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useProfileImage } from "@/hooks/useProfileImage";
 import { useAuth } from "@/hooks/useAuth";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 
@@ -294,12 +295,14 @@ function ProfileMenu({
   email,
   displayName,
   initials,
+  imageUrl,
   onSettings,
   onLogout,
 }: {
   email?: string;
   displayName: string;
   initials: string;
+  imageUrl?: string | null;
   onSettings: () => void;
   onLogout: () => void;
 }) {
@@ -340,10 +343,10 @@ function ProfileMenu({
         className={`inline-flex h-12 items-center gap-3 rounded-2xl pl-1.5 pr-3 ${cardBase}`}
       >
         <span
-          className="grid size-9 place-items-center rounded-xl bg-topbar-avatar-bg text-[11px] font-bold text-topbar-avatar-text ring-2 ring-white"
+          className="grid size-9 place-items-center overflow-hidden rounded-xl bg-topbar-avatar-bg text-[11px] font-bold text-topbar-avatar-text ring-2 ring-white"
           title={email}
         >
-          {initials}
+          {imageUrl ? <img src={imageUrl} alt="" className="size-full object-cover" /> : initials}
         </span>
         <span className="max-w-[140px] truncate text-xs font-semibold text-ink max-[850px]:hidden">
           {displayName}
@@ -358,8 +361,8 @@ function ProfileMenu({
         className={`${popoverClass(open)} w-64`}
       >
         <div className="flex items-center gap-3 border-b border-gray-100 bg-gradient-to-b from-gray-50/90 to-white px-3.5 py-3">
-          <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-topbar-avatar-bg text-[11px] font-bold text-topbar-avatar-text">
-            {initials}
+          <div className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-topbar-avatar-bg text-[11px] font-bold text-topbar-avatar-text">
+            {imageUrl ? <img src={imageUrl} alt="" className="size-full object-cover" /> : initials}
           </div>
           <div className="min-w-0 leading-tight">
             <p className="truncate text-xs font-semibold text-ink">
@@ -580,7 +583,7 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
   const email = user?.user_email;
   const initials = (email ?? "U").slice(0, 2).toUpperCase();
   const onSettingsPage = pathname.startsWith("/settings");
-
+  const imageUrl = useProfileImage();
   const displayName =
     user?.user_name?.trim() ||
     (email
@@ -635,8 +638,8 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
 
         <div
           className={`relative w-full rounded-xl transition-[max-width,box-shadow] duration-500 ${focused
-              ? "max-w-[440px] shadow-[0_0_0_4px] shadow-brand/[0.08]"
-              : "max-w-[340px]"
+            ? "max-w-[440px] shadow-[0_0_0_4px] shadow-brand/[0.08]"
+            : "max-w-[340px]"
             }`}
           style={{ transitionTimingFunction: "var(--tb-ease)" }}
         >
@@ -718,6 +721,7 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
           email={email}
           displayName={displayName}
           initials={initials}
+          imageUrl={imageUrl}
           onSettings={() => navigate("/settings")}
           onLogout={() => setConfirmOut(true)}
         />
