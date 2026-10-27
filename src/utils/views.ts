@@ -271,8 +271,8 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
     },
 
     history: {
-        title: "History",
-        nav: "History",
+        title: "API log",
+        nav: "API log",
         path: "/history",
         icon: "◷",
         subtitle: "Every Stripe API call made with your clients' tokens.",

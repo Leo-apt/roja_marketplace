@@ -567,15 +567,18 @@ function PreferencesPanel({ draft, set }: PanelProps) {
         description="Clients can withdraw only after their balance reaches this amount."
       >
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Minimum balance to withdraw" hint="Display only for now. Payouts are not enabled yet.">
-            <input
-              className={inputClass}
-              type="number"
-              min={0}
-              inputMode="decimal"
-              value={draft.withdrawalMin}
-              onChange={(e) => set("withdrawalMin", e.target.value)}
-            />
+          <Field label="Payout Threshold" hint="Display only for now. Payouts are not enabled yet.">
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-ink">$</span>
+              <input
+                className={`${inputClass} pl-6`}
+                type="number"
+                min={0}
+                inputMode="decimal"
+                value={draft.withdrawalMin}
+                onChange={(e) => set("withdrawalMin", e.target.value)}
+              />
+            </div>
           </Field>
         </div>
       </Card>

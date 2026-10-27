@@ -31,9 +31,6 @@ export function EnvProvider({ children }: { children: ReactNode }) {
 
     return (
         <EnvContext.Provider value={value}>
-            {/* thin line on top of the whole site: amber = sandbox, green = live */}
-            <div aria-hidden="true"
-                className={`pointer-events-none fixed inset-x-0 top-0 z-[60] h-[3px] transition-colors duration-300 ${mode === "live" ? "bg-good" : "bg-caution"}`} />
             {children}
         </EnvContext.Provider>
     );

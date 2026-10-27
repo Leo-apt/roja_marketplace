@@ -123,12 +123,12 @@ export default function Breadcrumb() {
       >
         {/* Title section */}
         <div className="flex min-w-0 items-center gap-2.5">
-          {sub && (
+          {(sub || inSettings) && (
             <button
               type="button"
               title="Back"
-              aria-label="Back to list"
-              onClick={() => nav(v.path)}
+              aria-label={sub ? "Back to list" : "Back to settings"}
+              onClick={() => nav(sub ? v.path : viewInfo.settings.path)}
               className="crumb-ease group grid size-9 shrink-0 place-items-center rounded-xl border border-gray-200/80 bg-white text-ink shadow-sm outline-none transition-all duration-300 hover:-translate-y-px hover:!border-brand/30 hover:bg-brand/5 hover:text-brand hover:shadow-[0_6px_14px_-6px_rgba(16,24,40,0.12)] focus-visible:ring-2 focus-visible:ring-brand/30 active:translate-y-0 active:scale-95"
             >
               <ArrowLeft className="crumb-ease size-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
