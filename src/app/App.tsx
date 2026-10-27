@@ -38,6 +38,11 @@ import DocsList from "@/pages/documents/List";
 import DocsManage from "@/pages/documents/Manage";
 import { EnvProvider } from "@/env/EnvContext";
 import Reports from "@/pages/reports/Reports";
+import PurchasesList from "@/pages/purchases/List";
+import MarginList from "@/pages/marginReport/List";
+import SubscriptionsList from "@/pages/subscriptions/List";
+import SettlementsList from "@/pages/settlements/List";
+import ApprovalsList from "@/pages/approvals/List";
 
 export default function App() {
     return (
@@ -99,6 +104,11 @@ export default function App() {
                         <Route path="/history/:entityId" element={<HistoryEnvironments />} />
                         <Route path="/history/:entityId/:subEntityId" element={<HistoryCalls />} />
                         <Route path="/marketplace/reports" element={<Reports />} />
+                        <Route path="/marketplace/purchases" element={<PurchasesList />} />
+                        <Route path="/marketplace/margins" element={<MarginList />} />
+                        <Route path="/marketplace/subscriptions" element={<SubscriptionsList />} />
+                        <Route path="/marketplace/settlements" element={<SettlementsList />} />
+                        <Route path="/marketplace/approvals" element={<ApprovalsList />} />
                         <Route path="/tools/documents-manage" element={<DocsList />} />
                         <Route path="/tools/documents-manage/new" element={<DocsManage />} />
                         <Route path="/tools/documents-manage/:id" element={<DocsManage />} />

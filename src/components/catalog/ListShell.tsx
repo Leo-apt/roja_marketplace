@@ -1,6 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, Eye, Pencil, Plus, Settings, SlidersHorizontal, Send, } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronsUpDown, Columns3, Eye, Pencil, Plus, Settings, SlidersHorizontal, Send, Download } from "lucide-react";
 import { useApp } from "@/hooks/useApp";
 import { useDebounce } from "@/hooks/useDebounce";
 import Pagination from "@/components/shared/Pagination";
@@ -16,6 +16,9 @@ export interface Col<T> {
     align?: "right" | "center";
     link?: boolean;
     sortValue?: (r: T) => string | number | null;
+    exportValue?: (r: T) => string | number | null;
+    /** Pin this column on the left while scrolling sideways. Value = width in px. Pinned columns must be the first ones. */
+    sticky?: number;
 }
 
 interface Props<T extends { id: string }> {
@@ -35,17 +38,25 @@ interface Props<T extends { id: string }> {
     onCreate?: () => void;
     onEdit?: (id: string) => void;
     hideView?: boolean;
+    exportName?: string;
+    hideEdit?: boolean;
+    hideCreate?: boolean;
+    toolbar?: ReactNode;
+    notice?: ReactNode;
+    /** Runs after search and filters, before sorting and paging (e.g. group rows). Client mode only. */
+    transform?: (rows: T[]) => T[];
     statusToggle?: { isActive: (r: T) => boolean; onToggle: (id: string, next: boolean) => void };
     /** Server mode: rows is the current page only; paging and search go through onChange. */
     server?: { total: number; pageSize: number; loading?: boolean; onChange: (page: number, q: string, f: Record<string, string>) => void };
 }
 
 const SIZE = 8;
+const SNO_W = 76; // width of the pinned S.No column
 const th = "whitespace-nowrap border-b border-linesoft bg-surfacealt px-3 py-3 text-left text-xs font-bold leading-snug text-th-text";
 const td = "whitespace-nowrap border-b border-linesoft px-3 py-3 align-middle text-xs text-td-text";
 
 export default function ListShell<T extends { id: string }>({
-    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, extraActions, onPublish, canPublish, onCreate, onEdit, server, statusToggle, hideView,
+    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, extraActions, onPublish, canPublish, onCreate, onEdit, server, statusToggle, hideView, exportName, hideEdit, hideCreate, toolbar, notice, transform,
 }: Props<T>) {
     const nav = useNavigate();
     const { openDrawer } = useApp();
@@ -109,13 +120,14 @@ export default function ListShell<T extends { id: string }>({
     const openMenu = (e: ReactMouseEvent<HTMLButtonElement>, id: string) => {
         if (menu?.id === id) { setMenu(null); return; }
         const r = e.currentTarget.getBoundingClientRect();
-        const items = (hideView ? 1 : 2) + (onDelete ? 1 : 0) + (onPublish && (!canPublish || canPublish(id)) ? 1 : 0) + (extraActions?.length ?? 0);
+        const items = (hideView ? 0 : 1) + (hideEdit ? 0 : 1) + (onDelete ? 1 : 0) + (onPublish && (!canPublish || canPublish(id)) ? 1 : 0) + (extraActions?.length ?? 0);
         const h = 16 + 36 * items; // dropdown height
         const top = r.bottom + h > window.innerHeight ? r.top - h - 4 : r.bottom + 4; // opens upward near screen bottom
         setMenu({ id, top, left: Math.max(8, r.right - 176) });
     };
 
-    const base = server ? rows : rows.filter((r) => match(r, q.trim().toLowerCase(), f));
+    const matched = server ? rows : rows.filter((r) => match(r, q.trim().toLowerCase(), f));
+    const base = transform && !server ? transform(matched) : matched;
     const sortCol = sort ? cols.find((c) => c.key === sort.key) : undefined;
     const filtered = sortCol && sort
         ? [...base].sort((a, b) => {
@@ -132,15 +144,58 @@ export default function ListShell<T extends { id: string }>({
     const start = (cur - 1) * size;
     const pageRows = server ? filtered : filtered.slice(start, start + size);
     const shown = cols.filter((c) => !hidden.includes(c.key));
+
+    // pinned columns: only the leading run of `sticky` columns, each offset by the widths before it
+    const stickyLeft: Record<string, number> = {};
+    let acc = SNO_W;
+    for (const c of shown) { if (!c.sticky) break; stickyLeft[c.key] = acc; acc += c.sticky; }
+    const lastSticky = Object.keys(stickyLeft).at(-1);
+    const hasSticky = lastSticky !== undefined;
+    const stickyProps = (base: string, left: number, width: number, head: boolean, last: boolean) => ({
+        className: `${base} sticky overflow-hidden text-ellipsis ${head ? "z-20 bg-surfacealt" : "z-10 bg-card group-hover:bg-row-hover"} ${last ? "shadow-[3px_0_4px_-2px_var(--color-scrollbar)]" : ""}`,
+        style: { left, width, minWidth: width, maxWidth: width } as CSSProperties,
+    });
+    const snoProps = (head: boolean) => hasSticky
+        ? stickyProps(`${head ? th : td} pl-5`, 0, SNO_W, head, false)
+        : { className: `${head ? th : td} pl-5`, style: undefined as CSSProperties | undefined };
+    const cellProps = (c: Col<T>, head: boolean) => {
+        const left = stickyLeft[c.key];
+        if (left === undefined) return { className: head ? th : `${td} ${c.align ? "tabular-nums" : ""}`, style: undefined as CSSProperties | undefined };
+        return stickyProps(head ? th : td, left, c.sticky!, head, c.key === lastSticky);
+    };
     const filtersActive = Object.values(f).some((v) => v !== "all") || q !== "";
+
+    const exportCsv = () => {
+        const safe = (v: unknown) => {
+            let s = String(v ?? "");
+            if (typeof v !== "number" && /^\s*[=+@\-\t\r]/.test(s)) s = "'" + s; // blocks formulas in Excel
+            return `"${s.replace(/"/g, '""')}"`;
+        };
+        const cell = (c: Col<T>, r: T) => {
+            if (c.exportValue) return c.exportValue(r);
+            const v = valueOf(c, r);
+            return typeof v === "string" || typeof v === "number" ? v : "";
+        };
+        const text = "\uFEFF" + [
+            shown.map((c) => safe(c.label)).join(","),
+            ...filtered.map((r) => shown.map((c) => safe(cell(c, r))).join(",")),
+        ].join("\r\n");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" }));
+        a.download = `${exportName ?? "export"}.csv`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    };
 
     return (
         <div className="flex flex-col gap-4">
             {cards && <StatCards items={cards(filtered)} />}
-            <div className="flex flex-wrap items-center gap-3">
+            {notice}
+            <div className="flex flex-wrap items-end gap-3">
                 <div className="min-w-[240px] max-w-[360px] flex-1">
                     <SearchField value={q} placeholder={searchPlaceholder} onChange={(v) => { setQ(v); if (!server) setPage(1); }} />
                 </div>
+                {toolbar}
                 <div className="ml-auto flex flex-wrap items-center gap-2">
                     <button className={btn.secondary}
                         onClick={() => openDrawer(
@@ -155,9 +210,16 @@ export default function ListShell<T extends { id: string }>({
                         )}>
                         <Columns3 className="size-4" /> Columns
                     </button>
-                    <button className={btn.brand} onClick={() => (onCreate ? onCreate() : nav(`${basePath}/new`))}>
-                        <Plus className="size-4" /> {createLabel}
-                    </button>
+                    {exportName && (
+                        <button className={btn.secondary} onClick={exportCsv}>
+                            <Download className="size-4" /> Export CSV
+                        </button>
+                    )}
+                    {!hideCreate && (
+                        <button className={btn.brand} onClick={() => (onCreate ? onCreate() : nav(`${basePath}/new`))}>
+                            <Plus className="size-4" /> {createLabel}
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -166,9 +228,9 @@ export default function ListShell<T extends { id: string }>({
                     <table className="w-full border-collapse text-left text-xs">
                         <thead>
                             <tr>
-                                <th className={`${th} pl-5`}>S.No</th>
+                                <th {...snoProps(true)}>S.No</th>
                                 {shown.map((c) => (
-                                    <th key={c.key} className={th}>
+                                    <th key={c.key} {...cellProps(c, true)}>
                                         {canSort(c) ? (
                                             <button type="button" onClick={() => toggleSort(c.key)}
                                                 className="inline-flex items-center gap-1">
@@ -186,10 +248,10 @@ export default function ListShell<T extends { id: string }>({
                         </thead>
                         <tbody>
                             {pageRows.map((r, i) => (
-                                <tr key={r.id} className="hover:bg-row-hover">
-                                    <td className={`${td} pl-5`}>{start + i + 1}</td>
+                                <tr key={r.id} className="group hover:bg-row-hover">
+                                    <td {...snoProps(false)}>{start + i + 1}</td>
                                     {shown.map((c) => (
-                                        <td key={c.key} className={`${td} ${c.align ? "tabular-nums" : ""}`}>
+                                        <td key={c.key} {...cellProps(c, false)}>
                                             {c.link ? (
                                                 <button type="button" onClick={() => nav(`${basePath}/${r.id}`)}
                                                     className="text-left font-semibold text-link hover:underline">
@@ -250,10 +312,12 @@ export default function ListShell<T extends { id: string }>({
                             <Eye className="size-4" /> View
                         </button>
                     )}
-                    <button onClick={() => { if (onEdit) onEdit(menu.id); else nav(`${basePath}/${menu.id}/edit`); setMenu(null); }}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-xs text-cell-text hover:bg-gray-50">
-                        <Pencil className="size-4" /> Edit
-                    </button>
+                    {!hideEdit && (
+                        <button onClick={() => { if (onEdit) onEdit(menu.id); else nav(`${basePath}/${menu.id}/edit`); setMenu(null); }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-xs text-cell-text hover:bg-gray-50">
+                            <Pencil className="size-4" /> Edit
+                        </button>
+                    )}
                     {extraActions?.map((a) => (
                         <button key={a.label} onClick={() => { a.onClick(menu.id); setMenu(null); }}
                             className="flex w-full items-center gap-2 px-3 py-2 text-xs text-cell-text hover:bg-gray-50">

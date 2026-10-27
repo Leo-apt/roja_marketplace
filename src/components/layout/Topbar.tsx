@@ -578,6 +578,7 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
   const { pathname } = useLocation();
   const [confirmOut, setConfirmOut] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [confirmEnv, setConfirmEnv] = useState(false);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -694,7 +695,7 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
         aria-checked={mode === "live"}
         aria-label="Data environment"
         title="Switch between Sandbox and Live"
-        onClick={() => setMode(mode === "live" ? "sandbox" : "live")}
+        onClick={() => setConfirmEnv(true)}
         className="tb-btn relative hidden h-9 w-[132px] shrink-0 items-center rounded-full border border-gray-200/80 bg-gray-100 p-0.5 text-[11px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-brand/30 md:inline-flex"
       >
         <span
@@ -763,6 +764,23 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
             setLoggingOut(false);
             setConfirmOut(false);
           }
+        }}
+      />
+      <ConfirmDialog
+        isOpen={confirmEnv}
+        type="warning"
+        title={`Switch to ${mode === "live" ? "Sandbox" : "Live"}?`}
+        message={
+          mode === "live"
+            ? "You will see Sandbox (test) data instead of Live data."
+            : "You will see Live (real) data. Actions you take may affect real clients."
+        }
+        confirmText="Switch"
+        cancelText="Stay"
+        onClose={() => setConfirmEnv(false)}
+        onConfirm={() => {
+          setMode(mode === "live" ? "sandbox" : "live");
+          setConfirmEnv(false);
         }}
       />
     </header>

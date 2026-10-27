@@ -20,6 +20,7 @@ export type ViewKey =
     | "settings"
     | "documentsManage"
     | "reports"
+    | "approvals"
 
 export interface ViewInfo {
     title: string;
@@ -67,9 +68,9 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
             "Catalog shown regardless of sales activity. Date range applies to sales metrics only.",
     },
     purchases: {
-        title: "Marketplace purchases",
-        nav: "Purchase list",
-        path: "/purchases",
+        title: "Purchases",
+        nav: "Purchases",
+        path: "/marketplace/purchases",
         icon: "▣",
         subtitle:
             "One row per customer order. Open an order for line items, payment attempts, fulfillment, and margin.",
@@ -82,7 +83,7 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
     subscriptions: {
         title: "Marketplace subscriptions",
         nav: "Marketplace subscriptions",
-        path: "/subscriptions",
+        path: "/marketplace/subscriptions",
         icon: "↻",
         subtitle:
             "Track marketplace plans, trials, renewals, grace periods, and cancellations. Separate from EWA membership.",
@@ -101,9 +102,9 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
         scope: defaultScope,
     },
     margin: {
-        title: "Margin reports",
-        nav: "Margin reports",
-        path: "/margin",
+        title: "Platform & client margins",
+        nav: "Platform & client margins",
+        path: "/marketplace/margins",
         icon: "↗",
         subtitle:
             "Financial-event reporting with historical price/cost snapshots, confirmed supplier credits, and payment fees.",
@@ -115,9 +116,9 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
             "Financial events within this range; refunds and credits may relate to older purchases.",
     },
     settlements: {
-        title: "Supplier settlements",
-        nav: "Supplier settlements",
-        path: "/settlements",
+        title: "Receivables & settlements",
+        nav: "Receivables & settlements",
+        path: "/marketplace/settlements",
         icon: "⇄",
         subtitle:
             "Prepare and approve supplier payouts from eligible payables. Gateway deposits are tracked separately.",
@@ -333,12 +334,24 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
         statusLabel: "Status",
         scope: "All transactions in the selected environment.",
     },
+    approvals: {
+        title: "Approvals & audit",
+        nav: "Approvals & audit",
+        path: "/marketplace/approvals",
+        icon: "≋",
+        subtitle: "Review configuration releases, maker/checker approvals and the history of actions.",
+        dateLabel: "Date",
+        search: "release / actor / action",
+        statuses: ["all"],
+        statusLabel: "Status",
+        scope: "Metadata only; secrets are never shown.",
+    },
 };
 
 export const navGroups: { label: string; items: ViewKey[] }[] = [
     // { label: "ARS Marketplace", items: ["overview", "products", "purchases", "subscriptions"] },
     // { label: "Finance & control", items: ["margin", "settlements", "reconciliation"] },
-    { label: "Marketplace", items: ["reports"] },
+    { label: "Marketplace", items: ["reports", "purchases", "margin", "subscriptions", "settlements", "approvals"] },
     { label: "Business", items: ["instances", "history"] },
     { label: "Tools", items: ["documents"] },
 ];

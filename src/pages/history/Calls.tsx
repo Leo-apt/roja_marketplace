@@ -5,7 +5,6 @@ import Dropdownbox from "@/components/shared/Dropdownbox";
 import DatePicker from "@/components/shared/DatePicker";
 import EmptyState from "@/components/shared/EmptyState";
 import Pagination from "@/components/shared/Pagination";
-import Tabs from "@/components/shared/Tabs";
 import { btn, Field } from "@/components/catalog/FormBits";
 import { ErrorBox } from "@/components/catalog/PageState";
 import { useApp } from "@/hooks/useApp";
@@ -72,8 +71,7 @@ export default function HistoryCalls() {
     return (
         <div className="flex flex-col gap-4">
             <div className="overflow-hidden rounded-xl border border-line bg-white">
-                <Tabs label="Environment" large value={env} onChange={(k) => { setEnv(k as "sandbox" | "live"); setPage(1); }}
-                    tabs={[["sandbox", "Sandbox"], ["live", "Live"]]} />
+                <p className="px-4 pt-4 text-xs font-semibold text-muted">Showing {env === "live" ? "Live" : "Sandbox"} calls</p>
                 <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-5">
                     <Field label="Action">
                         <Dropdownbox name="action" value={action} options={actionOpts} rounded="rounded-md" compact searchable

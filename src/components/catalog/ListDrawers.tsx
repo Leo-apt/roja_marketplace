@@ -1,12 +1,14 @@
 import { useState } from "react";
 import Drawer from "@/components/shared/Drawer";
 import Dropdownbox from "@/components/shared/Dropdownbox";
+import DatePicker from "@/components/shared/DatePicker";
 import { btn, Check, SearchField } from "./FormBits";
 
 export interface FilterField {
     key: string;
     label: string;
     options: { value: string; label: string }[];
+    type?: "select" | "date"; // date: value is "YYYY-MM-DD" or "all" (= empty)
 }
 
 export function CatalogFilterDrawer({ fields, values, q, onApply }: {
@@ -28,7 +30,17 @@ export function CatalogFilterDrawer({ fields, values, q, onApply }: {
                 </>
             )}
         >
-            {fields.map((f) => (
+            {fields.map((f) => f.type === "date" ? (
+                <DatePicker
+                    key={f.key}
+                    name={f.key}
+                    label={f.label}
+                    value={draft[f.key] && draft[f.key] !== "all" ? draft[f.key] : ""}
+                    minDate={f.key === "to" && draft.from && draft.from !== "all" ? draft.from : undefined}
+                    maxDate={f.key === "from" && draft.to && draft.to !== "all" ? draft.to : undefined}
+                    onChange={(v) => setDraft((d) => ({ ...d, [f.key]: v || "all" }))}
+                />
+            ) : (
                 <Dropdownbox
                     key={f.key}
                     name={f.key}

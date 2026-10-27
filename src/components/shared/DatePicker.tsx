@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Calendar, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 
 interface DatePickerProps {
@@ -44,14 +45,41 @@ export default function DatePicker({
     const selected = parseValue(value);
     const [viewDate, setViewDate] = useState(() => selected ?? new Date());
     const wrapperRef = useRef<HTMLDivElement>(null);
+    const popRef = useRef<HTMLDivElement>(null);
+    const [pos, setPos] = useState({ top: 0, left: 0 });
+
+    const toggle = () => {
+        if (!open && wrapperRef.current) {
+            const r = wrapperRef.current.getBoundingClientRect();
+            const H = 380, W = 288; // calendar height and width
+            setPos({
+                top: r.bottom + 8 + H > window.innerHeight ? Math.max(8, r.top - H - 8) : r.bottom + 8, // opens upward near the bottom
+                left: Math.max(8, Math.min(r.left, window.innerWidth - W - 8)),
+            });
+        }
+        setOpen((o) => !o);
+    };
 
     useEffect(() => {
         if (selected) setViewDate(selected);
     }, [value]);
 
     useEffect(() => {
+        if (!open) return;
+        const close = () => setOpen(false);
+        window.addEventListener("scroll", close, true); // true = also catches the drawer scroll
+        window.addEventListener("resize", close);
+        return () => {
+            window.removeEventListener("scroll", close, true);
+            window.removeEventListener("resize", close);
+        };
+    }, [open]);
+
+    useEffect(() => {
         const handleClick = (e: MouseEvent) => {
-            if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setOpen(false);
+            const t = e.target as Node;
+            if (wrapperRef.current?.contains(t) || popRef.current?.contains(t)) return;
+            setOpen(false);
         };
         const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
         document.addEventListener("mousedown", handleClick);
@@ -103,7 +131,7 @@ export default function DatePicker({
             <button
                 type="button"
                 name={name}
-                onClick={() => setOpen((o) => !o)}
+                onClick={toggle}
                 className="flex min-h-9 w-full cursor-pointer items-center gap-2 rounded-lg border border-line bg-white px-2.5 py-[7px] text-start text-xs transition-colors hover:border-brand/40 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
             >
                 <Calendar className="size-4 shrink-0 text-brand" />
@@ -113,8 +141,8 @@ export default function DatePicker({
                 <ChevronDown className={`size-4 shrink-0 text-gray-400 transition-transform duration-150 ${open ? "rotate-180" : ""}`} />
             </button>
 
-            {open && (
-                <div className="absolute z-50 mt-2 w-72 rounded-2xl border border-gray-100 bg-white p-4 shadow-xl">
+            {open && createPortal(
+                <div ref={popRef} style={{ top: pos.top, left: pos.left }} className="fixed z-[100] w-72 rounded-2xl border border-gray-100 bg-white p-4 shadow-xl">
                     <div className="mb-3 flex items-center justify-between">
                         <button type="button" onClick={() => goMonth(-1)} className="cursor-pointer rounded-lg p-1.5 text-gray-500 hover:bg-gray-100">
                             <ChevronLeft className="size-4" />
@@ -169,7 +197,8 @@ export default function DatePicker({
                             Close
                         </button>
                     </div>
-                </div>
+                </div>,
+                document.body,
             )}
         </div>
     );

@@ -18,7 +18,7 @@ import {
   SlidersHorizontal,
   LayoutTemplate,
   TrendingUp,
-  Settings, Building2, Activity, History as HistoryIcon, Workflow, FileText, BarChart3
+  Settings, Building2, Activity, History as HistoryIcon, Workflow, FileText, BarChart3, ShieldCheck
 } from "lucide-react";
 import { viewInfo, type ViewKey } from "@/utils/views";
 import { displayGroups } from "@/utils/navGroups";
@@ -47,6 +47,7 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
   settings: Settings,
   documentsManage: FileText,
   reports: BarChart3,
+  approvals: ShieldCheck,
 };
 
 type Tip = { label: string; top: number; left: number };
