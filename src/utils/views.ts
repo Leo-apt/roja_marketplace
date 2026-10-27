@@ -352,6 +352,6 @@ export const navGroups: { label: string; items: ViewKey[] }[] = [
     // { label: "ARS Marketplace", items: ["overview", "products", "purchases", "subscriptions"] },
     // { label: "Finance & control", items: ["margin", "settlements", "reconciliation"] },
     { label: "Marketplace", items: ["reports", "purchases", "margin", "subscriptions", "settlements", "approvals"] },
-    { label: "Business", items: ["instances", "history"] },
-    { label: "Tools", items: ["documents"] },
+    { label: "Business", items: ["instances"] },
+    { label: "Tools", items: ["documents", "history"] },
 ];

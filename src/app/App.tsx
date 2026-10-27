@@ -43,6 +43,7 @@ import MarginList from "@/pages/marginReport/List";
 import SubscriptionsList from "@/pages/subscriptions/List";
 import SettlementsList from "@/pages/settlements/List";
 import ApprovalsList from "@/pages/approvals/List";
+import Overview from "@/pages/overview/Overview";
 
 export default function App() {
     return (
@@ -103,6 +104,7 @@ export default function App() {
                         <Route path="/history" element={<HistoryClients />} />
                         <Route path="/history/:entityId" element={<HistoryEnvironments />} />
                         <Route path="/history/:entityId/:subEntityId" element={<HistoryCalls />} />
+                        <Route path="/overview" element={<Overview />} />
                         <Route path="/marketplace/reports" element={<Reports />} />
                         <Route path="/marketplace/purchases" element={<PurchasesList />} />
                         <Route path="/marketplace/margins" element={<MarginList />} />
