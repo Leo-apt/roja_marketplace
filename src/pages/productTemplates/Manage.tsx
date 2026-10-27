@@ -123,17 +123,17 @@ function TemplateForm({ initial }: { initial?: TemplateRec }) {
                     <Section n={2} title="Template Information">
                         <div className="flex flex-col gap-5">
                             <div className="grid gap-5 md:grid-cols-2">
-                                <Field label="Background Image" error={err("bgImage")} note="Upload a JPEG or PNG image that is less than 2 MB.">
+                                <Field label="Background Image" error={err("bgImage")} note="Upload a JPEG, PNG or WEBP image that is less than 2 MB.">
                                     <div id="tpl-bgImage">
-                                        <FileInput accept="image/png,image/jpeg" file={f.bgImage} onChange={(file) => set("bgImage", file)} />
+                                        <FileInput accept="image/png,image/jpeg,image/webp" file={f.bgImage} onChange={(file) => set("bgImage", file)} />
                                     </div>
-                                    {shownBg && <img src={shownBg} alt="Background preview" className="mt-3 h-24 rounded-md border border-line object-contain" />}
+                                    {shownBg && <img src={shownBg} alt="Background preview" onError={(e) => { e.currentTarget.style.display = "none"; }} className="mt-3 h-24 rounded-md border border-line bg-white object-contain" />}
                                 </Field>
-                                <Field label="Front Image" error={err("frontImage")} note="Upload a JPEG or PNG image that is less than 2 MB.">
+                                <Field label="Front Image" error={err("frontImage")} note="Upload a JPEG, PNG or WEBP image that is less than 2 MB.">
                                     <div id="tpl-frontImage">
-                                        <FileInput accept="image/png,image/jpeg" file={f.frontImage} onChange={(file) => set("frontImage", file)} />
+                                        <FileInput accept="image/png,image/jpeg,image/webp" file={f.frontImage} onChange={(file) => set("frontImage", file)} />
                                     </div>
-                                    {shownFront && <img src={shownFront} alt="Front preview" className="mt-3 h-24 rounded-md border border-line object-contain" />}
+                                    {shownFront && <img src={shownFront} alt="Front preview" onError={(e) => { e.currentTarget.style.display = "none"; }} className="mt-3 h-24 rounded-md border border-line bg-white object-contain" />}
                                 </Field>
                             </div>
                             <div className="grid gap-5 md:grid-cols-3">

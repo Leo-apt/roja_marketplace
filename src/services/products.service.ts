@@ -49,6 +49,7 @@ export interface ProductInput {
     wholesale: string; markupType: "flat" | "percent"; markupValue: string;
     audience: "everyone" | "provider"; productConfig: string; placements: string[]; freqCap: string;
     publish: "now" | "later"; availableFrom: string; expires: boolean; expiresOn: string;
+    termsFile?: File | null; imageFile?: File | null;
 }
 
 /** Accepts boolean (true/false) or the string enum (active/inactive/draft/scheduled). */
@@ -146,6 +147,15 @@ function toPayload(i: ProductInput, isEdit: boolean) {
 }
 
 // Same helper the bundles and categories services use: returns the wrapped response ({ data }) and throws when success is false
+// JSON goes in one "data" field, files go beside it (backend field names: termsUrl, imageUrl)
+const toBody = (i: ProductInput, isEdit: boolean) => {
+    const fd = new FormData();
+    fd.append("data", toPayload(i, isEdit));
+    if (i.termsFile) fd.append("termsUrl", i.termsFile);
+    if (i.imageFile) fd.append("imageUrl", i.imageFile);
+    return fd;
+};
+
 const call = <T>(path: string, init?: RequestInit) => apiCall<T>(path, init);
 
 export const productsService = {
@@ -177,9 +187,9 @@ export const productsService = {
     },
     get: (id: string) => call<ApiProduct>(`/products/${id}/get-product`).then((r) => toUi(r.data)),
     create: (i: ProductInput) =>
-        call<ApiProduct>("/products/create-product", { method: "POST", body: toPayload(i, false) }).then((r) => toUi(r.data)),
+        call<ApiProduct>("/products/create-product", { method: "POST", body: toBody(i, false) }).then((r) => toUi(r.data)),
     update: (id: string, i: ProductInput) =>
-        call<ApiProduct>(`/products/${id}/update-product`, { method: "PATCH", body: toPayload(i, true) }).then((r) => toUi(r.data)),
+        call<ApiProduct>(`/products/${id}/update-product`, { method: "PATCH", body: toBody(i, true) }).then((r) => toUi(r.data)),
     publish: (id: string) =>
         call<ApiProduct>(`/products/${id}/publish-product`, { method: "POST", body: "{}" }).then((r) => toUi(r.data)),
     remove: (id: string) =>

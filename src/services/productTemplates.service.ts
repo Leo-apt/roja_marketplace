@@ -2,7 +2,6 @@ import { apiCall, ApiError } from "@/services/auth.service";
 import { who } from "@/services/categories.service";
 import type { Status } from "@/data/catalog";
 
-const API = ((import.meta.env.VITE_API_URL as string | undefined) ?? "").replace(/\/$/, "");
 const BASE = "/product-templates";
 
 export type ColorKey = "cardBg" | "buttonBg" | "buttonText" | "textPrimary" | "textSecondary";
@@ -37,7 +36,7 @@ type ApiPage = ApiTemplate[] | { data: ApiTemplate[]; total: number };
 
 const toUi = (a: ApiTemplate): TemplateRec => ({
     id: a.id, name: a.name, status: (a.status === "active" ? "Active" : "Inactive") as Status,
-    bgImageUrl: a.bgImage ? `${API}${a.bgImage}` : "", frontImageUrl: a.frontImage ? `${API}${a.frontImage}` : "",
+    bgImageUrl: a.bgImage ?? "", frontImageUrl: a.frontImage ?? "",
     cardBg: a.cardBg ?? "", buttonBg: a.buttonBg ?? "", buttonText: a.buttonText ?? "",
     textPrimary: a.textPrimary ?? "", textSecondary: a.textSecondary ?? "",
     createdBy: who(a.createdBy), createdAt: a.createdAt ?? "", updatedBy: who(a.updatedBy), updatedAt: a.updatedAt ?? "",

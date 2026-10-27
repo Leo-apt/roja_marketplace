@@ -26,7 +26,7 @@ export const priceError = (label: string, value: string, o: { required?: boolean
 
 export const imageError = (file: File | null, maxMb = 2) => {
     if (!file) return "";
-    if (!["image/png", "image/jpeg"].includes(file.type)) return "Only JPEG or PNG images are allowed";
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) return "Only JPEG, PNG or WEBP images are allowed";
     if (file.size > maxMb * 1024 * 1024) return `Image must be less than ${maxMb} MB`;
     return "";
 };

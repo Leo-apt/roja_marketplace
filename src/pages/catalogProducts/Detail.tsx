@@ -4,6 +4,8 @@ import { DetailHeader, DetailShell, DRow, DRows, DSection, DTile, DTiles } from 
 import { ErrorBox, LoadingBox } from "@/components/catalog/PageState";
 import { PLACEMENT_OPTIONS, productsService, type ProductRec } from "@/services/products.service";
 import { usd } from "@/utils/catalog";
+import { btn } from "@/components/catalog/FormBits";
+import { FileText } from "lucide-react";
 
 const BASE = "/catalog/products";
 const dash = (v?: string | null) => (v ? v : "-");
@@ -92,7 +94,16 @@ export default function CatalogProductsDetail() {
                             : "-"}
                     </DRow>
                     <DRow label="Pricing Content" wide>{dash(r.pricingContent)}</DRow>
-                    <DRow label="Terms URL" wide>{dash(r.termsUrl)}</DRow>
+                    <DRow label="Product Image" wide>
+                        {r.imageUrl
+                            ? <img src={r.imageUrl} alt="Product" onError={(e) => { e.currentTarget.style.display = "none"; }} className="h-32 rounded-md border border-line bg-white object-contain p-1" />
+                            : "-"}
+                    </DRow>
+                    <DRow label="Terms & Conditions" wide>
+                        {r.termsUrl
+                            ? <a href={r.termsUrl} target="_blank" rel="noreferrer" className={btn.brand}><FileText className="size-4" /> View PDF</a>
+                            : "-"}
+                    </DRow>
                 </DRows>
             </DSection>
 

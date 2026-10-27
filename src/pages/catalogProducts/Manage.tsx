@@ -78,7 +78,7 @@ const rules: Record<string, (f: Form) => string> = {
     name: (f) => textError("Product name", f.name, ...LIMITS.name),
     categoryId: (f) => (f.categoryId ? "" : "Product category is required"),
     providerId: (f) => (f.providerId ? "" : "Provider ID is required"),
-    termsFile: (f) => imageError(f.termsFile),
+    termsFile: (f) => !f.termsFile ? "" : f.termsFile.type !== "application/pdf" ? "Terms must be a PDF file" : f.termsFile.size > 5 * 1024 * 1024 ? "PDF must be less than 5 MB" : "",
     imageFile: (f) => imageError(f.imageFile),
     imageBg: (f) => (f.imageBg && !isHex(f.imageBg) ? "Enter a valid HEX code, e.g. #000000" : ""),
     mShort: (f) => textError("Short Description", f.shortDescription, ...LIMITS.mShort),
@@ -197,6 +197,8 @@ function ProductForm({ initial, categories, bundleOpts, providerOpts, templateOp
     const imgUrl = useMemo(() => (f.imageFile ? URL.createObjectURL(f.imageFile) : null), [f.imageFile]);
     useEffect(() => () => { if (imgUrl) URL.revokeObjectURL(imgUrl); }, [imgUrl]);
     const shownImg = imgUrl ?? initial?.imageUrl ?? "";
+    const termsPicked = useMemo(() => (f.termsFile ? URL.createObjectURL(f.termsFile) : null), [f.termsFile]);
+    useEffect(() => () => { if (termsPicked) URL.revokeObjectURL(termsPicked); }, [termsPicked]);
 
     const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((p) => ({ ...p, [k]: v }));
     const [expOpt, setExpOpt] = useState<ExpOpt>(initial?.expiresOn ? "custom" : "never");
@@ -216,7 +218,7 @@ function ProductForm({ initial, categories, bundleOpts, providerOpts, templateOp
     // image uploads are checked as soon as a file is chosen
     const pickFile = (k: "termsFile" | "imageFile", file: File | null) => {
         set(k, file);
-        const msg = imageError(file);
+        const msg = rules[k]({ ...f, [k]: file });
         setErrors((p) => { const n = { ...p }; if (msg) n[k] = msg; else delete n[k]; return n; });
     };
     const selling = sellingPrice(num(f.retail), f.discountType, num(f.discountValue));
@@ -413,15 +415,17 @@ function ProductForm({ initial, categories, bundleOpts, providerOpts, templateOp
                             <div className="flex flex-col gap-5">
                                 <h3 className="text-sm font-bold text-ink">Marketplace Content</h3>
                                 <div className="grid gap-5 md:grid-cols-2">
-                                    <Field label="Terms & Conditions" note="JPEG or PNG, under 2 MB." error={errors.termsFile}>
-                                        <FileInput accept="image/png,image/jpeg" file={f.termsFile} onChange={(v) => pickFile("termsFile", v)} />
-                                        {!f.termsFile && initial?.termsUrl && (
-                                            <a href={initial.termsUrl} target="_blank" rel="noreferrer" className="mt-2 block text-xs font-semibold text-link hover:underline">View current file</a>
+                                    <Field label="Terms & Conditions" note="PDF, under 5 MB." error={errors.termsFile}>
+                                        <FileInput accept="application/pdf" file={f.termsFile} onChange={(v) => pickFile("termsFile", v)} />
+                                        {(termsPicked || initial?.termsUrl) && (
+                                            <a href={termsPicked ?? initial?.termsUrl} target="_blank" rel="noreferrer" className="mt-2 block text-xs font-semibold text-link hover:underline">
+                                                {termsPicked ? "Preview selected PDF" : "View current PDF"}
+                                            </a>
                                         )}
                                     </Field>
-                                    <Field label="Product Image" note="JPEG or PNG, under 2 MB." error={errors.imageFile}>
-                                        <FileInput accept="image/png,image/jpeg" file={f.imageFile} onChange={(v) => pickFile("imageFile", v)} />
-                                        {shownImg && <img src={shownImg} alt="Product preview" className="mt-3 h-28 w-full rounded-lg border border-line object-contain" />}
+                                    <Field label="Product Image" note="JPEG, PNG or WEBP, under 2 MB." error={errors.imageFile}>
+                                        <FileInput accept="image/png,image/jpeg,image/webp" file={f.imageFile} onChange={(v) => pickFile("imageFile", v)} />
+                                        {shownImg && <img src={shownImg} alt="Product preview" onError={() => console.warn("Image failed:", shownImg)} className="mt-3 h-28 w-full rounded-lg border border-line bg-white object-contain" />}
                                     </Field>
                                     <Field label="Image Background Color" note={HexNote} error={errors.imageBg}>
                                         <ColorField value={f.imageBg} onChange={(v) => set("imageBg", v.replace(/\s/g, ""))} />

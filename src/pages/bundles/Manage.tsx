@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Trash2 } from "lucide-react";
 import { useApp } from "@/hooks/useApp";
 import Dropdownbox from "@/components/shared/Dropdownbox";
 import { Alert } from "@/components/auth/AuthShell";
 import { AdminNotice, ErrorBox, LoadingBox, useIsAdmin } from "@/components/catalog/PageState";
-import { bundlesService, compressImage } from "@/services/bundles.service";
+import { bundlesService } from "@/services/bundles.service";
 import RichTextEditor from "@/components/catalog/RichTextEditor";
 import {
     btn, ColorField, Field, FileInput, HexNote, MoneyInput, PhoneField, Radio, Section, TextArea, TextInput, Toggle,
@@ -66,6 +66,8 @@ function BundleForm({ initial }: { initial?: Bundle }) {
     const [saving, setSaving] = useState(false);
 
     const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((p) => ({ ...p, [k]: v }));
+    const picked = useMemo(() => (f.bgImage ? URL.createObjectURL(f.bgImage) : ""), [f.bgImage]);
+    const preview = picked || initial?.bgImage || "";
 
     const priceNum = num(f.price);
     const discNum = num(f.discountValue);
@@ -101,7 +103,8 @@ function BundleForm({ initial }: { initial?: Bundle }) {
             req("shortDescription", "Short description is required");
             req("tIconFamily", "Icon family is required");
             req("tAppIcon", "App icon is required");
-            if (f.bgImage && f.bgImage.size > 2 * 1024 * 1024) e.bgImage = "Image must be less than 2 MB";
+            if (f.bgImage && !["image/jpeg", "image/png", "image/webp"].includes(f.bgImage.type)) e.bgImage = "Use a JPEG, PNG or WebP image";
+            else if (f.bgImage && f.bgImage.size > 2 * 1024 * 1024) e.bgImage = "Image must be less than 2 MB";
             if (f.cardBg && !isHex(f.cardBg)) e.cardBg = "Enter a valid HEX code";
             if (f.iconBg && !isHex(f.iconBg)) e.iconBg = "Enter a valid HEX code";
         }
@@ -114,10 +117,8 @@ function BundleForm({ initial }: { initial?: Bundle }) {
         if (Object.keys(e).length) { focusFirstError(); return; }
         setSaving(true);
         try {
-            const bgImageBase64 = f.bgImage ? await compressImage(f.bgImage) : undefined;
-            const input = { ...f, bgImageBase64 };
-            if (initial) await bundlesService.update(initial.id, input);
-            else await bundlesService.create(input);
+            if (initial) await bundlesService.update(initial.id, f);
+            else await bundlesService.create(f);
             toast(isEdit ? "Bundle updated" : "Bundle created");
             nav(BASE);
         } catch (err) {
@@ -279,8 +280,9 @@ function BundleForm({ initial }: { initial?: Bundle }) {
                         </Field>
                     </div>
                     <div className="grid gap-5 md:grid-cols-3">
-                        <Field label="Background Image" note="Upload a JPEG or PNG image that is less than 2 MB." error={errors.bgImage}>
-                            <FileInput accept="image/png,image/jpeg" file={f.bgImage} onChange={(file) => set("bgImage", file)} />
+                        <Field label="Background Image" note="Upload a JPEG, PNG or WEBP image that is less than 2 MB." error={errors.bgImage}>
+                            <FileInput accept="image/png,image/jpeg,image/webp" file={f.bgImage} onChange={(file) => set("bgImage", file)} />
+                            {preview && <img src={preview} alt="Background preview" onError={(e) => { e.currentTarget.style.display = "none"; }} className="mt-3 h-24 rounded-md border border-line bg-white object-contain p-1" />}
                         </Field>
                         <Field label="Icon Family" required error={errors.tIconFamily}>
                             <TextInput value={f.tIconFamily} placeholder="Icon Family" onChange={(e) => set("tIconFamily", e.target.value)} />

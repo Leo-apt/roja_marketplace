@@ -81,6 +81,7 @@ export default function ProvidersDetail() {
     const [error, setError] = useState("");
     const [sp] = useSearchParams();
     const [tab, setTab] = useState<"overview" | "creds">(sp.get("tab") === "creds" ? "creds" : "overview");
+    const [logoBad, setLogoBad] = useState(false);
 
     useEffect(() => {
         if (!id) return;
@@ -100,8 +101,8 @@ export default function ProvidersDetail() {
         <div className="flex flex-col gap-4">
             <section className="overflow-hidden rounded-xl border border-sidebar-border bg-sidebar-bg">
                 <div className="flex flex-wrap items-start gap-4 p-5">
-                    {rec.logoUrl
-                        ? <img src={rec.logoUrl} alt={rec.name} className="size-14 rounded-lg object-cover" />
+                    {rec.logoUrl && !logoBad
+                        ? <img src={rec.logoUrl} alt={rec.name} onError={() => setLogoBad(true)} className="size-14 rounded-lg bg-white object-contain" />
                         : <span className="grid size-14 place-items-center rounded-lg bg-brandsoft text-lg font-bold text-brand">{rec.name[0]}</span>}
                     <div className="min-w-0 flex-1">
                         <h2 className="truncate text-base font-bold text-sidebar-text-active">{rec.name}</h2>

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Pencil } from "lucide-react";
 import type { Bundle } from "@/data/catalog";
@@ -31,6 +31,7 @@ export default function BundleSections({ b, variant = "bundle", editTo }: {
     b: Bundle; variant?: "bundle" | "product"; editTo?: string;
 }) {
     const nav = useNavigate();
+    const [imgBad, setImgBad] = useState(false);
     const p = variant === "product";
     return (
         <>
@@ -68,10 +69,9 @@ export default function BundleSections({ b, variant = "bundle", editTo }: {
                     </Tile>
                     <Tile label={p ? "Product Short Code" : "Feature Short Code"}>{b.shortCode}</Tile>
                     <Tile label="Banner Image">
-                        {b.bgImage ? (
-                            <img
-                                src={b.bgImage.startsWith("http") ? b.bgImage : `data:image/jpeg;base64,${b.bgImage}`}
-                                alt="Banner" className="h-20 w-full rounded-md object-cover" />
+                        {b.bgImage && !imgBad ? (
+                            <img src={b.bgImage} alt="Banner" onError={() => setImgBad(true)}
+                                className="h-24 w-full rounded-md border border-line bg-white object-contain p-1" />
                         ) : "N/A"}
                     </Tile>
                 </dl>

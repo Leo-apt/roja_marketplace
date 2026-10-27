@@ -8,8 +8,12 @@ import { BASE, Swatch } from "./List";
 
 const na = (v?: string) => (v ? v : "N/A");
 
-const Img = ({ src, alt }: { src: string; alt: string }) =>
-    src ? <img src={src} alt={alt} className="h-24 rounded-md border border-line object-contain" /> : <>N/A</>;
+const Img = ({ src, alt }: { src: string; alt: string }) => {
+    const [bad, setBad] = useState(false);
+    return src && !bad
+        ? <img src={src} alt={alt} onError={() => setBad(true)} className="h-24 rounded-md border border-line bg-white object-contain p-1" />
+        : <>N/A</>;
+};
 
 export default function ProductTemplatesDetail() {
     const { id } = useParams();

@@ -107,9 +107,9 @@ function ProviderForm({ initial, initialCreds }: { initial?: ProviderRec; initia
                     <Field label="Email Address" required error={errors.email}>
                         <TextInput type="email" value={email} placeholder="Enter your email" onChange={(e) => setEmail(e.target.value)} />
                     </Field>
-                    <Field label="Logo" required error={errors.logo} note="Upload a JPEG or PNG Logo that is less than 2mb">
-                        <FileInput accept="image/png,image/jpeg" file={logo} onChange={setLogo} />
-                        {!logo && initial?.logoUrl && <img src={initial.logoUrl} alt="Current logo" className="mt-3 h-16 rounded-md border border-line object-contain" />}
+                    <Field label="Logo" required error={errors.logo} note="Upload a JPEG, PNG or WEBP Logo that is less than 2mb">
+                        <FileInput accept="image/png,image/jpeg,image/webp" file={logo} onChange={setLogo} />
+                        {!logo && initial?.logoUrl && <img src={initial.logoUrl} alt="Current logo" onError={(e) => { e.currentTarget.style.display = "none"; }} className="mt-3 h-20 rounded-md border border-line bg-white object-contain p-1" />}
                     </Field>
                 </div>
 

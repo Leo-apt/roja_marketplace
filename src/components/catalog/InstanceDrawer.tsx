@@ -54,8 +54,8 @@ export default function InstanceDrawer({ onSubmit, initial }: {
             <Field label="Description">
                 <TextArea rows={4} value={desc} placeholder="What is this Entity used for?" onChange={(e) => setDesc(e.target.value)} />
             </Field>
-            <Field label="Image" note="Upload a JPEG or PNG image that is less than 2 MB." error={err.image}>
-                <FileInput accept="image/png,image/jpeg" file={file} onChange={setFile} />
+            <Field label="Image" note="Upload a JPEG, PNG or WEBP image that is less than 2 MB." error={err.image}>
+                <FileInput accept="image/png,image/jpeg,image/webp" file={file} onChange={setFile} />
                 {preview && <img src={preview} alt="Preview" className="mt-3 h-32 w-full rounded-lg border border-line object-contain" />}
             </Field>
         </Drawer>

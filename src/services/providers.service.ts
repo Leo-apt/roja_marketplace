@@ -2,8 +2,6 @@ import { apiCall } from "@/services/auth.service";
 import { fmt, who } from "@/services/categories.service";
 import type { Status } from "@/data/catalog";
 
-const API = ((import.meta.env.VITE_API_URL as string | undefined) ?? "").replace(/\/$/, "");
-
 export interface ProviderRec {
     id: string; providerId: string; name: string; email: string; phone: string; logoUrl: string; status: Status; isActive: boolean;
     createdBy: string; createdOn: string; updatedBy: string; updatedOn: string;
@@ -28,7 +26,7 @@ interface ApiCredView {
 
 const toUi = (a: ApiProvider): ProviderRec => ({
     id: a.id, providerId: a.providerId ?? "", name: a.name, email: a.email ?? "", phone: a.phone ?? "",
-    logoUrl: a.logo ? `${API}${a.logo}` : "", status: a.isActive ? "Active" : "Inactive", isActive: a.isActive,
+    logoUrl: a.logo ?? "", status: a.isActive ? "Active" : "Inactive", isActive: a.isActive,
     createdBy: who(a.createdBy), createdOn: fmt(a.createdAt), updatedBy: who(a.updatedBy), updatedOn: fmt(a.updatedAt),
 });
 

@@ -7,7 +7,7 @@ import { Alert } from "@/components/auth/AuthShell";
 import RichTextEditor from "./RichTextEditor";
 import { useApp } from "@/hooks/useApp";
 import { useBackGuard } from "@/hooks/useBackGuard";
-import { bundlesService, compressImage } from "@/services/bundles.service";
+import { bundlesService } from "@/services/bundles.service";
 import { btn, ColorField, Field, FileInput, HexNote, MoneyInput, PhoneField, Radio, TextArea, TextInput, Toggle } from "./FormBits";
 import type { Bundle, Status } from "@/data/catalog";
 import { discountTypeFormOptions, isHex, num, sellingPrice, statusFormOptions, usd, type DiscountType } from "@/utils/catalog";
@@ -89,7 +89,8 @@ export default function BundleCreateDrawer({ onCreated }: { onCreated: (b: Bundl
         req("shortDescription", "Short description is required");
         req("tIconFamily", "Icon family is required");
         req("tAppIcon", "App icon is required");
-        if (f.bgImage && f.bgImage.size > 2 * 1024 * 1024) e.bgImage = "Image must be less than 2 MB";
+        if (f.bgImage && !["image/jpeg", "image/png", "image/webp"].includes(f.bgImage.type)) e.bgImage = "Use a JPEG, PNG or WebP image";
+        else if (f.bgImage && f.bgImage.size > 2 * 1024 * 1024) e.bgImage = "Image must be less than 2 MB";
         if (f.cardBg && !isHex(f.cardBg)) e.cardBg = "Enter a valid HEX code";
         if (f.iconBg && !isHex(f.iconBg)) e.iconBg = "Enter a valid HEX code";
         return e;
@@ -102,8 +103,7 @@ export default function BundleCreateDrawer({ onCreated }: { onCreated: (b: Bundl
         if (Object.keys(e).length) { setTick((t) => t + 1); return; }
         setSaving(true);
         try {
-            const bgImageBase64 = f.bgImage ? await compressImage(f.bgImage) : undefined;
-            const rec = await bundlesService.create({ ...f, bgImageBase64 });
+            const rec = await bundlesService.create(f);
             onCreated(rec);
             toast("Bundle created");
             close();
@@ -261,8 +261,8 @@ export default function BundleCreateDrawer({ onCreated }: { onCreated: (b: Bundl
                     </Field>
                 </div>
                 <div className="grid gap-5 md:grid-cols-3">
-                    <Field label="Background Image" note="JPEG or PNG, under 2 MB." error={errors.bgImage}>
-                        <FileInput accept="image/png,image/jpeg" file={f.bgImage} onChange={(file) => set("bgImage", file)} />
+                    <Field label="Background Image" note="JPEG, PNG or WEBP, under 2 MB." error={errors.bgImage}>
+                        <FileInput accept="image/png,image/jpeg,image/webp" file={f.bgImage} onChange={(file) => set("bgImage", file)} />
                     </Field>
                     <Field label="Icon Family" required error={errors.tIconFamily}>
                         <TextInput value={f.tIconFamily} onChange={(e) => set("tIconFamily", e.target.value)} />

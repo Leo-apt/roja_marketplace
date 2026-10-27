@@ -47,7 +47,7 @@ interface ApiBundle {
 }
 
 export interface BundleInput {
-    bgImageBase64: any;
+    bgImage: File | null;
     name: string; shortCode: string; iconFamily: string; appIcon: string; webIcon: string; bgColor: string;
     pricingType: "addon" | "bundle"; price: string;
     discountOn: boolean; discountType: DiscountType; discountValue: string;
@@ -108,7 +108,6 @@ function toPayload(i: BundleInput, isEdit: boolean) {
         template: {
             title: i.title.trim(),
             shortDescription: i.shortDescription.trim(),
-            backgroundImage: i.bgImageBase64,
             iconFamily: i.tIconFamily.trim(),
             appIcon: i.tAppIcon.trim(),
             webIcon: opt(i.tWebIcon),
@@ -117,6 +116,14 @@ function toPayload(i: BundleInput, isEdit: boolean) {
         },
     });
 }
+
+// JSON goes in one "data" field, the image goes beside it as "backgroundImage"
+const toBody = (i: BundleInput, isEdit: boolean) => {
+    const fd = new FormData();
+    fd.append("data", toPayload(i, isEdit));
+    if (i.bgImage) fd.append("backgroundImage", i.bgImage);
+    return fd;
+};
 
 export const bundlesService = {
     list: (page = 1, limit = 8, search = "") => {
@@ -132,9 +139,9 @@ export const bundlesService = {
             .then((r) => r.data),
     get: (id: string) => apiCall<ApiBundle>(`/bundles/${id}/get-bundle`).then((r) => toUi(r.data)),
     create: (i: BundleInput) =>
-        apiCall<ApiBundle>("/bundles/create-bundles", { method: "POST", body: toPayload(i, false) }).then((r) => toUi(r.data)),
+        apiCall<ApiBundle>("/bundles/create-bundles", { method: "POST", body: toBody(i, false) }).then((r) => toUi(r.data)),
     update: (id: string, i: BundleInput) =>
-        apiCall<ApiBundle>(`/bundles/${id}/update-bundles`, { method: "PATCH", body: toPayload(i, true) }).then((r) => toUi(r.data)),
+        apiCall<ApiBundle>(`/bundles/${id}/update-bundles`, { method: "PATCH", body: toBody(i, true) }).then((r) => toUi(r.data)),
     remove: (id: string) =>
         apiCall<{ deleted: boolean }>(`/bundles/${id}/delete-bundles`, { method: "DELETE" }).then((r) => r.data),
 };
