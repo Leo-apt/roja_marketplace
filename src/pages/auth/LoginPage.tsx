@@ -20,7 +20,7 @@ export default function LoginPage() {
         setError("");
         setLoading(true);
         try {
-            await login(em, password); // PublicOnly redirects to Product Categories once the user is set
+            await login(em, password); // PublicOnly redirects to Overview once the user is set
             setLoading(false);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Login failed");

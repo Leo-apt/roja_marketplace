@@ -56,7 +56,7 @@ export default function App() {
                 <Route element={<RequireAuth />}>
                     <Route path="/tools/documents" element={<ToolsDocuments />} />
                     <Route element={<Layout />}>
-                        <Route index element={<Navigate to="/catalog/product-categories" replace />} />
+                        <Route index element={<Navigate to="/overview" replace />} />
 
                         <Route path="/catalog/providers" element={<ProvidersList />} />
                         <Route path="/catalog/providers/new" element={<ProvidersManage />} />

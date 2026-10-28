@@ -52,9 +52,8 @@ const Loading = ({ finishing = false }: { finishing?: boolean }) => {
       aria-live="polite"
       aria-busy={!finishing}
       aria-label="Loading"
-      className={`ld-root relative grid min-h-screen place-items-center overflow-hidden bg-page text-ink ${
-        finishing ? "ld-leaving" : ""
-      }`}
+      className={`ld-root relative grid min-h-screen place-items-center overflow-hidden bg-page text-ink ${finishing ? "ld-leaving" : ""
+        }`}
     >
       {/* faint dotted grid, fading out toward the edges */}
       <div className="ld-grid pointer-events-none absolute inset-0" />
@@ -86,9 +85,8 @@ const Loading = ({ finishing = false }: { finishing?: boolean }) => {
         {/* Status line: fades in each time the text changes */}
         <p
           key={finishing ? "done" : step}
-          className={`ld-text mt-7 flex h-5 items-center gap-2 text-sm font-medium ${
-            finishing ? "text-ink" : "text-muted"
-          }`}
+          className={`ld-text mt-7 flex h-5 items-center gap-2 text-sm font-medium ${finishing ? "text-ink" : "text-muted"
+            }`}
         >
           {finishing && (
             <span className="ld-pop grid size-4 place-items-center rounded-full bg-brand text-white">
@@ -213,7 +211,7 @@ export function PublicOnly() {
   const phase = useLoaderPhase(ready);
   if (phase !== "done") return <Loading finishing={phase === "finishing"} />;
   return user ? (
-    <Navigate to="/catalog/product-categories" replace />
+    <Navigate to="/overview" replace />
   ) : (
     <Outlet />
   );

@@ -227,9 +227,8 @@ function IconButton({
       aria-current={active ? "page" : undefined}
       title={label}
       onClick={onClick}
-      className={`relative grid size-11 place-items-center rounded-xl ${cardBase} ${
-        active ? "bg-gray-50 text-brand" : "text-ink"
-      } ${className}`}
+      className={`relative grid size-11 place-items-center rounded-xl ${cardBase} ${active ? "bg-gray-50 text-brand" : "text-ink"
+        } ${className}`}
     >
       {children}
     </button>
@@ -297,9 +296,8 @@ function ModeSwitch({
         />
 
         <span
-          className={`tb-switch-label relative z-10 flex items-center justify-center gap-1.5 ${
-            !isLive ? "text-white" : "text-muted"
-          }`}
+          className={`tb-switch-label relative z-10 flex items-center justify-center gap-1.5 ${!isLive ? "text-white" : "text-muted"
+            }`}
         >
           <span className="grid size-3.5 shrink-0 place-items-center">
             <FlaskConical className="tb-ic-flask size-3.5" />
@@ -307,9 +305,8 @@ function ModeSwitch({
           <span className="leading-none">Sandbox</span>
         </span>
         <span
-          className={`tb-switch-label relative z-10 flex items-center justify-center gap-1.5 ${
-            isLive ? "text-white" : "text-muted"
-          }`}
+          className={`tb-switch-label relative z-10 flex items-center justify-center gap-1.5 ${isLive ? "text-white" : "text-muted"
+            }`}
         >
           <span className="relative grid size-3.5 shrink-0 place-items-center">
             {isLive && (
@@ -348,9 +345,8 @@ function NotificationsMenu({ items }: { items: AppNotification[] }) {
         title="Notifications"
         data-open={open}
         onClick={() => setOpen((o) => !o)}
-        className={`relative grid size-11 place-items-center rounded-xl text-ink ${cardBase} ${
-          open ? "bg-gray-50" : ""
-        }`}
+        className={`relative grid size-11 place-items-center rounded-xl text-ink ${cardBase} ${open ? "bg-gray-50" : ""
+          }`}
       >
         <Bell className="tb-bell size-[18px]" />
         {unread > 0 && (
@@ -413,11 +409,10 @@ function NotificationsMenu({ items }: { items: AppNotification[] }) {
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5 leading-tight">
                   <span className="flex items-center gap-2">
                     <span
-                      className={`truncate text-xs ${
-                        isUnread
-                          ? "font-bold text-ink"
-                          : "font-semibold text-ink/80"
-                      }`}
+                      className={`truncate text-xs ${isUnread
+                        ? "font-bold text-ink"
+                        : "font-semibold text-ink/80"
+                        }`}
                     >
                       {n.title}
                     </span>
@@ -431,9 +426,8 @@ function NotificationsMenu({ items }: { items: AppNotification[] }) {
                 </span>
                 <span
                   aria-hidden
-                  className={`tb-unread mt-1.5 size-2 shrink-0 rounded-full bg-brand ${
-                    isUnread ? "" : "tb-unread-off"
-                  }`}
+                  className={`tb-unread mt-1.5 size-2 shrink-0 rounded-full bg-brand ${isUnread ? "" : "tb-unread-off"
+                    }`}
                 />
               </button>
             );
@@ -1014,15 +1008,15 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
     thumb?.animate(
       goingLive
         ? [
-            { width: "calc(50% - 3px)", marginLeft: "0%" },
-            { width: "calc(75% - 3px)", marginLeft: "-25%", offset: 0.45 },
-            { width: "calc(50% - 3px)", marginLeft: "0%" },
-          ]
+          { width: "calc(50% - 3px)", marginLeft: "0%" },
+          { width: "calc(75% - 3px)", marginLeft: "-25%", offset: 0.45 },
+          { width: "calc(50% - 3px)", marginLeft: "0%" },
+        ]
         : [
-            { width: "calc(50% - 3px)", marginLeft: "0%" },
-            { width: "calc(75% - 3px)", marginLeft: "0%", offset: 0.45 },
-            { width: "calc(50% - 3px)", marginLeft: "0%" },
-          ],
+          { width: "calc(50% - 3px)", marginLeft: "0%" },
+          { width: "calc(75% - 3px)", marginLeft: "0%", offset: 0.45 },
+          { width: "calc(50% - 3px)", marginLeft: "0%" },
+        ],
       { duration: 560, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
     );
 
@@ -1030,15 +1024,15 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
     beamRef.current?.animate(
       goingLive
         ? [
-            { clipPath: "inset(0 100% 0 0)" },
-            { clipPath: "inset(0 0 0 0)", offset: 0.5 },
-            { clipPath: "inset(0 0 0 100%)" },
-          ]
+          { clipPath: "inset(0 100% 0 0)" },
+          { clipPath: "inset(0 0 0 0)", offset: 0.5 },
+          { clipPath: "inset(0 0 0 100%)" },
+        ]
         : [
-            { clipPath: "inset(0 0 0 100%)" },
-            { clipPath: "inset(0 0 0 0)", offset: 0.5 },
-            { clipPath: "inset(0 100% 0 0)" },
-          ],
+          { clipPath: "inset(0 0 0 100%)" },
+          { clipPath: "inset(0 0 0 0)", offset: 0.5 },
+          { clipPath: "inset(0 100% 0 0)" },
+        ],
       { duration: 900, easing: "ease-in-out" },
     );
 
@@ -1084,11 +1078,11 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
     user?.user_name?.trim() ||
     (email
       ? email
-          .split("@")[0]
-          .split(/[._-]+/)
-          .filter(Boolean)
-          .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-          .join(" ")
+        .split("@")[0]
+        .split(/[._-]+/)
+        .filter(Boolean)
+        .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+        .join(" ")
       : "Account");
 
   const modeColor = shownMode === "live" ? "bg-good" : "bg-caution";
@@ -1096,7 +1090,7 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
   const shortcut = useMemo(
     () =>
       typeof navigator !== "undefined" &&
-      /Mac|iPhone|iPad/i.test(navigator.platform)
+        /Mac|iPhone|iPad/i.test(navigator.platform)
         ? "⌘K"
         : "Ctrl K",
     [],
@@ -1235,12 +1229,12 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
       {/* Environment edge: faint persistent line + scanner beam on switch */}
       <span
         aria-hidden
-        className={`tb-mode-line pointer-events-none absolute inset-x-0 bottom-0 h-[2px] ${modeColor}`}
+        className={`tb-mode-line pointer-events-none absolute inset-x-0 bottom-0 h-[2.5px] ${modeColor}`}
       />
       <span
         ref={beamRef}
         aria-hidden
-        className={`tb-beam pointer-events-none absolute inset-x-0 bottom-0 h-[3px] ${modeColor}`}
+        className={`tb-beam pointer-events-none absolute inset-x-0 bottom-0 h-[2.5px] ${modeColor}`}
         style={{ clipPath: "inset(0 100% 0 0)" }}
       />
 
@@ -1261,17 +1255,15 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
         </button>
 
         <div
-          className={`relative w-full rounded-xl transition-[max-width,box-shadow] duration-500 ${
-            focused
-              ? "max-w-[440px] shadow-[0_0_0_4px] shadow-brand/[0.08]"
-              : "max-w-[340px]"
-          }`}
+          className={`relative w-full rounded-xl transition-[max-width,box-shadow] duration-500 ${focused
+            ? "max-w-[440px] shadow-[0_0_0_4px] shadow-brand/[0.08]"
+            : "max-w-[340px]"
+            }`}
           style={{ transitionTimingFunction: "var(--tb-ease)" }}
         >
           <Search
-            className={`pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 transition-colors duration-300 ${
-              focused ? "text-brand" : "text-muted"
-            }`}
+            className={`pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 transition-colors duration-300 ${focused ? "text-brand" : "text-muted"
+              }`}
           />
           <input
             ref={inputRef}
@@ -1310,9 +1302,8 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
             <X className="size-4" />
           </button>
           <kbd
-            className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-sans text-[10px] font-semibold text-muted transition-opacity duration-200 max-[850px]:hidden ${
-              query || focused ? "opacity-0" : "opacity-100"
-            }`}
+            className={`pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md border border-gray-200 bg-gray-50 px-1.5 py-0.5 font-sans text-[10px] font-semibold text-muted transition-opacity duration-200 max-[850px]:hidden ${query || focused ? "opacity-0" : "opacity-100"
+              }`}
           >
             {shortcut}
           </kbd>
@@ -1321,9 +1312,8 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
           <div
             aria-hidden={!focused}
             onMouseDown={(e) => e.preventDefault()}
-            className={`tb-pop absolute left-0 top-[calc(100%+10px)] z-50 w-[30rem] max-w-[calc(100vw-2rem)] origin-top-left overflow-hidden rounded-2xl border border-gray-200/80 bg-white ring-1 ring-black/5 ${
-              focused ? "tb-pop-open" : ""
-            }`}
+            className={`tb-pop absolute left-0 top-[calc(100%+10px)] z-50 w-[30rem] max-w-[calc(100vw-2rem)] origin-top-left overflow-hidden rounded-2xl border border-gray-200/80 bg-white ring-1 ring-black/5 ${focused ? "tb-pop-open" : ""
+              }`}
           >
             <div
               id="tb-cmd-list"

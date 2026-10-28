@@ -221,7 +221,7 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
     },
     instances: {
         title: "clients",
-        nav: "clients",
+        nav: "Clients",
         path: "/instances",
         icon: "▥",
         subtitle: "Manage clients, their products and access tokens.",
