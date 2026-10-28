@@ -16,7 +16,7 @@ import {
   BadgePercent,
   UserStar,
   SlidersHorizontal,
-  LayoutTemplate,
+  LayoutTemplate, Users,
   Settings, Building2, Activity, History as HistoryIcon, Workflow, FileText, BarChart3, ShieldCheck
 } from "lucide-react";
 import { viewInfo, type ViewKey } from "@/utils/views";
@@ -45,6 +45,7 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
   documentsManage: FileText,
   reports: BarChart3,
   approvals: ShieldCheck,
+  customers: Users,
 };
 
 type SubLabel = "Create" | "Edit" | "Details";

@@ -17,7 +17,7 @@ import {
   UserStar,
   SlidersHorizontal,
   LayoutTemplate,
-  TrendingUp,
+  TrendingUp, Users,
   Settings, Building2, Activity, History as HistoryIcon, Workflow, FileText, BarChart3, ShieldCheck
 } from "lucide-react";
 import { viewInfo, type ViewKey } from "@/utils/views";
@@ -48,6 +48,7 @@ const iconMap: Record<ViewKey, React.ComponentType<{ className?: string }>> = {
   documentsManage: FileText,
   reports: BarChart3,
   approvals: ShieldCheck,
+  customers: Users,
 };
 
 type Tip = { label: string; top: number; left: number };

@@ -38,6 +38,7 @@ interface Props<T extends { id: string }> {
     onCreate?: () => void;
     onEdit?: (id: string) => void;
     hideView?: boolean;
+    readOnly?: boolean;
     exportName?: string;
     hideEdit?: boolean;
     hideCreate?: boolean;
@@ -56,7 +57,7 @@ const th = "whitespace-nowrap border-b border-linesoft bg-surfacealt px-3 py-3 t
 const td = "whitespace-nowrap border-b border-linesoft px-3 py-3 align-middle text-xs text-td-text";
 
 export default function ListShell<T extends { id: string }>({
-    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, extraActions, onPublish, canPublish, onCreate, onEdit, server, statusToggle, hideView, exportName, hideEdit, hideCreate, toolbar, notice, transform,
+    rows, cols, basePath, createLabel, rowLabel, searchPlaceholder, filterFields, match, cards, onDelete, extraActions, onPublish, canPublish, onCreate, onEdit, server, statusToggle, readOnly, hideView, exportName, hideEdit, hideCreate, toolbar, notice, transform,
 }: Props<T>) {
     const nav = useNavigate();
     const { openDrawer } = useApp();
@@ -215,7 +216,7 @@ export default function ListShell<T extends { id: string }>({
                             <Download className="size-4" /> Export CSV
                         </button>
                     )}
-                    {!hideCreate && (
+                    {!hideCreate && !readOnly && (
                         <button className={btn.brand} onClick={() => (onCreate ? onCreate() : nav(`${basePath}/new`))}>
                             <Plus className="size-4" /> {createLabel}
                         </button>
@@ -243,7 +244,7 @@ export default function ListShell<T extends { id: string }>({
                                     </th>
                                 ))}
                                 {statusToggle && <th className={th}>Status</th>}
-                                <th className={th}>Action</th>
+                                {!readOnly && <th className={th}>Action</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -275,13 +276,14 @@ export default function ListShell<T extends { id: string }>({
                                             })()}
                                         </td>
                                     )}
-                                    <td className={td}>
+                                    {!readOnly && (<td className={td}>
                                         <button data-action-menu aria-label="Actions" title="Actions"
                                             onClick={(e) => openMenu(e, r.id)}
                                             className="group rounded-md bg-action p-1.5 text-white hover:bg-action-hover">
                                             <Settings className="size-4 transition-transform duration-300 group-hover:rotate-90" />
                                         </button>
                                     </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>

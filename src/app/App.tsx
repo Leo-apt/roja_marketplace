@@ -44,6 +44,7 @@ import SubscriptionsList from "@/pages/subscriptions/List";
 import SettlementsList from "@/pages/settlements/List";
 import ApprovalsList from "@/pages/approvals/List";
 import Overview from "@/pages/overview/Overview";
+import CustomersList from "@/pages/customers/List";
 
 export default function App() {
     return (
@@ -101,6 +102,8 @@ export default function App() {
                         <Route path="/instances" element={<InstancesList />} />
                         <Route path="/instances/:id" element={<InstanceDetail />} />
                         <Route path="/instances/:id/edit" element={<InstanceDetail />} />
+
+                        <Route path="/customers" element={<CustomersList />} />
                         <Route path="/history" element={<HistoryClients />} />
                         <Route path="/history/:entityId" element={<HistoryEnvironments />} />
                         <Route path="/history/:entityId/:subEntityId" element={<HistoryCalls />} />

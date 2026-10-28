@@ -21,6 +21,7 @@ export type ViewKey =
     | "documentsManage"
     | "reports"
     | "approvals"
+    | "customers"
 
 export interface ViewInfo {
     title: string;
@@ -346,12 +347,24 @@ export const viewInfo: Record<ViewKey, ViewInfo> = {
         statusLabel: "Status",
         scope: "Metadata only; secrets are never shown.",
     },
+    customers: {
+        title: "Customers",
+        nav: "Customers",
+        path: "/customers",
+        icon: "▥",
+        subtitle: "Customers created through the payment API, in sandbox and live.",
+        dateLabel: "Created on",
+        search: "name / email / stripe id",
+        statuses: ["all"],
+        statusLabel: "Status",
+        scope: "All customers.",
+    },
 };
 
 export const navGroups: { label: string; items: ViewKey[] }[] = [
     // { label: "ARS Marketplace", items: ["overview", "products", "purchases", "subscriptions"] },
     // { label: "Finance & control", items: ["margin", "settlements", "reconciliation"] },
     { label: "Marketplace", items: ["reports", "purchases", "margin", "subscriptions", "settlements", "approvals"] },
-    { label: "Business", items: ["instances"] },
+    { label: "Business", items: ["instances", "customers"] },
     { label: "Tools", items: ["documents", "history"] },
 ];
